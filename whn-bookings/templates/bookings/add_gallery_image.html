@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="min-h-screen bg-whn-dark pt-32 pb-20 px-6">
+    <div class="container mx-auto max-w-2xl">
+        <!-- Header -->
+        <div class="mb-16" data-aos="fade-down">
+            <a href="{% url 'manage_gallery' %}" class="text-whn-purple font-bold tracking-[0.3em] uppercase text-[10px] mb-4 flex items-center gap-2 hover:translate-x-[-4px] transition-transform">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg>
+                Back to Gallery
+            </a>
+            <h1 class="text-5xl md:text-6xl font-black text-white tracking-tighter">Add Picture</h1>
+        </div>
+
+        <!-- Form Card -->
+        <div class="glass-card rounded-[2.5rem] p-10 md:p-12 border border-white/5 shadow-2xl" data-aos="fade-up">
+            <form method="POST" enctype="multipart/form-data" class="space-y-8">
+                {% csrf_token %}
+                
+                <!-- Title -->
+                <div class="relative group">
+                    <label class="text-[10px] font-bold text-whn-tertiary uppercase tracking-[0.2em] ml-1 mb-3 block group-focus-within:text-whn-purple transition-colors">Image Title (Optional)</label>
+                    <input type="text" name="title" placeholder="e.g. Neon Vibes 2024" class="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-whn-purple/50 focus:ring-4 focus:ring-whn-purple/10 transition-all placeholder:text-white/10">
+                </div>
+
+                <!-- Image Upload -->
+                <div class="relative group">
+                    <label class="text-[10px] font-bold text-whn-tertiary uppercase tracking-[0.2em] ml-1 mb-3 block group-focus-within:text-whn-purple transition-colors">Upload Picture</label>
+                    <div class="relative">
+                        <input type="file" name="image" required accept=".jpg,.jpeg,.png,.webp" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
+                        <div class="w-full bg-white/[0.03] border border-white/10 border-dashed rounded-2xl px-6 py-10 text-center group-hover:border-whn-purple/50 transition-all">
+                            <div class="text-4xl mb-3">📸</div>
+                            <p class="text-xs text-whn-tertiary font-bold uppercase tracking-widest">Click to upload gallery image</p>
+                            <p class="text-[8px] text-white/20 mt-2 uppercase tracking-widest">JPG, PNG, WEBP ONLY</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Active Toggle -->
+                <div class="flex items-center gap-4 p-6 rounded-2xl bg-white/[0.03] border border-white/5">
+                    <div class="relative inline-block w-12 h-6 transition duration-200 ease-in-out rounded-full bg-white/10">
+                        <input type="checkbox" name="is_active" checked class="absolute z-10 w-12 h-6 opacity-0 cursor-pointer peer">
+                        <div class="absolute top-1 left-1 w-4 h-4 transition-all duration-200 ease-in-out transform bg-whn-tertiary rounded-full peer-checked:translate-x-6 peer-checked:bg-whn-purple"></div>
+                    </div>
+                    <div>
+                        <p class="text-sm font-bold text-white uppercase tracking-widest">Active Status</p>
+                        <p class="text-[10px] text-whn-tertiary uppercase tracking-widest">Image will appear on homepage if active</p>
+                    </div>
+                </div>
+
+                <!-- Submit -->
+                <div class="pt-6">
+                    <button type="submit" class="w-full py-5 bg-gradient-to-r from-whn-purple to-whn-blue text-white font-black tracking-[0.2em] rounded-2xl hover:scale-[1.02] active:scale-[0.98] transition-all shadow-[0_0_40px_rgba(124,58,237,0.3)] hover:shadow-[0_0_60px_rgba(124,58,237,0.5)]">
+                        ADD PICTURE
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

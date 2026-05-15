@@ -1,0 +1,156 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="min-h-screen bg-whn-dark pt-32 pb-20 px-6">
+    <div class="container mx-auto">
+        <!-- Dashboard Header -->
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-16" data-aos="fade-down">
+            <div>
+                <span class="text-whn-purple font-bold tracking-[0.3em] uppercase text-[10px] mb-4 block">Platform Control</span>
+                <h1 class="text-6xl md:text-7xl font-black text-white tracking-tighter">Dashboard</h1>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="text-right hidden md:block">
+                    <p class="text-white font-bold text-sm">{{ user.username }}</p>
+                    <p class="text-whn-tertiary text-[10px] uppercase tracking-widest">Administrator</p>
+                </div>
+                <a href="{% url 'logout' %}" class="px-6 py-2.5 rounded-full glass border border-white/10 text-[10px] font-bold hover:bg-red-500 hover:text-white hover:border-red-500 transition-all uppercase tracking-[0.2em]">Logout</a>
+            </div>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
+            <!-- Total Artists -->
+            <div class="glass-card p-8 rounded-[2.5rem] border border-white/5 hover:border-whn-purple/30 transition-all duration-500 group" data-aos="fade-up" data-aos-delay="100">
+                <div class="flex items-center justify-between mb-6">
+                    <div class="w-12 h-12 rounded-2xl bg-whn-purple/10 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">🎧</div>
+                    <span class="text-[10px] font-bold text-whn-purple uppercase tracking-widest">Artists</span>
+                </div>
+                <div class="text-4xl font-black text-white mb-2">{{ total_artists }}</div>
+                <p class="text-whn-tertiary text-xs">Verified Performers</p>
+            </div>
+
+            <!-- Total Bookings -->
+            <div class="glass-card p-8 rounded-[2.5rem] border border-white/5 hover:border-whn-blue/30 transition-all duration-500 group" data-aos="fade-up" data-aos-delay="200">
+                <div class="flex items-center justify-between mb-6">
+                    <div class="w-12 h-12 rounded-2xl bg-whn-blue/10 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">📅</div>
+                    <span class="text-[10px] font-bold text-whn-blue uppercase tracking-widest">Total Events</span>
+                </div>
+                <div class="text-4xl font-black text-white mb-2">{{ total_bookings }}</div>
+                <p class="text-whn-tertiary text-xs">Lifetime Bookings</p>
+            </div>
+
+            <!-- Confirmed Events -->
+            <div class="glass-card p-8 rounded-[2.5rem] border border-white/5 hover:border-green-500/30 transition-all duration-500 group" data-aos="fade-up" data-aos-delay="300">
+                <div class="flex items-center justify-between mb-6">
+                    <div class="w-12 h-12 rounded-2xl bg-green-500/10 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">✅</div>
+                    <span class="text-[10px] font-bold text-green-500 uppercase tracking-widest">Confirmed</span>
+                </div>
+                <div class="text-4xl font-black text-white mb-2">{{ confirmed_events }}</div>
+                <p class="text-whn-tertiary text-xs">Ready to Rock</p>
+            </div>
+
+            <!-- Pending Requests -->
+            <div class="glass-card p-8 rounded-[2.5rem] border border-white/5 hover:border-yellow-500/30 transition-all duration-500 group" data-aos="fade-up" data-aos-delay="400">
+                <div class="flex items-center justify-between mb-6">
+                    <div class="w-12 h-12 rounded-2xl bg-yellow-500/10 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">⏳</div>
+                    <span class="text-[10px] font-bold text-yellow-500 uppercase tracking-widest">Pending</span>
+                </div>
+                <div class="text-4xl font-black text-white mb-2">{{ pending_requests }}</div>
+                <p class="text-whn-tertiary text-xs">Awaiting Approval</p>
+            </div>
+        </div>
+
+        <!-- Recent Activity & Management -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Activity Log Table -->
+            <div class="lg:col-span-2 glass-card rounded-[2.5rem] p-10 border border-white/5" data-aos="fade-right">
+                <div class="flex items-center justify-between mb-10">
+                    <h3 class="text-2xl font-black text-white tracking-tight">Recent Activity</h3>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead>
+                            <tr class="border-b border-white/5">
+                                <th class="pb-4 text-[10px] font-black text-whn-tertiary uppercase tracking-widest">Action</th>
+                                <th class="pb-4 text-[10px] font-black text-whn-tertiary uppercase tracking-widest text-right">Time</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-white/5">
+                            {% for log in activity_logs %}
+                            <tr class="group">
+                                <td class="py-6">
+                                    <span class="text-white font-bold text-sm">{{ log.action }}</span>
+                                </td>
+                                <td class="py-6 text-sm text-whn-tertiary text-right">{{ log.created_at|timesince }} ago</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="2" class="py-10 text-center text-whn-tertiary text-sm italic">No recent activity recorded.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="glass-card rounded-[2.5rem] p-10 border border-white/5" data-aos="fade-left">
+                <h3 class="text-2xl font-black text-white tracking-tight mb-10">Quick Actions</h3>
+                <div class="grid grid-cols-1 gap-4">
+                    <a href="{% url 'manage_artists' %}" class="flex items-center justify-between p-6 rounded-2xl bg-white/[0.03] border border-white/5 hover:border-whn-purple/30 transition-all group">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 rounded-xl bg-whn-purple/10 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">👥</div>
+                            <span class="text-sm font-bold text-white">Manage Artists</span>
+                        </div>
+                        <span class="text-whn-tertiary group-hover:text-white transition-colors">→</span>
+                    </a>
+                    <a href="{% url 'manage_events' %}" class="flex items-center justify-between p-6 rounded-2xl bg-white/[0.03] border border-white/5 hover:border-whn-blue/30 transition-all group">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 rounded-xl bg-whn-blue/10 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">📅</div>
+                            <span class="text-sm font-bold text-white">Manage Events</span>
+                        </div>
+                        <span class="text-whn-tertiary group-hover:text-white transition-colors">→</span>
+                    </a>
+                    <a href="{% url 'manage_gallery' %}" class="flex items-center justify-between p-6 rounded-2xl bg-white/[0.03] border border-white/5 hover:border-whn-purple/30 transition-all group">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 rounded-xl bg-whn-purple/10 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">🖼️</div>
+                            <span class="text-sm font-bold text-white">Manage Gallery</span>
+                        </div>
+                        <span class="text-whn-tertiary group-hover:text-white transition-colors">→</span>
+                    </a>
+                    <a href="{% url 'add_event' %}" class="flex items-center justify-between p-6 rounded-2xl bg-white/[0.03] border border-white/5 hover:border-whn-purple/30 transition-all group">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 rounded-xl bg-whn-purple/10 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">✨</div>
+                            <span class="text-sm font-bold text-white">Add Event</span>
+                        </div>
+                        <span class="text-whn-tertiary group-hover:text-white transition-colors">→</span>
+                    </a>
+                    <a href="{% url 'add_booking' %}" class="flex items-center justify-between p-6 rounded-2xl bg-white/[0.03] border border-white/5 hover:border-whn-blue/30 transition-all group">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 rounded-xl bg-whn-blue/10 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">🎟️</div>
+                            <span class="text-sm font-bold text-white">Add New Booking</span>
+                        </div>
+                        <span class="text-whn-tertiary group-hover:text-white transition-colors">→</span>
+                    </a>
+                    <a href="{% url 'dashboard_settings' %}" class="flex items-center justify-between p-6 rounded-2xl bg-white/[0.03] border border-white/5 hover:border-white/20 transition-all group">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">⚙️</div>
+                            <span class="text-sm font-bold text-white">Advanced Settings</span>
+                        </div>
+                        <span class="text-whn-tertiary group-hover:text-white transition-colors">→</span>
+                    </a>
+                </div>
+
+                <div class="mt-12 p-8 rounded-3xl bg-gradient-to-br from-whn-purple/20 to-whn-blue/20 border border-white/5">
+                    <p class="text-white font-bold text-sm mb-2">Pro Tip</p>
+                    <p class="text-whn-tertiary text-xs leading-relaxed">
+                        Use the advanced settings to manage user permissions and global platform configurations.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

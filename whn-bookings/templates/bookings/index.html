@@ -1,0 +1,211 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
+    <!-- Light Orbs -->
+    <div class="light-orb orb-purple top-1/4 -left-20 animate-pulse-slow"></div>
+    <div class="light-orb orb-blue bottom-1/4 -right-20 animate-pulse-slow" style="animation-delay: 2s"></div>
+        <div class="relative z-10 text-center max-w-4xl mx-auto px-6" data-aos="fade-up" data-aos-duration="1000">
+            <h1 class="text-7xl md:text-9xl font-black text-white mb-8 tracking-tighter leading-none animate-float">
+                {{ settings.title|upper }}
+            </h1>
+            <p class="text-lg md:text-xl text-white/60 mb-12 leading-relaxed font-medium tracking-wide">
+                {{ settings.hero_text }}
+            </p>
+        <div class="flex flex-col md:flex-row items-center justify-center gap-6" data-aos="fade-up" data-aos-delay="400">
+            <a href="#events" class="px-10 py-4 bg-whn-purple rounded-full text-lg font-bold hover:scale-105 active:scale-95 transition-all animate-glow">
+                Explore Events
+            </a>
+            <a href="#artists" class="px-10 py-4 glass rounded-full text-lg font-bold hover:bg-white hover:text-black transition-all">
+                View Artists
+            </a>
+        </div>
+    </div>
+
+    <!-- Scroll Indicator -->
+    <div class="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4 animate-bounce opacity-50">
+        <span class="text-[10px] font-bold tracking-[0.3em] uppercase">Scroll</span>
+        <div class="w-[1px] h-12 bg-gradient-to-b from-whn-purple to-transparent"></div>
+    </div>
+</section>
+
+<!-- Featured Upcoming Events -->
+<section id="events" class="py-32 bg-grid">
+    <div class="container mx-auto px-6">
+        <div class="flex flex-col md:flex-row items-end justify-between gap-8 mb-20">
+            <div data-aos="fade-right">
+                <span class="text-whn-purple font-bold tracking-[0.3em] uppercase text-[10px] mb-4 block">Selected Experiences</span>
+                <h2 class="text-6xl md:text-7xl font-black text-white tracking-tighter">Events</h2>
+            </div>
+            <a href="{% url 'all_events' %}" class="group flex items-center gap-4 text-whn-purple font-bold tracking-widest text-xs uppercase" data-aos="fade-left">
+                View All
+                <span class="w-10 h-10 rounded-full border border-whn-purple/30 flex items-center justify-center group-hover:bg-whn-purple group-hover:text-white transition-all duration-500">→</span>
+            </a>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
+            {% for event in events %}
+            <!-- Dynamic Event Card -->
+            <div class="group" data-aos="fade-up" data-aos-delay="{{ forloop.counter|add:forloop.counter }}00">
+                <div class="relative aspect-[4/5] overflow-hidden rounded-[2rem] glass border border-white/5 mb-6 group-hover:border-whn-purple/30 transition-all duration-700">
+                    {% if event.event_image %}
+                    <img src="{{ event.event_image.url }}" alt="{{ event.event_name }}" class="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110 grayscale-[0.2] group-hover:grayscale-0">
+                    {% else %}
+                    <div class="w-full h-full bg-white/5 flex items-center justify-center text-5xl">🎇</div>
+                    {% endif %}
+                    <div class="absolute inset-0 bg-gradient-to-t from-whn-dark via-transparent to-transparent opacity-80"></div>
+                </div>
+                <div class="px-2">
+                    <div class="text-whn-purple font-bold text-[10px] uppercase tracking-[0.2em] mb-3">{{ event.event_date|date:"d M" }} · {{ event.event_time|time:"H:i" }}</div>
+                    <h3 class="text-2xl font-black text-white mb-3 group-hover:text-whn-purple transition-colors leading-tight tracking-tight">{{ event.event_name }}</h3>
+                    <p class="text-white/40 text-sm font-medium tracking-wide">{{ event.venue_name }}, {{ event.location }}</p>
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-span-full text-center py-20">
+                <p class="text-whn-tertiary italic">Stay tuned for upcoming experiences.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- Featured Artists -->
+<section id="artists" class="py-32 relative overflow-hidden">
+    <div class="light-orb orb-purple -top-40 -right-40 animate-pulse-slow"></div>
+    <div class="container mx-auto px-6">
+        <div class="text-center mb-20" data-aos="fade-up">
+            <span class="text-whn-purple font-bold tracking-[0.2em] uppercase text-sm mb-4 block">Meet the Stars</span>
+            <h2 class="text-5xl md:text-6xl font-black text-white">Featured Artists</h2>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
+            {% for artist in artists %}
+            <!-- Artist Card -->
+            <div class="flex flex-col items-center group" data-aos="fade-up" data-aos-delay="{{ forloop.counter|add:100 }}">
+                <div class="relative mb-8">
+                    <div class="w-48 h-48 rounded-full border border-white/5 p-2 group-hover:border-whn-purple/50 group-hover:shadow-[0_0_40px_rgba(124,58,237,0.2)] transition-all duration-700">
+                        <div class="w-full h-full rounded-full overflow-hidden grayscale group-hover:grayscale-0 transition-all duration-700">
+                            {% if artist.artist_image %}
+                            <img src="{{ artist.artist_image.url }}" alt="{{ artist.name }}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
+                            {% else %}
+                            <div class="w-full h-full bg-white/5 flex items-center justify-center text-4xl">🎧</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <h3 class="text-2xl font-black text-white mb-2 tracking-tight">{{ artist.name }}</h3>
+                <p class="text-whn-tertiary text-[10px] font-bold uppercase tracking-[0.3em] mb-4">{{ artist.genre }}</p>
+                <div class="flex items-center gap-6 mb-8">
+                    {% if artist.instagram %}
+                    <a href="{% if 'http' in artist.instagram %}{{ artist.instagram }}{% else %}https://instagram.com/{{ artist.instagram }}{% endif %}" target="_blank" class="text-[10px] font-black text-white/30 hover:text-white transition-colors tracking-widest uppercase">IG</a>
+                    {% endif %}
+                </div>
+                <a href="{% if artist.instagram %}{% if 'http' in artist.instagram %}{{ artist.instagram }}{% else %}https://instagram.com/{{ artist.instagram }}{% endif %}{% else %}#{% endif %}" target="_blank" class="px-8 py-2.5 rounded-full glass border border-white/10 text-[10px] font-bold hover:bg-whn-purple hover:text-white hover:border-whn-purple transition-all uppercase tracking-[0.2em]">View Profile</a>
+            </div>
+            {% empty %}
+            <div class="col-span-full text-center py-20">
+                <p class="text-whn-tertiary text-sm italic">No featured artists yet.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- About Section -->
+<section id="about" class="py-32 bg-grid relative overflow-hidden">
+    <div class="container mx-auto px-6">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
+            <div class="relative" data-aos="fade-right">
+                <div class="aspect-square rounded-3xl overflow-hidden glass p-4">
+                    <img src="https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&q=80&w=1000" alt="Nightlife" class="w-full h-full object-cover rounded-2xl transition-transform duration-1000 hover:scale-105">
+                </div>
+                <div class="absolute -bottom-10 -right-10 w-64 h-64 glass-card rounded-3xl p-8 hidden md:block animate-float">
+                    <div class="text-5xl font-black text-whn-purple mb-2">100+</div>
+                    <div class="text-sm font-bold text-white uppercase tracking-widest">Events Hosted Across The Globe</div>
+                </div>
+            </div>
+            <div data-aos="fade-left">
+                <span class="text-whn-purple font-bold tracking-[0.2em] uppercase text-sm mb-4 block">The Platform</span>
+                <h2 class="text-5xl md:text-6xl font-black text-white mb-8 leading-tight">About Wild<br>High Nights</h2>
+                <p class="text-xl text-whn-tertiary leading-relaxed mb-8">
+                    Wild High Nights is a modern nightlife and artist booking platform connecting audiences with unforgettable events, DJs, performers, and nightlife experiences across the globe.
+                </p>
+                <p class="text-lg text-whn-tertiary leading-relaxed mb-12">
+                    We bridge the gap between world-class artists and energetic audiences, ensuring every night is a cinematic masterpiece of music and lights.
+                </p>
+                <!-- <a href="#" class="inline-flex items-center gap-4 text-white font-bold group"> -->
+                   
+                    <!-- <span class="w-12 h-12 rounded-full bg-whn-purple flex items-center justify-center group-hover:scale-110 transition-all">→</span> -->
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Why Choose Us -->
+<section class="py-32 relative overflow-hidden">
+    <div class="container mx-auto px-6">
+        <div class="text-center mb-24" data-aos="fade-up">
+            <span class="text-whn-purple font-bold tracking-[0.3em] uppercase text-[10px] mb-4 block">The Difference</span>
+            <h2 class="text-6xl md:text-7xl font-black text-white tracking-tighter">Why WHN?</h2>
+        </div>
+        <div class="flex flex-col md:flex-row justify-center gap-12 max-w-5xl mx-auto">
+            <div class="glass-card p-12 rounded-[2.5rem] flex-1 hover:border-whn-purple/30 transition-all duration-500 group" data-aos="fade-up" data-aos-delay="100">
+                <div class="text-5xl mb-8 group-hover:scale-110 transition-transform duration-500">🎩</div>
+                <h3 class="text-3xl font-black text-white mb-6 tracking-tight">Premium Events</h3>
+                <p class="text-white/40 leading-relaxed font-medium tracking-wide">Handpicked nightlife experiences that set the bar for luxury and energy across the finest venues.</p>
+            </div>
+            <div class="glass-card p-12 rounded-[2.5rem] flex-1 hover:border-whn-purple/30 transition-all duration-500 group" data-aos="fade-up" data-aos-delay="200">
+                <div class="text-5xl mb-8 group-hover:scale-110 transition-transform duration-500">💎</div>
+                <h3 class="text-3xl font-black text-white mb-6 tracking-tight">Verified Artists</h3>
+                <p class="text-white/40 leading-relaxed font-medium tracking-wide">Top-tier DJs and performers vetted for exceptional quality and a professional stage presence.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Gallery Section -->
+<section class="py-32 bg-grid">
+    <div class="container mx-auto px-6">
+        <div class="text-center mb-20" data-aos="fade-up">
+            <span class="text-whn-purple font-bold tracking-[0.2em] uppercase text-sm mb-4 block">Moments</span>
+            <h2 class="text-5xl md:text-6xl font-black text-white">Gallery</h2>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {% for img in gallery_images %}
+            <div class="group relative aspect-square overflow-hidden rounded-[2rem] glass border border-white/5" data-aos="zoom-in" data-aos-delay="{{ forloop.counter }}00">
+                <img src="{{ img.image.url }}" alt="{{ img.title|default:'Gallery Image' }}" class="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110">
+                <div class="absolute inset-0 bg-gradient-to-t from-whn-dark via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex flex-col justify-end p-8">
+                    {% if img.title %}
+                    <p class="text-white font-black text-lg tracking-tight translate-y-4 group-hover:translate-y-0 transition-transform duration-500">{{ img.title }}</p>
+                    <p class="text-whn-tertiary text-[10px] uppercase tracking-widest mt-2 translate-y-4 group-hover:translate-y-0 transition-transform duration-500 delay-100">Wild High Nights</p>
+                    {% endif %}
+                </div>
+            </div>
+            {% empty %}
+            <div class="col-span-full text-center py-20">
+                <p class="text-whn-tertiary italic">Gallery is being updated. Check back soon!</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="py-40 relative overflow-hidden">
+    <div class="absolute inset-0 bg-gradient-to-r from-whn-purple to-whn-blue animate-pulse-slow opacity-30"></div>
+    <div class="container mx-auto px-6 relative z-10 text-center" data-aos="zoom-in">
+        <h2 class="text-6xl md:text-8xl font-black text-white mb-16 leading-none tracking-tighter">Ready for your next<br>unforgettable night?</h2>
+        <div class="flex justify-center">
+            <a href="#events" class="px-14 py-6 bg-white text-black rounded-full text-xl font-bold hover:scale-110 hover:shadow-[0_0_50px_rgba(255,255,255,0.4)] transition-all duration-500 uppercase tracking-widest">
+                Explore Events
+            </a>
+        </div>
+    </div>
+</section>
+
+{% endblock %}

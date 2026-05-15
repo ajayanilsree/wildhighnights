@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="relative min-h-screen flex items-center justify-center overflow-hidden py-20 px-6">
+    <!-- Animated Background Mesh -->
+    <div class="absolute inset-0 z-0">
+        <div class="light-orb orb-purple top-[-10%] left-[-10%] w-[600px] h-[600px] animate-pulse-slow"></div>
+        <div class="light-orb orb-blue bottom-[-10%] right-[-10%] w-[600px] h-[600px] animate-pulse-slow" style="animation-delay: 4s"></div>
+        <div class="absolute inset-0 bg-whn-dark/40 backdrop-blur-[100px]"></div>
+    </div>
+
+    <!-- Floating Particles Container (Simulated with CSS) -->
+    <div class="absolute inset-0 z-0 pointer-events-none opacity-30">
+        <div class="absolute top-1/4 left-1/3 w-1 h-1 bg-white rounded-full animate-float" style="animation-delay: 1s"></div>
+        <div class="absolute top-1/2 left-1/4 w-2 h-2 bg-whn-purple/50 rounded-full animate-float" style="animation-delay: 3s"></div>
+        <div class="absolute bottom-1/4 right-1/3 w-1 h-1 bg-white rounded-full animate-float" style="animation-delay: 5s"></div>
+        <div class="absolute top-1/3 right-1/4 w-1.5 h-1.5 bg-whn-blue/50 rounded-full animate-float" style="animation-delay: 2s"></div>
+    </div>
+
+    <!-- Login Card -->
+    <div class="relative z-10 w-full max-w-md {% if messages %}animate-shake{% endif %}" id="login-card" data-aos="zoom-in" data-aos-duration="800">
+        <div class="glass-card rounded-[2.5rem] p-10 md:p-12 shadow-2xl border border-white/10 hover:border-whn-purple/40 transition-all duration-500 {% if messages %}border-red-500/50 shadow-[0_0_30px_rgba(239,68,68,0.2)]{% endif %}">
+            <!-- Logo Area -->
+            <div class="text-center mb-12">
+                <a href="/" class="text-5xl font-black tracking-tighter text-white inline-block hover:text-whn-purple transition-all duration-500 hover:scale-110">WHN</a>
+            </div>
+
+            <!-- Error Messages -->
+            {% if messages %}
+            <div class="mb-8 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl text-center" data-aos="fade-down">
+                {% for message in messages %}
+                <p class="text-red-400 text-xs font-bold uppercase tracking-widest">{{ message }}</p>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Login Form -->
+            <form action="{% url 'login' %}" method="POST" class="space-y-8">
+                {% csrf_token %}
+                
+                <!-- Identifier Field -->
+                <div class="relative group">
+                    <label for="identifier" class="text-[10px] font-bold text-whn-tertiary uppercase tracking-[0.2em] ml-1 mb-3 block group-focus-within:text-whn-purple transition-colors">Username</label>
+                    <input type="text" id="identifier" name="username" required
+                        class="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-whn-purple/50 focus:ring-4 focus:ring-whn-purple/10 transition-all placeholder:text-white/10"
+                        placeholder="Username">
+                </div>
+
+                <!-- Password Field -->
+                <div class="relative group">
+                    <div class="flex items-center justify-between ml-1 mb-3">
+                        <label for="password" class="text-[10px] font-bold text-whn-tertiary uppercase tracking-[0.2em] group-focus-within:text-whn-purple transition-colors">Password</label>
+                        <a href="#" class="text-[10px] font-bold text-whn-purple/80 hover:text-whn-purple hover:underline underline-offset-4 tracking-wider uppercase">Forgot?</a>
+                    </div>
+                    <div class="relative">
+                        <input type="password" id="password" name="password" required
+                            class="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-whn-purple/50 focus:ring-4 focus:ring-whn-purple/10 transition-all placeholder:text-white/10"
+                            placeholder="••••••••">
+                        <button type="button" id="togglePassword" class="absolute right-5 top-1/2 -translate-y-1/2 text-white/20 hover:text-white transition-colors">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Remember Me -->
+                <div class="flex items-center gap-3 ml-1">
+                    <input type="checkbox" id="remember" name="remember" class="w-4 h-4 rounded border-white/10 bg-white/5 text-whn-purple focus:ring-whn-purple/30 transition-all">
+                    <label for="remember" class="text-xs text-whn-tertiary select-none tracking-wide">Stay signed in</label>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="pt-4">
+                    <button type="submit" id="loginSubmit" 
+                        class="w-full py-5 bg-gradient-to-r from-whn-purple via-whn-blue to-whn-purple bg-[length:200%_auto] animate-[gradient_4s_linear_infinite] text-white font-black tracking-[0.2em] rounded-2xl hover:scale-[1.03] active:scale-[0.97] transition-all shadow-[0_0_40px_rgba(124,58,237,0.3)] hover:shadow-[0_0_60px_rgba(124,58,237,0.6)]">
+                        LOGIN
+                    </button>
+                </div>
+            </form>
+
+            <div class="mt-12 text-center">
+                <a href="/" class="text-[10px] font-bold text-whn-tertiary uppercase tracking-[0.3em] hover:text-white transition-colors flex items-center justify-center gap-3">
+                    <span class="w-8 h-[1px] bg-white/10"></span>
+                    Back to Home
+                    <span class="w-8 h-[1px] bg-white/10"></span>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Password Toggle
+    const toggleBtn = document.getElementById('togglePassword');
+    const passwordInput = document.getElementById('password');
+    
+    toggleBtn.addEventListener('click', () => {
+        const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+        passwordInput.setAttribute('type', type);
+        
+        // Update icon if needed
+        toggleBtn.innerHTML = type === 'password' 
+            ? `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>`
+            : `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" /></svg>`;
+    });
+
+    // Form Loading State Simulation
+    const form = document.querySelector('form');
+    const submitBtn = document.getElementById('loginSubmit');
+    
+    form.addEventListener('submit', (e) => {
+        // In a real Django app, the form will submit normally. 
+        // This is just for the premium feel during transition.
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = `
+            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            AUTHENTICATING...
+        `;
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="min-h-screen bg-whn-dark pt-32 pb-20 px-6">
+    <div class="container mx-auto max-w-3xl">
+        <!-- Header -->
+        <div class="mb-16" data-aos="fade-down">
+            <a href="{% url 'dashboard' %}" class="text-whn-purple font-bold tracking-[0.3em] uppercase text-[10px] mb-4 flex items-center gap-2 hover:translate-x-[-4px] transition-transform">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg>
+                Back to Dashboard
+            </a>
+            <h1 class="text-5xl md:text-6xl font-black text-white tracking-tighter">Add Booking</h1>
+        </div>
+
+        <!-- Form Card -->
+        <div class="glass-card rounded-[2.5rem] p-10 md:p-12 border border-white/5 shadow-2xl" data-aos="fade-up">
+            <form method="POST" class="space-y-8">
+                {% csrf_token %}
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <!-- Artist Selection -->
+                    <div class="relative group">
+                        <label class="text-[10px] font-bold text-whn-tertiary uppercase tracking-[0.2em] ml-1 mb-3 block group-focus-within:text-whn-purple transition-colors">Artist</label>
+                        <select name="artist" required class="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-whn-purple/50 focus:ring-4 focus:ring-whn-purple/10 transition-all appearance-none cursor-pointer">
+                            <option value="" disabled selected class="bg-whn-dark">Select Artist</option>
+                            {% for artist in artists %}
+                            <option value="{{ artist.id }}" class="bg-whn-dark">{{ artist.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Event Type -->
+                    <div class="relative group">
+                        <label class="text-[10px] font-bold text-whn-tertiary uppercase tracking-[0.2em] ml-1 mb-3 block group-focus-within:text-whn-purple transition-colors">Event Type</label>
+                        <select name="type" required class="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-whn-purple/50 focus:ring-4 focus:ring-whn-purple/10 transition-all appearance-none cursor-pointer">
+                            <option value="performance" class="bg-whn-dark">Performance</option>
+                            <option value="shoot" class="bg-whn-dark">Shoot</option>
+                            <option value="vacation" class="bg-whn-dark">Vacation</option>
+                            <option value="travel" class="bg-whn-dark">Travel</option>
+                            <option value="other" class="bg-whn-dark">Other</option>
+                        </select>
+                    </div>
+
+                    <!-- Venue -->
+                    <div class="relative group">
+                        <label class="text-[10px] font-bold text-whn-tertiary uppercase tracking-[0.2em] ml-1 mb-3 block group-focus-within:text-whn-purple transition-colors">Venue</label>
+                        <input type="text" name="venue" required placeholder="Club Name / Venue" class="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-whn-purple/50 focus:ring-4 focus:ring-whn-purple/10 transition-all placeholder:text-white/10">
+                    </div>
+
+                    <!-- Location -->
+                    <div class="relative group">
+                        <label class="text-[10px] font-bold text-whn-tertiary uppercase tracking-[0.2em] ml-1 mb-3 block group-focus-within:text-whn-purple transition-colors">Location</label>
+                        <input type="text" name="location" required placeholder="City, Country" class="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-whn-purple/50 focus:ring-4 focus:ring-whn-purple/10 transition-all placeholder:text-white/10">
+                    </div>
+
+                    <!-- Date -->
+                    <div class="relative group">
+                        <label class="text-[10px] font-bold text-whn-tertiary uppercase tracking-[0.2em] ml-1 mb-3 block group-focus-within:text-whn-purple transition-colors">Date</label>
+                        <input type="date" name="date" required class="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-whn-purple/50 focus:ring-4 focus:ring-whn-purple/10 transition-all [color-scheme:dark]">
+                    </div>
+
+                    <!-- Time -->
+                    <div class="relative group">
+                        <label class="text-[10px] font-bold text-whn-tertiary uppercase tracking-[0.2em] ml-1 mb-3 block group-focus-within:text-whn-purple transition-colors">Time (Optional)</label>
+                        <input type="time" name="time" class="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-whn-purple/50 focus:ring-4 focus:ring-whn-purple/10 transition-all [color-scheme:dark]">
+                    </div>
+
+                    <!-- Status -->
+                    <div class="relative group md:col-span-2">
+                        <label class="text-[10px] font-bold text-whn-tertiary uppercase tracking-[0.2em] ml-1 mb-3 block group-focus-within:text-whn-purple transition-colors">Status</label>
+                        <div class="grid grid-cols-3 gap-4">
+                            <label class="relative cursor-pointer">
+                                <input type="radio" name="status" value="tentative" checked class="peer sr-only">
+                                <div class="p-4 rounded-2xl bg-white/[0.03] border border-white/10 text-center text-xs font-bold uppercase tracking-widest text-whn-tertiary peer-checked:bg-yellow-500/10 peer-checked:border-yellow-500/50 peer-checked:text-yellow-500 transition-all">Tentative</div>
+                            </label>
+                            <label class="relative cursor-pointer">
+                                <input type="radio" name="status" value="confirmed" class="peer sr-only">
+                                <div class="p-4 rounded-2xl bg-white/[0.03] border border-white/10 text-center text-xs font-bold uppercase tracking-widest text-whn-tertiary peer-checked:bg-green-500/10 peer-checked:border-green-500/50 peer-checked:text-green-500 transition-all">Confirmed</div>
+                            </label>
+                            <label class="relative cursor-pointer">
+                                <input type="radio" name="status" value="cancelled" class="peer sr-only">
+                                <div class="p-4 rounded-2xl bg-white/[0.03] border border-white/10 text-center text-xs font-bold uppercase tracking-widest text-whn-tertiary peer-checked:bg-red-500/10 peer-checked:border-red-500/50 peer-checked:text-red-500 transition-all">Cancelled</div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Notes -->
+                <div class="relative group">
+                    <label class="text-[10px] font-bold text-whn-tertiary uppercase tracking-[0.2em] ml-1 mb-3 block group-focus-within:text-whn-purple transition-colors">Notes (Optional)</label>
+                    <textarea name="notes" rows="4" placeholder="Additional details..." class="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-whn-purple/50 focus:ring-4 focus:ring-whn-purple/10 transition-all placeholder:text-white/10 resize-none"></textarea>
+                </div>
+
+                <!-- Submit -->
+                <div class="pt-6">
+                    <button type="submit" class="w-full py-5 bg-gradient-to-r from-whn-purple to-whn-blue text-white font-black tracking-[0.2em] rounded-2xl hover:scale-[1.02] active:scale-[0.98] transition-all shadow-[0_0_40px_rgba(124,58,237,0.3)] hover:shadow-[0_0_60px_rgba(124,58,237,0.5)]">
+                        CREATE BOOKING
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

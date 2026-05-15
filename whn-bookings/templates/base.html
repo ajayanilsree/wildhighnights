@@ -1,0 +1,96 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="theme-color" content="#7C3AED">
+    <title>WHN Bookings</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              'whn-purple': '#7C3AED',
+              'whn-blue': '#007AFF',
+              'whn-dark': '#0A0A0B',
+              'whn-surface': '#161618',
+            },
+            fontFamily: {
+              'outfit': ['Outfit', 'sans-serif'],
+              'inter': ['Inter', 'sans-serif'],
+            }
+          }
+        }
+      }
+    </script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- AOS Animations -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/homepage.css' %}">
+</head>
+<body class="bg-whn-dark text-white font-inter selection:bg-whn-purple/30 overflow-x-hidden">
+    <!-- Preloader -->
+    <div id="loader" class="fixed inset-0 z-[9999] bg-whn-dark flex flex-col items-center justify-center gap-4 transition-all duration-700">
+        <div class="text-6xl font-black text-white tracking-tighter animate-pulse">WHN</div>
+        <div class="text-[10px] font-bold text-whn-purple uppercase tracking-[0.3em] animate-pulse">Connecting...</div>
+    </div>
+
+    {% include 'bookings/navbar.html' %}
+    
+    <div id="app">
+        {% block content %}{% endblock %}
+    </div>
+
+    {% include 'bookings/footer.html' %}
+
+    <button id="backToTop" class="fixed bottom-8 right-8 bg-whn-purple text-white p-3 rounded-full shadow-lg opacity-0 transition-opacity duration-300 z-50 hover:scale-110 active:scale-95">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+        </svg>
+    </button>
+
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        AOS.init({
+            duration: 1000,
+            once: true,
+            offset: 100,
+        });
+
+        // Preloader Logic
+        window.addEventListener("load", function () {
+            const loader = document.getElementById("loader");
+            if (loader) {
+                loader.style.opacity = "0";
+                loader.style.pointerEvents = "none";
+                setTimeout(() => {
+                    loader.style.display = "none";
+                }, 700);
+            }
+        });
+
+        // Fallback Timeout
+        setTimeout(() => {
+            const loader = document.getElementById("loader");
+            if (loader && loader.style.display !== "none") {
+                loader.style.display = "none";
+            }
+        }, 3000);
+
+        // Back to top logic
+        const btt = document.getElementById('backToTop');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 500) btt.classList.add('opacity-100');
+            else btt.classList.remove('opacity-100');
+        });
+        btt.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+    </script>
+    <script src="{% static 'js/script.js' %}"></script>
+</body>
+</html>
