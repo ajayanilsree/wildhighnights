@@ -8,6 +8,6 @@ class ArtistAdmin(admin.ModelAdmin):
 
 @admin.register(Booking)
 class BookingAdmin(admin.ModelAdmin):
-    list_display = ('artist', 'venue', 'date', 'status', 'type')
-    list_filter = ('artist', 'status', 'type', 'date')
+    list_display = ('artist', 'venue', 'date', 'status', 'event_type')
+    list_filter = ('artist', 'status', 'event_type', 'date')
     search_fields = ('venue', 'location', 'notes')

@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="min-h-screen bg-whn-dark pt-32 pb-20 px-6">
+    <div class="container mx-auto max-w-6xl">
+        <!-- Back navigation -->
+        <div class="mb-12" data-aos="fade-down">
+            <a href="{% url 'artist_dashboard' %}" class="text-whn-purple font-bold tracking-[0.3em] uppercase text-[10px] mb-4 flex items-center gap-2 hover:translate-x-[-4px] transition-transform w-fit">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg>
+                Back to Dashboard
+            </a>
+            <span class="text-whn-purple font-bold tracking-[0.3em] uppercase text-[10px] mb-4 block">Earnings & Analytics</span>
+            <h1 class="text-5xl md:text-6xl font-black text-white tracking-tighter">Earnings & Expenses</h1>
+        </div>
+
+        <!-- Aggregate Summary Piles -->
+        <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6 mb-16">
+            <!-- Total Earnings -->
+            <div class="glass-card p-6 rounded-3xl border border-white/5 hover:border-whn-purple/20 transition-all duration-300" data-aos="fade-up" data-aos-delay="100">
+                <span class="text-[9px] font-bold text-whn-tertiary uppercase tracking-widest block mb-2">Total Earnings</span>
+                <div class="text-2xl font-black text-white mb-1">₹{{ total_earnings|floatformat:2 }}</div>
+                <p class="text-whn-purple text-[10px] font-bold">Gross Partner Payouts</p>
+            </div>
+
+            <!-- Total Expenses -->
+            <div class="glass-card p-6 rounded-3xl border border-white/5 hover:border-red-500/20 transition-all duration-300" data-aos="fade-up" data-aos-delay="200">
+                <span class="text-[9px] font-bold text-whn-tertiary uppercase tracking-widest block mb-2">Total Expenses</span>
+                <div class="text-2xl font-black text-white mb-1">₹{{ total_expenses|floatformat:2 }}</div>
+                <p class="text-red-400 text-[10px] font-bold">Cost Deductions</p>
+            </div>
+
+            <!-- Net Profit -->
+            <div class="glass-card p-6 rounded-3xl border border-white/5 hover:border-green-500/20 transition-all duration-300" data-aos="fade-up" data-aos-delay="300">
+                <span class="text-[9px] font-bold text-whn-tertiary uppercase tracking-widest block mb-2">Net Earnings</span>
+                <div class="text-2xl font-black text-green-400 mb-1">₹{{ net_earnings|floatformat:2 }}</div>
+                <p class="text-green-400 text-[10px] font-bold">Take-Home Profit</p>
+            </div>
+
+            <!-- Monthly earnings -->
+            <div class="glass-card p-6 rounded-3xl border border-white/5 hover:border-whn-blue/20 transition-all duration-300" data-aos="fade-up" data-aos-delay="400">
+                <span class="text-[9px] font-bold text-whn-tertiary uppercase tracking-widest block mb-2">This Month</span>
+                <div class="text-2xl font-black text-white mb-1">₹{{ monthly_earnings|floatformat:2 }}</div>
+                <p class="text-whn-blue text-[10px] font-bold">Current Month Gross</p>
+            </div>
+
+            <!-- Yearly earnings -->
+            <div class="glass-card p-6 rounded-3xl border border-white/5 hover:border-yellow-500/20 transition-all duration-300" data-aos="fade-up" data-aos-delay="500">
+                <span class="text-[9px] font-bold text-whn-tertiary uppercase tracking-widest block mb-2">This Year</span>
+                <div class="text-2xl font-black text-white mb-1">₹{{ yearly_earnings|floatformat:2 }}</div>
+                <p class="text-yellow-400 text-[10px] font-bold">Calendar Year Gross</p>
+            </div>
+        </div>
+
+        <!-- Ledger Table Card -->
+        <div class="glass-card rounded-[2.5rem] border border-white/5 p-8 md:p-10 shadow-2xl relative overflow-hidden" data-aos="fade-up">
+            <h2 class="text-xl font-black text-white uppercase tracking-wider mb-8">Performance Ledger</h2>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="border-b border-white/10">
+                            <th class="py-4 px-6 text-[10px] font-bold text-whn-tertiary uppercase tracking-widest">Event & Venue</th>
+                            <th class="py-4 px-6 text-[10px] font-bold text-whn-tertiary uppercase tracking-widest">Booking Type</th>
+                            <th class="py-4 px-6 text-[10px] font-bold text-whn-tertiary uppercase tracking-widest text-right">Deal Amount</th>
+                            <th class="py-4 px-6 text-[10px] font-bold text-whn-tertiary uppercase tracking-widest text-center">Split %</th>
+                            <th class="py-4 px-6 text-[10px] font-bold text-whn-tertiary uppercase tracking-widest text-right">My Share</th>
+                            <th class="py-4 px-6 text-[10px] font-bold text-whn-tertiary uppercase tracking-widest text-right">Expenses</th>
+                            <th class="py-4 px-6 text-[10px] font-bold text-whn-tertiary uppercase tracking-widest text-right">Net Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-white/5">
+                        {% for ledger in events_ledger %}
+                        <tr class="hover:bg-white/[0.02] transition-colors duration-200">
+                            <!-- Event -->
+                            <td class="py-5 px-6">
+                                <span class="text-white font-bold text-sm block">{{ ledger.booking.venue }}</span>
+                                <span class="text-[10px] text-whn-tertiary tracking-wide uppercase">{{ ledger.booking.date|date:"d M Y" }} · {{ ledger.booking.location }}</span>
+                            </td>
+                            <!-- Booking Type -->
+                            <td class="py-5 px-6">
+                                <span class="px-3 py-1 rounded-full text-[9px] font-bold bg-white/5 border border-white/10 text-white uppercase">{{ ledger.booking.booking_type }}</span>
+                            </td>
+                            <!-- Deal Amount -->
+                            <td class="py-5 px-6 text-right">
+                                <span class="text-white font-semibold text-sm">₹{{ ledger.booking.deal_amount }}</span>
+                            </td>
+                            <!-- Split % -->
+                            <td class="py-5 px-6 text-center">
+                                <span class="text-whn-purple font-bold text-sm">{{ ledger.pct_str }}</span>
+                            </td>
+                            <!-- Share -->
+                            <td class="py-5 px-6 text-right">
+                                <span class="text-white font-semibold text-sm">₹{{ ledger.earning|floatformat:2 }}</span>
+                            </td>
+                            <!-- Expenses -->
+                            <td class="py-5 px-6 text-right">
+                                <span class="text-red-400 font-semibold text-sm">₹{{ ledger.expenses|floatformat:2 }}</span>
+                            </td>
+                            <!-- Net Amount -->
+                            <td class="py-5 px-6 text-right">
+                                <span class="text-green-400 font-bold text-sm">₹{{ ledger.net|floatformat:2 }}</span>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="py-16 text-center text-whn-tertiary italic text-sm">
+                                No payout records or transactions logged so far.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+
+    </div>
+</div>
+{% endblock %}

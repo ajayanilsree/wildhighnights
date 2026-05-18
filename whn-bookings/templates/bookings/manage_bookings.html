@@ -1,0 +1,180 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+    /* Custom Scrollbar for Table Wrapper */
+    .table-responsive::-webkit-scrollbar {
+        height: 6px;
+    }
+    .table-responsive::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.02);
+        border-radius: 10px;
+    }
+    .table-responsive::-webkit-scrollbar-thumb {
+        background: linear-gradient(to right, #7C3AED, #007AFF);
+        border-radius: 10px;
+    }
+    /* Modal Animation */
+    .modal-backdrop {
+        transition: opacity 0.4s ease-out;
+    }
+    .modal-content {
+        transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.4s ease-out;
+    }
+</style>
+
+<div class="min-h-screen bg-whn-dark pt-32 pb-20 px-6">
+    <div class="container mx-auto">
+        <!-- Header -->
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-16" data-aos="fade-down">
+            <div>
+                <a href="{% url 'dashboard' %}" class="text-whn-purple font-bold tracking-[0.3em] uppercase text-[10px] mb-4 flex items-center gap-2 hover:translate-x-[-4px] transition-transform w-fit">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                    </svg>
+                    Back to Dashboard
+                </a>
+                <h1 class="text-6xl md:text-7xl font-black text-white tracking-tighter">Bookings</h1>
+            </div>
+            <div>
+                <a href="{% url 'add_booking' %}" class="px-8 py-4 bg-gradient-to-r from-whn-purple to-whn-blue text-white text-[10px] font-bold rounded-full shadow-[0_0_30px_rgba(124,58,237,0.3)] hover:scale-105 active:scale-95 transition-all uppercase tracking-[0.2em] block text-center">Add New Booking</a>
+            </div>
+        </div>
+
+        <!-- Bookings Table Card -->
+        <div class="glass-card rounded-[2.5rem] p-8 md:p-10 border border-white/5 shadow-2xl" data-aos="fade-up">
+            <div class="table-responsive overflow-x-auto">
+                <table class="w-full text-left border-collapse min-w-[900px]">
+                    <thead>
+                        <tr class="border-b border-white/5 text-whn-tertiary">
+                            <th class="pb-6 text-[10px] font-black uppercase tracking-widest pl-4">Artist</th>
+                            <th class="pb-6 text-[10px] font-black uppercase tracking-widest">Event Type</th>
+                            <th class="pb-6 text-[10px] font-black uppercase tracking-widest">Venue</th>
+                            <th class="pb-6 text-[10px] font-black uppercase tracking-widest">Location</th>
+                            <th class="pb-6 text-[10px] font-black uppercase tracking-widest">Date</th>
+                            <th class="pb-6 text-[10px] font-black uppercase tracking-widest">Time</th>
+                            <th class="pb-6 text-[10px] font-black uppercase tracking-widest">Deal Amount</th>
+                            <th class="pb-6 text-[10px] font-black uppercase tracking-widest">Status</th>
+                            <th class="pb-6 text-[10px] font-black uppercase tracking-widest text-right pr-4">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-white/5">
+                        {% for booking in bookings %}
+                        <tr class="group hover:bg-white/[0.01] transition-all duration-300">
+                            <!-- Artist -->
+                            <td class="py-6 pl-4">
+                                <div class="flex items-center gap-3">
+                                    {% if booking.artist.artist_image %}
+                                    <img src="{{ booking.artist.artist_image.url }}" alt="{{ booking.artist.name }}" class="w-8 h-8 rounded-full object-cover border border-white/10 group-hover:border-whn-purple/40 transition-colors">
+                                    {% else %}
+                                    <div class="w-8 h-8 rounded-full bg-whn-purple/20 flex items-center justify-center text-xs font-bold text-whn-purple">🎧</div>
+                                    {% endif %}
+                                    <span class="text-white font-bold text-sm group-hover:text-whn-purple transition-colors">{{ booking.artist.name }}</span>
+                                </div>
+                            </td>
+
+                            <!-- Event Type -->
+                            <td class="py-6 text-sm text-white/80 font-medium">{{ booking.event_type }}</td>
+
+                            <!-- Venue -->
+                            <td class="py-6 text-sm text-white font-bold">{{ booking.venue }}</td>
+
+                            <!-- Location -->
+                            <td class="py-6 text-sm text-whn-tertiary">{{ booking.location }}</td>
+
+                            <!-- Date -->
+                            <td class="py-6 text-sm text-white/80 font-semibold">{{ booking.date|date:"d M Y" }}</td>
+
+                            <!-- Time -->
+                            <td class="py-6 text-sm text-whn-tertiary">
+                                {% if booking.time %}
+                                    {{ booking.time|time:"H:i" }}
+                                {% else %}
+                                    <span class="italic text-white/10">N/A</span>
+                                {% endif %}
+                            </td>
+
+                            <!-- Deal Amount -->
+                            <td class="py-6 text-sm font-bold text-white">
+                                ₹{{ booking.deal_amount }}
+                            </td>
+
+                            <!-- Status -->
+                            <td class="py-6">
+                                {% if booking.status == 'Confirmed' %}
+                                <span class="px-3 py-1.5 rounded-full bg-green-500/10 border border-green-500/30 text-green-500 text-[9px] font-bold uppercase tracking-widest shadow-[0_0_15px_rgba(34,197,94,0.1)]">Confirmed</span>
+                                {% elif booking.status == 'Tentative' %}
+                                <span class="px-3 py-1.5 rounded-full bg-yellow-500/10 border border-yellow-500/30 text-yellow-500 text-[9px] font-bold uppercase tracking-widest shadow-[0_0_15px_rgba(234,179,8,0.1)]">Tentative</span>
+                                {% else %}
+                                <span class="px-3 py-1.5 rounded-full bg-red-500/10 border border-red-500/30 text-red-500 text-[9px] font-bold uppercase tracking-widest shadow-[0_0_15px_rgba(239,68,68,0.1)]">Cancelled</span>
+                                {% endif %}
+                            </td>
+
+                            <!-- Actions -->
+                            <td class="py-6 text-right pr-4">
+                                <div class="flex items-center justify-end gap-3">
+                                    <a href="{% url 'edit_booking' booking.id %}" class="px-5 py-2 rounded-full border border-whn-purple/30 text-whn-purple text-[10px] font-bold hover:bg-whn-purple hover:text-white hover:border-whn-purple hover:shadow-[0_0_15px_rgba(124,58,237,0.4)] transition-all uppercase tracking-widest">Edit</a>
+                                    <button onclick="confirmDelete('{{ booking.id }}', '{{ booking.artist.name|escapejs }}', '{{ booking.venue|escapejs }}')" class="px-5 py-2 rounded-full bg-red-500/10 border border-red-500/30 text-red-500 text-[10px] font-bold hover:bg-red-500 hover:text-white hover:border-red-500 hover:shadow-[0_0_15px_rgba(239,68,68,0.4)] transition-all uppercase tracking-widest">Delete</button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="9" class="py-20 text-center text-whn-tertiary text-sm italic">No bookings found in the database.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Deletion Confirmation Modal -->
+<div id="deleteModal" class="fixed inset-0 z-[1000] flex items-center justify-center opacity-0 pointer-events-none transition-all duration-300">
+    <!-- Backdrop -->
+    <div class="absolute inset-0 bg-whn-dark/80 backdrop-blur-md modal-backdrop" onclick="closeModal()"></div>
+    
+    <!-- Content Card -->
+    <div class="glass-card rounded-[2rem] border border-white/10 p-10 max-w-md w-full mx-6 relative z-10 scale-95 opacity-0 modal-content shadow-[0_0_50px_rgba(0,0,0,0.5)] hover:border-red-500/30 transition-all">
+        <div class="w-14 h-14 rounded-2xl bg-red-500/10 border border-red-500/30 flex items-center justify-center text-2xl mb-6">⚠️</div>
+        <h3 class="text-2xl font-black text-white tracking-tight mb-4">Confirm Deletion</h3>
+        <p class="text-whn-tertiary text-sm leading-relaxed mb-8">
+            Are you sure you want to delete the booking for <strong id="deleteArtist" class="text-white"></strong> at <strong id="deleteVenue" class="text-white"></strong>? This operation is permanent and cannot be reverted.
+        </p>
+        
+        <div class="flex items-center gap-4">
+            <button onclick="closeModal()" class="flex-1 py-4 rounded-xl bg-white/5 border border-white/10 text-white text-[10px] font-bold uppercase tracking-wider hover:bg-white/10 transition-all">Cancel</button>
+            <a id="deleteConfirmBtn" href="#" class="flex-1 py-4 rounded-xl bg-red-600 text-white text-[10px] font-bold uppercase tracking-wider hover:bg-red-500 hover:shadow-[0_0_20px_rgba(239,68,68,0.4)] transition-all text-center">Yes, Delete</a>
+        </div>
+    </div>
+</div>
+
+<script>
+    const modal = document.getElementById("deleteModal");
+    const modalContent = modal.querySelector(".modal-content");
+    const deleteArtistEl = document.getElementById("deleteArtist");
+    const deleteVenueEl = document.getElementById("deleteVenue");
+    const deleteConfirmBtn = document.getElementById("deleteConfirmBtn");
+
+    function confirmDelete(bookingId, artistName, venue) {
+        deleteArtistEl.textContent = artistName;
+        deleteVenueEl.textContent = venue;
+        deleteConfirmBtn.href = `/dashboard/bookings/${bookingId}/delete/`;
+        
+        // Show Modal
+        modal.classList.remove("pointer-events-none");
+        modal.classList.add("opacity-100");
+        modalContent.classList.remove("scale-95", "opacity-0");
+        modalContent.classList.add("scale-100", "opacity-100");
+    }
+
+    function closeModal() {
+        modal.classList.remove("opacity-100");
+        modal.classList.add("pointer-events-none");
+        modalContent.classList.remove("scale-100", "opacity-100");
+        modalContent.classList.add("scale-95", "opacity-0");
+    }
+</script>
+{% endblock %}

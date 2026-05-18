@@ -32,12 +32,14 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <!-- AOS Animations -->
     <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="{% static 'images/whn-logo.png' %}">
     <link rel="stylesheet" href="{% static 'css/homepage.css' %}">
 </head>
 <body class="bg-whn-dark text-white font-inter selection:bg-whn-purple/30 overflow-x-hidden">
     <!-- Preloader -->
-    <div id="loader" class="fixed inset-0 z-[9999] bg-whn-dark flex flex-col items-center justify-center gap-4 transition-all duration-700">
-        <div class="text-6xl font-black text-white tracking-tighter animate-pulse">WHN</div>
+    <div id="loader" class="fixed inset-0 z-[9999] bg-whn-dark flex flex-col items-center justify-center gap-6 transition-all duration-700">
+        <img src="{% static 'images/whn-logo.png' %}" alt="WHN Logo" class="h-16 w-auto object-contain animate-pulse">
         <div class="text-[10px] font-bold text-whn-purple uppercase tracking-[0.3em] animate-pulse">Connecting...</div>
     </div>
 

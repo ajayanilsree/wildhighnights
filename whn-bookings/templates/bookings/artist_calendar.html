@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="min-h-screen bg-whn-dark pt-32 pb-20 px-6">
+    <div class="container mx-auto max-w-5xl">
+        <!-- Back navigation -->
+        <div class="mb-12" data-aos="fade-down">
+            <a href="{% url 'artist_dashboard' %}" class="text-whn-purple font-bold tracking-[0.3em] uppercase text-[10px] mb-4 flex items-center gap-2 hover:translate-x-[-4px] transition-transform w-fit">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg>
+                Back to Dashboard
+            </a>
+            <span class="text-whn-purple font-bold tracking-[0.3em] uppercase text-[10px] mb-4 block">Performance Schedule</span>
+            <h1 class="text-5xl md:text-6xl font-black text-white tracking-tighter">My Calendar</h1>
+        </div>
+
+        <!-- Schedule Items -->
+        <div class="space-y-8">
+            {% for booking in bookings %}
+            <!-- Single Calendar Card -->
+            <div class="glass-card p-8 md:p-10 rounded-[2.5rem] border border-white/5 hover:border-whn-purple/20 transition-all duration-500 flex flex-col md:flex-row md:items-center justify-between gap-8 group" data-aos="fade-up" data-aos-delay="{{ forloop.counter }}00">
+                
+                <!-- Date column -->
+                <div class="flex items-center gap-6">
+                    <div class="w-20 h-20 rounded-2xl bg-white/[0.02] border border-white/10 flex flex-col items-center justify-center text-center group-hover:bg-whn-purple/10 group-hover:border-whn-purple/30 transition-all duration-500">
+                        <span class="text-[10px] font-bold text-whn-purple uppercase tracking-widest mb-1">{{ booking.date|date:"M" }}</span>
+                        <span class="text-3xl font-black text-white leading-none">{{ booking.date|date:"d" }}</span>
+                    </div>
+                    <div>
+                        <span class="text-whn-tertiary text-xs uppercase tracking-widest block mb-1">{{ booking.date|date:"l" }}</span>
+                        <span class="text-white font-bold text-lg block">{{ booking.time|time:"H:i"|default:"TBA" }}</span>
+                    </div>
+                </div>
+
+                <!-- Event Name / Venue Info -->
+                <div class="flex-1 md:px-8 border-l border-white/5 md:border-l-2">
+                    <span class="text-whn-purple font-bold tracking-widest text-[10px] uppercase block mb-2">{{ booking.event_type }} Show</span>
+                    <h3 class="text-2xl font-black text-white mb-2 leading-tight tracking-tight">{{ booking.venue }}</h3>
+                    <p class="text-white/40 text-sm font-medium tracking-wide">📍 {{ booking.location }} · {% if booking.duration %}{{ booking.duration }}{% else %}Standard Duration{% endif %}</p>
+                </div>
+
+                <!-- Status column -->
+                <div class="flex items-center justify-between md:justify-end gap-6 border-t border-white/5 pt-6 md:border-t-0 md:pt-0">
+                    <div class="text-left md:text-right">
+                        {% if booking.status == 'Confirmed' %}
+                        <span class="px-5 py-2 rounded-full text-xs font-black tracking-widest bg-green-500/10 border border-green-500/30 text-green-400 uppercase shadow-[0_0_15px_rgba(34,197,94,0.15)]">CONFIRMED</span>
+                        {% elif booking.status == 'Cancelled' %}
+                        <span class="px-5 py-2 rounded-full text-xs font-black tracking-widest bg-red-500/10 border border-red-500/30 text-red-400 uppercase">CANCELLED</span>
+                        {% else %}
+                        <span class="px-5 py-2 rounded-full text-xs font-black tracking-widest bg-yellow-500/10 border border-yellow-500/30 text-yellow-400 uppercase shadow-[0_0_15px_rgba(234,179,8,0.15)]">TENTATIVE</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+            </div>
+            {% empty %}
+            <!-- Empty state -->
+            <div class="glass-card py-24 px-8 text-center rounded-[2.5rem] border border-white/5" data-aos="fade-up">
+                <div class="w-16 h-16 rounded-2xl bg-white/[0.02] flex items-center justify-center text-4xl mx-auto mb-6">📅</div>
+                <h3 class="text-2xl font-black text-white mb-2">No Booked Events Yet</h3>
+                <p class="text-whn-tertiary max-w-md mx-auto text-sm leading-relaxed">You currently don't have any booked dates assigned. Reach out to the admin panel to update your schedule!</p>
+            </div>
+            {% endfor %}
+        </div>
+
+    </div>
+</div>
+{% endblock %}

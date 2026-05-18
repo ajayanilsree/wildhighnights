@@ -1,0 +1,183 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="min-h-screen bg-whn-dark pt-32 pb-20 px-6">
+    <div class="container mx-auto max-w-6xl">
+        <!-- Back navigation -->
+        <div class="mb-12" data-aos="fade-down">
+            <a href="{% url 'artist_dashboard' %}" class="text-whn-purple font-bold tracking-[0.3em] uppercase text-[10px] mb-4 flex items-center gap-2 hover:translate-x-[-4px] transition-transform w-fit">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg>
+                Back to Dashboard
+            </a>
+            <span class="text-whn-purple font-bold tracking-[0.3em] uppercase text-[10px] mb-4 block">Contract & Accounts</span>
+            <h1 class="text-5xl md:text-6xl font-black text-white tracking-tighter">My Accounts</h1>
+        </div>
+
+        <!-- Accounts Grid List -->
+        <div class="space-y-12">
+            {% for item in booking_details %}
+            <div class="glass-card rounded-[2.5rem] border border-white/5 p-8 md:p-12 shadow-2xl relative overflow-hidden group" data-aos="fade-up" data-aos-delay="{{ forloop.counter }}00">
+                <div class="absolute top-0 right-0 w-64 h-64 bg-whn-purple/5 rounded-full filter blur-3xl pointer-events-none group-hover:bg-whn-purple/10 transition-colors duration-700"></div>
+                
+                <!-- Card Header -->
+                <div class="flex flex-col md:flex-row md:items-center justify-between border-b border-white/5 pb-8 mb-8 gap-6">
+                    <div>
+                        <span class="text-whn-purple font-bold tracking-widest text-xs uppercase block mb-1">Contract ID: #WHN-{{ item.booking.id|stringformat:"05d" }}</span>
+                        <h2 class="text-3xl font-black text-white leading-none">{{ item.booking.venue }}</h2>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        {% if item.booking.status == 'Confirmed' %}
+                        <span class="px-5 py-2.5 rounded-full text-xs font-black tracking-widest bg-green-500/10 border border-green-500/30 text-green-400 uppercase shadow-[0_0_20px_rgba(34,197,94,0.15)]">Confirmed</span>
+                        {% elif item.booking.status == 'Cancelled' %}
+                        <span class="px-5 py-2.5 rounded-full text-xs font-black tracking-widest bg-red-500/10 border border-red-500/30 text-red-400 uppercase">Cancelled</span>
+                        {% else %}
+                        <span class="px-5 py-2.5 rounded-full text-xs font-black tracking-widest bg-yellow-500/10 border border-yellow-500/30 text-yellow-400 uppercase shadow-[0_0_20px_rgba(234,179,8,0.15)]">Tentative</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Card Details Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-10">
+                    
+                    <!-- Section 1: Performance Terms -->
+                    <div class="space-y-6">
+                        <div class="flex items-center gap-2 border-b border-white/5 pb-2">
+                            <span class="text-lg">🗓️</span>
+                            <h3 class="text-xs font-black text-white uppercase tracking-widest">Performance Details</h3>
+                        </div>
+                        <div class="space-y-4">
+                            <div>
+                                <span class="text-[10px] text-whn-tertiary uppercase tracking-wider block">Artist Partner</span>
+                                <span class="text-white font-bold text-sm">{{ item.booking.artist.name }}</span>
+                            </div>
+                            <div>
+                                <span class="text-[10px] text-whn-tertiary uppercase tracking-wider block">Show Date & Time</span>
+                                <span class="text-white font-bold text-sm">{{ item.booking.date|date:"d M Y" }} · {{ item.booking.time|time:"H:i"|default:"TBA" }}</span>
+                            </div>
+                            <div>
+                                <span class="text-[10px] text-whn-tertiary uppercase tracking-wider block">Duration</span>
+                                <span class="text-white font-bold text-sm">{{ item.booking.duration|default:"Standard Set" }}</span>
+                            </div>
+                            <div>
+                                <span class="text-[10px] text-whn-tertiary uppercase tracking-wider block">Event Venue & City</span>
+                                <span class="text-white font-bold text-sm">{{ item.booking.venue }}, {{ item.booking.location }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 2: Financial Terms -->
+                    <div class="space-y-6">
+                        <div class="flex items-center gap-2 border-b border-white/5 pb-2">
+                            <span class="text-lg">💰</span>
+                            <h3 class="text-xs font-black text-white uppercase tracking-widest">Financial Summary</h3>
+                        </div>
+                        <div class="space-y-4">
+                            <div>
+                                <span class="text-[10px] text-whn-tertiary uppercase tracking-wider block">Booking & Deal Type</span>
+                                <span class="text-white font-bold text-sm">{{ item.booking.booking_type }} · {{ item.booking.deal_type }}</span>
+                            </div>
+                            <div>
+                                <span class="text-[10px] text-whn-tertiary uppercase tracking-wider block">Deal Amount</span>
+                                <span class="text-white font-bold text-sm">₹{{ item.booking.deal_amount }}</span>
+                            </div>
+                            <div>
+                                <span class="text-[10px] text-whn-tertiary uppercase tracking-wider block">GST Amount (18%)</span>
+                                <span class="text-white font-bold text-sm">₹{{ item.gst_amount|floatformat:2 }}</span>
+                            </div>
+                            <div>
+                                <span class="text-[10px] text-whn-tertiary uppercase tracking-wider block">Total Amount (Inc. GST)</span>
+                                <span class="text-whn-purple font-black text-sm">₹{{ item.total_amount|floatformat:2 }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 3: Attachments & Documents -->
+                    <div class="space-y-6">
+                        <div class="flex items-center gap-2 border-b border-white/5 pb-2">
+                            <span class="text-lg">📂</span>
+                            <h3 class="text-xs font-black text-white uppercase tracking-widest">Documents & Assets</h3>
+                        </div>
+                        <div class="flex flex-col gap-3">
+                            <!-- Travel PDF -->
+                            {% if item.booking.travel_pdf %}
+                            <a href="{{ item.booking.travel_pdf.url }}" download class="w-full px-5 py-3 rounded-xl bg-white/[0.03] border border-white/10 hover:border-whn-purple/50 flex items-center justify-between text-xs font-bold text-white hover:text-whn-purple transition-all duration-300">
+                                <span>✈️ Travel PDF</span>
+                                <span class="text-[10px] uppercase tracking-widest opacity-60">Download</span>
+                            </a>
+                            {% else %}
+                            <div class="w-full px-5 py-3 rounded-xl bg-white/[0.01] border border-white/5 flex items-center justify-between text-xs text-white/30 cursor-not-allowed">
+                                <span>✈️ Travel Info</span>
+                                <span class="text-[10px] uppercase tracking-widest opacity-35">TBA</span>
+                            </div>
+                            {% endif %}
+
+                            <!-- Accommodation PDF -->
+                            {% if item.booking.accommodation_pdf %}
+                            <a href="{{ item.booking.accommodation_pdf.url }}" download class="w-full px-5 py-3 rounded-xl bg-white/[0.03] border border-white/10 hover:border-whn-purple/50 flex items-center justify-between text-xs font-bold text-white hover:text-whn-purple transition-all duration-300">
+                                <span>🏨 Accommodation PDF</span>
+                                <span class="text-[10px] uppercase tracking-widest opacity-60">Download</span>
+                            </a>
+                            {% else %}
+                            <div class="w-full px-5 py-3 rounded-xl bg-white/[0.01] border border-white/5 flex items-center justify-between text-xs text-white/30 cursor-not-allowed">
+                                <span>🏨 Accommodation</span>
+                                <span class="text-[10px] uppercase tracking-widest opacity-35">TBA</span>
+                            </div>
+                            {% endif %}
+
+                            <!-- Ground Transport attachment -->
+                            {% if item.booking.ground_transport_attachment %}
+                            <a href="{{ item.booking.ground_transport_attachment.url }}" download class="w-full px-5 py-3 rounded-xl bg-white/[0.03] border border-white/10 hover:border-whn-purple/50 flex items-center justify-between text-xs font-bold text-white hover:text-whn-purple transition-all duration-300">
+                                <span>🚗 Transport Attachment</span>
+                                <span class="text-[10px] uppercase tracking-widest opacity-60">Download</span>
+                            </a>
+                            {% else %}
+                            <div class="w-full px-5 py-3 rounded-xl bg-white/[0.01] border border-white/5 flex items-center justify-between text-xs text-white/30 cursor-not-allowed">
+                                <span>🚗 Ground Transport</span>
+                                <span class="text-[10px] uppercase tracking-widest opacity-35">TBA</span>
+                            </div>
+                            {% endif %}
+
+                            <!-- Artwork attachment -->
+                            {% if item.booking.artwork_attachment %}
+                            <a href="{{ item.booking.artwork_attachment.url }}" download class="w-full px-5 py-3 rounded-xl bg-white/[0.03] border border-white/10 hover:border-whn-purple/50 flex items-center justify-between text-xs font-bold text-white hover:text-whn-purple transition-all duration-300">
+                                <span>🎨 Show Artwork</span>
+                                <span class="text-[10px] uppercase tracking-widest opacity-60">Download</span>
+                            </a>
+                            {% else %}
+                            <div class="w-full px-5 py-3 rounded-xl bg-white/[0.01] border border-white/5 flex items-center justify-between text-xs text-white/30 cursor-not-allowed">
+                                <span>🎨 Event Artwork</span>
+                                <span class="text-[10px] uppercase tracking-widest opacity-35">TBA</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Notes / Remarks row -->
+                {% if item.booking.notes %}
+                <div class="mt-8 pt-8 border-t border-white/5">
+                    <span class="text-[10px] text-whn-tertiary uppercase tracking-wider block mb-2">Internal Notes & Contract Remarks</span>
+                    <div class="p-5 rounded-2xl bg-white/[0.02] border border-white/5 text-whn-tertiary text-sm leading-relaxed">
+                        {{ item.booking.notes }}
+                    </div>
+                </div>
+                {% endif %}
+
+            </div>
+            {% empty %}
+            <!-- Empty state -->
+            <div class="glass-card py-24 px-8 text-center rounded-[2.5rem] border border-white/5" data-aos="fade-up">
+                <div class="w-16 h-16 rounded-2xl bg-white/[0.02] flex items-center justify-center text-4xl mx-auto mb-6">💎</div>
+                <h3 class="text-2xl font-black text-white mb-2">No Contracts Found</h3>
+                <p class="text-whn-tertiary max-w-md mx-auto text-sm leading-relaxed">You currently do not have any bookings or deal accounts assigned to your profile.</p>
+            </div>
+            {% endfor %}
+        </div>
+
+    </div>
+</div>
+{% endblock %}

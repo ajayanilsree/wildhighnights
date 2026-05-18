@@ -23,14 +23,18 @@
         <div class="glass-card rounded-[2.5rem] p-10 md:p-12 shadow-2xl border border-white/10 hover:border-whn-purple/40 transition-all duration-500 {% if messages %}border-red-500/50 shadow-[0_0_30px_rgba(239,68,68,0.2)]{% endif %}">
             <!-- Logo Area -->
             <div class="text-center mb-12">
-                <a href="/" class="text-5xl font-black tracking-tighter text-white inline-block hover:text-whn-purple transition-all duration-500 hover:scale-110">WHN</a>
+                <a href="/" class="inline-block hover:scale-110 transition-all duration-500">
+                    <img src="{% static 'images/whn-logo.png' %}" alt="WHN Logo" class="h-16 w-auto mx-auto object-contain">
+                </a>
             </div>
 
-            <!-- Error Messages -->
+            <!-- Status/Error Messages -->
             {% if messages %}
-            <div class="mb-8 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl text-center" data-aos="fade-down">
+            <div class="mb-8 p-4 rounded-2xl text-center max-h-24 overflow-y-auto scrollbar-hide" data-aos="fade-down">
                 {% for message in messages %}
-                <p class="text-red-400 text-xs font-bold uppercase tracking-widest">{{ message }}</p>
+                <div class="{% if 'success' in message.tags %}bg-green-500/10 border-green-500/20 text-green-400{% else %}bg-red-500/10 border-red-500/20 text-red-400{% endif %} border p-3 rounded-xl mb-2 last:mb-0">
+                    <p class="text-[10px] font-bold uppercase tracking-[0.2em]">{{ message }}</p>
+                </div>
                 {% endfor %}
             </div>
             {% endif %}

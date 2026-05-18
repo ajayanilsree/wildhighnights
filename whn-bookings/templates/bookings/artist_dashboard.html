@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="min-h-screen bg-whn-dark pt-32 pb-20 px-6">
+    <div class="container mx-auto max-w-6xl">
+        <!-- Dashboard Header -->
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-16" data-aos="fade-down">
+            <div>
+                <span class="text-whn-purple font-bold tracking-[0.3em] uppercase text-[10px] mb-4 block">Artist Portal</span>
+                <h1 class="text-6xl md:text-7xl font-black text-white tracking-tighter">Welcome, {{ artist.name }}</h1>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="text-right hidden md:block">
+                    <p class="text-white font-bold text-sm">{{ artist.name }}</p>
+                    <p class="text-whn-tertiary text-[10px] uppercase tracking-widest">{{ artist.genre|default:"Artist Partner" }}</p>
+                </div>
+                <a href="{% url 'logout' %}" class="px-6 py-2.5 rounded-full glass border border-white/10 text-[10px] font-bold hover:bg-red-500 hover:text-white hover:border-red-500 transition-all uppercase tracking-[0.2em]">Logout</a>
+            </div>
+        </div>
+
+        <!-- Quick Summary Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+            <!-- Total Bookings -->
+            <div class="glass-card p-8 rounded-[2.5rem] border border-white/5 hover:border-whn-purple/30 transition-all duration-500 group" data-aos="fade-up" data-aos-delay="100">
+                <div class="flex items-center justify-between mb-6">
+                    <div class="w-12 h-12 rounded-2xl bg-whn-purple/10 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">🎧</div>
+                    <span class="text-[10px] font-bold text-whn-purple uppercase tracking-widest">Total Bookings</span>
+                </div>
+                <div class="text-4xl font-black text-white mb-2">{{ total_bookings }}</div>
+                <p class="text-whn-tertiary text-xs">Total scheduled events</p>
+            </div>
+
+            <!-- Confirmed bookings -->
+            <div class="glass-card p-8 rounded-[2.5rem] border border-white/5 hover:border-green-500/30 transition-all duration-500 group" data-aos="fade-up" data-aos-delay="200">
+                <div class="flex items-center justify-between mb-6">
+                    <div class="w-12 h-12 rounded-2xl bg-green-500/10 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">✅</div>
+                    <span class="text-[10px] font-bold text-green-500 uppercase tracking-widest">Confirmed</span>
+                </div>
+                <div class="text-4xl font-black text-white mb-2">{{ confirmed_count }}</div>
+                <p class="text-whn-tertiary text-xs">Ready and locked in</p>
+            </div>
+
+            <!-- Tentative bookings -->
+            <div class="glass-card p-8 rounded-[2.5rem] border border-white/5 hover:border-yellow-500/30 transition-all duration-500 group" data-aos="fade-up" data-aos-delay="300">
+                <div class="flex items-center justify-between mb-6">
+                    <div class="w-12 h-12 rounded-2xl bg-yellow-500/10 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">⏳</div>
+                    <span class="text-[10px] font-bold text-yellow-500 uppercase tracking-widest">Tentative</span>
+                </div>
+                <div class="text-4xl font-black text-white mb-2">{{ tentative_count }}</div>
+                <p class="text-whn-tertiary text-xs">Awaiting confirmation</p>
+            </div>
+        </div>
+
+        <!-- 3 Main Interactive Dashboard Cards -->
+        <h2 class="text-2xl font-black text-white uppercase tracking-wider mb-8" data-aos="fade-right">Select Service</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <!-- 1. Calendar -->
+            <a href="{% url 'artist_calendar' %}" class="glass-card p-10 rounded-[3rem] border border-white/5 hover:border-whn-purple/50 hover:shadow-[0_0_50px_rgba(124,58,237,0.2)] transition-all duration-500 flex flex-col justify-between aspect-square group" data-aos="zoom-in" data-aos-delay="100">
+                <div class="w-16 h-16 rounded-[1.5rem] bg-whn-purple/10 flex items-center justify-center text-4xl group-hover:scale-110 transition-all duration-500">📅</div>
+                <div>
+                    <h3 class="text-3xl font-black text-white mb-4 group-hover:text-whn-purple transition-colors leading-tight">Calendar</h3>
+                    <p class="text-whn-tertiary text-sm leading-relaxed">View all scheduled dates, venues, performance times, and specific booking status details.</p>
+                </div>
+                <div class="text-right">
+                    <span class="text-whn-purple font-bold tracking-widest text-xs uppercase group-hover:translate-x-2 transition-transform inline-block">Explore →</span>
+                </div>
+            </a>
+
+            <!-- 2. Accounts -->
+            <a href="{% url 'artist_accounts' %}" class="glass-card p-10 rounded-[3rem] border border-white/5 hover:border-whn-blue/50 hover:shadow-[0_0_50px_rgba(0,122,255,0.2)] transition-all duration-500 flex flex-col justify-between aspect-square group" data-aos="zoom-in" data-aos-delay="200">
+                <div class="w-16 h-16 rounded-[1.5rem] bg-whn-blue/10 flex items-center justify-center text-4xl group-hover:scale-110 transition-all duration-500">💎</div>
+                <div>
+                    <h3 class="text-3xl font-black text-white mb-4 group-hover:text-whn-blue transition-colors leading-tight">Accounts</h3>
+                    <p class="text-whn-tertiary text-sm leading-relaxed">Access full contracts, client details, deal parameters, GST statements, and download essential documents (PDFs).</p>
+                </div>
+                <div class="text-right">
+                    <span class="text-whn-blue font-bold tracking-widest text-xs uppercase group-hover:translate-x-2 transition-transform inline-block">Explore →</span>
+                </div>
+            </a>
+
+            <!-- 3. Earnings & Expenses -->
+            <a href="{% url 'artist_earnings' %}" class="glass-card p-10 rounded-[3rem] border border-white/5 hover:border-pink-500/50 hover:shadow-[0_0_50px_rgba(236,72,153,0.2)] transition-all duration-500 flex flex-col justify-between aspect-square group" data-aos="zoom-in" data-aos-delay="300">
+                <div class="w-16 h-16 rounded-[1.5rem] bg-pink-500/10 flex items-center justify-center text-4xl group-hover:scale-110 transition-all duration-500">📊</div>
+                <div>
+                    <h3 class="text-3xl font-black text-white mb-4 group-hover:text-pink-500 transition-colors leading-tight">Earnings & Expenses</h3>
+                    <p class="text-whn-tertiary text-sm leading-relaxed">Deep-dive into payout calculations, commission splits, deductable production costs, and annual statements.</p>
+                </div>
+                <div class="text-right">
+                    <span class="text-pink-500 font-bold tracking-widest text-xs uppercase group-hover:translate-x-2 transition-transform inline-block">Explore →</span>
+                </div>
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

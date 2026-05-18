@@ -25,30 +25,64 @@ class Artist(models.Model):
         return self.name
 
 class Booking(models.Model):
-    TYPE_CHOICES = [
-        ('performance', 'Performance'),
-        ('shoot', 'Shoot'),
-        ('vacation', 'Vacation'),
-        ('travel', 'Travel'),
-        ('other', 'Other'),
+    EVENT_TYPE_CHOICES = [
+        ('Private', 'Private'),
+        ('Campus', 'Campus'),
+        ('Club', 'Club'),
+    ]
+    BOOKING_TYPE_CHOICES = [
+        ('Sale', 'Sale'),
+        ('Lead', 'Lead'),
+    ]
+    DEAL_TYPE_CHOICES = [
+        ('++ Deal', '++ Deal'),
+        ('All Inclusive Deal', 'All Inclusive Deal'),
+        ('Landed Deal', 'Landed Deal'),
     ]
     STATUS_CHOICES = [
-        ('confirmed', 'Confirmed'),
-        ('tentative', 'Tentative'),
-        ('cancelled', 'Cancelled'),
+        ('Tentative', 'Tentative'),
+        ('Confirmed', 'Confirmed'),
+        ('Cancelled', 'Cancelled'),
+    ]
+    YES_NO_CHOICES = [
+        ('Yes', 'Yes'),
+        ('No', 'No'),
     ]
 
     artist = models.ForeignKey(Artist, on_delete=models.CASCADE, related_name='bookings')
+    event_type = models.CharField(max_length=20, choices=EVENT_TYPE_CHOICES, default='Club')
     venue = models.CharField(max_length=200)
+    location = models.CharField(max_length=255)
     date = models.DateField()
     time = models.TimeField(null=True, blank=True)
-    type = models.CharField(max_length=20, choices=TYPE_CHOICES, default='performance')
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='confirmed')
-    location = models.CharField(max_length=255, blank=True)
-    notes = models.TextField(blank=True)
+    duration = models.CharField(max_length=100, blank=True, null=True)
+    
+    booking_type = models.CharField(max_length=10, choices=BOOKING_TYPE_CHOICES, default='Sale')
+    deal_type = models.CharField(max_length=30, choices=DEAL_TYPE_CHOICES, default='Landed Deal')
+    deal_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    
+    travel_pdf = models.FileField(upload_to="booking_docs/travel/", blank=True, null=True)
+    accommodation_pdf = models.FileField(upload_to="booking_docs/accommodation/", blank=True, null=True)
+    
+    ground_transport = models.CharField(max_length=5, choices=YES_NO_CHOICES, default='No')
+    ground_transport_attachment = models.FileField(upload_to="booking_docs/transport/", blank=True, null=True)
+    
+    sound_check = models.CharField(max_length=5, choices=YES_NO_CHOICES, default='No')
+    artwork_attachment = models.FileField(upload_to="booking_docs/artwork/", blank=True, null=True)
+    
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Tentative')
+    notes = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return f"{self.artist.name} - {self.venue} ({self.date})"
+
+class BookingExpense(models.Model):
+    booking = models.ForeignKey(Booking, on_delete=models.CASCADE, related_name="expenses")
+    name = models.CharField(max_length=150)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+
+    def __str__(self):
+        return f"{self.name}: {self.amount} for {self.booking}"
 
 class SiteSettings(models.Model):
     title = models.CharField(max_length=200, default='Wild High Nights')

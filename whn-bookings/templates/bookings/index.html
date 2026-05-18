@@ -31,88 +31,482 @@
     </div>
 </section>
 
-<!-- Featured Upcoming Events -->
-<section id="events" class="py-32 bg-grid">
-    <div class="container mx-auto px-6">
-        <div class="flex flex-col md:flex-row items-end justify-between gap-8 mb-20">
-            <div data-aos="fade-right">
-                <span class="text-whn-purple font-bold tracking-[0.3em] uppercase text-[10px] mb-4 block">Selected Experiences</span>
-                <h2 class="text-6xl md:text-7xl font-black text-white tracking-tighter">Events</h2>
-            </div>
-            <a href="{% url 'all_events' %}" class="group flex items-center gap-4 text-whn-purple font-bold tracking-widest text-xs uppercase" data-aos="fade-left">
-                View All
-                <span class="w-10 h-10 rounded-full border border-whn-purple/30 flex items-center justify-center group-hover:bg-whn-purple group-hover:text-white transition-all duration-500">→</span>
-            </a>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
-            {% for event in events %}
-            <!-- Dynamic Event Card -->
-            <div class="group" data-aos="fade-up" data-aos-delay="{{ forloop.counter|add:forloop.counter }}00">
-                <div class="relative aspect-[4/5] overflow-hidden rounded-[2rem] glass border border-white/5 mb-6 group-hover:border-whn-purple/30 transition-all duration-700">
-                    {% if event.event_image %}
-                    <img src="{{ event.event_image.url }}" alt="{{ event.event_name }}" class="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110 grayscale-[0.2] group-hover:grayscale-0">
-                    {% else %}
-                    <div class="w-full h-full bg-white/5 flex items-center justify-center text-5xl">🎇</div>
-                    {% endif %}
-                    <div class="absolute inset-0 bg-gradient-to-t from-whn-dark via-transparent to-transparent opacity-80"></div>
-                </div>
-                <div class="px-2">
-                    <div class="text-whn-purple font-bold text-[10px] uppercase tracking-[0.2em] mb-3">{{ event.event_date|date:"d M" }} · {{ event.event_time|time:"H:i" }}</div>
-                    <h3 class="text-2xl font-black text-white mb-3 group-hover:text-whn-purple transition-colors leading-tight tracking-tight">{{ event.event_name }}</h3>
-                    <p class="text-white/40 text-sm font-medium tracking-wide">{{ event.venue_name }}, {{ event.location }}</p>
-                </div>
-            </div>
-            {% empty %}
-            <div class="col-span-full text-center py-20">
-                <p class="text-whn-tertiary italic">Stay tuned for upcoming experiences.</p>
-            </div>
-            {% endfor %}
-        </div>
-    </div>
-</section>
-
 <!-- Featured Artists -->
 <section id="artists" class="py-32 relative overflow-hidden">
     <div class="light-orb orb-purple -top-40 -right-40 animate-pulse-slow"></div>
     <div class="container mx-auto px-6">
-        <div class="text-center mb-20" data-aos="fade-up">
-            <span class="text-whn-purple font-bold tracking-[0.2em] uppercase text-sm mb-4 block">Meet the Stars</span>
-            <h2 class="text-5xl md:text-6xl font-black text-white">Featured Artists</h2>
+        <style>
+            /* Carousel Sizing & Layout */
+            .artist-carousel-wrapper {
+                position: relative;
+                width: 100%;
+                overflow: hidden;
+            }
+            .artist-carousel-track {
+                display: flex;
+                transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+                will-change: transform;
+            }
+            .artist-carousel-card {
+                width: 100%;
+                flex-shrink: 0;
+            }
+            @media (min-width: 640px) {
+                .artist-carousel-card {
+                    width: calc((100% - 32px) / 2); /* Tablet: 2 items, 32px gap */
+                }
+            }
+            @media (min-width: 768px) {
+                .artist-carousel-card {
+                    width: calc((100% - 64px) / 3); /* Large Tablet: 3 items, 32px gap */
+                }
+            }
+            @media (min-width: 1024px) {
+                .artist-carousel-card {
+                    width: calc((100% - 96px) / 4); /* Desktop: 4 items, 32px gap */
+                }
+            }
+        </style>
+
+        <div class="flex flex-col md:flex-row items-start md:items-end justify-between gap-8 mb-20 relative">
+            <div data-aos="fade-right">
+                <span class="text-whn-purple font-bold tracking-[0.2em] uppercase text-sm mb-4 block">Meet the Stars</span>
+                <h2 class="text-5xl md:text-6xl font-black text-white">Featured Artists</h2>
+            </div>
+            <!-- Slider Buttons -->
+            <div class="flex items-center gap-4 z-10" data-aos="fade-left">
+                <button id="artist-prev" class="w-12 h-12 rounded-full glass border border-white/10 hover:border-whn-purple/50 flex items-center justify-center text-white hover:text-whn-purple hover:shadow-[0_0_20px_rgba(124,58,237,0.3)] hover:scale-110 active:scale-95 transition-all duration-300">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                    </svg>
+                </button>
+                <button id="artist-next" class="w-12 h-12 rounded-full glass border border-white/10 hover:border-whn-purple/50 flex items-center justify-center text-white hover:text-whn-purple hover:shadow-[0_0_20px_rgba(124,58,237,0.3)] hover:scale-110 active:scale-95 transition-all duration-300">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                </button>
+            </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
-            {% for artist in artists %}
-            <!-- Artist Card -->
-            <div class="flex flex-col items-center group" data-aos="fade-up" data-aos-delay="{{ forloop.counter|add:100 }}">
-                <div class="relative mb-8">
-                    <div class="w-48 h-48 rounded-full border border-white/5 p-2 group-hover:border-whn-purple/50 group-hover:shadow-[0_0_40px_rgba(124,58,237,0.2)] transition-all duration-700">
-                        <div class="w-full h-full rounded-full overflow-hidden grayscale group-hover:grayscale-0 transition-all duration-700">
-                            {% if artist.artist_image %}
-                            <img src="{{ artist.artist_image.url }}" alt="{{ artist.name }}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
-                            {% else %}
-                            <div class="w-full h-full bg-white/5 flex items-center justify-center text-4xl">🎧</div>
-                            {% endif %}
+        <div class="artist-carousel-wrapper select-none cursor-grab active:cursor-grabbing">
+            <div id="artist-carousel-track" class="artist-carousel-track gap-8">
+                {% for artist in artists %}
+                <!-- Artist Card -->
+                <div class="artist-carousel-card flex flex-col items-center group text-center" data-aos="fade-up" data-aos-delay="{{ forloop.counter|add:100 }}">
+                    <div class="relative mb-8">
+                        <div class="w-48 h-48 rounded-full border border-white/5 p-2 group-hover:border-whn-purple/50 group-hover:shadow-[0_0_40px_rgba(124,58,237,0.2)] transition-all duration-700">
+                            <div class="w-full h-full rounded-full overflow-hidden grayscale group-hover:grayscale-0 transition-all duration-700">
+                                {% if artist.artist_image %}
+                                <img src="{{ artist.artist_image.url }}" alt="{{ artist.name }}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 pointer-events-none">
+                                {% else %}
+                                <div class="w-full h-full bg-white/5 flex items-center justify-center text-4xl">🎧</div>
+                                {% endif %}
+                            </div>
                         </div>
                     </div>
+                    <h3 class="text-2xl font-black text-white mb-2 tracking-tight">{{ artist.name }}</h3>
+                    <p class="text-whn-tertiary text-[10px] font-bold uppercase tracking-[0.3em] mb-4">{{ artist.genre }}</p>
+                    <div class="flex items-center gap-6 mb-8">
+                        {% if artist.instagram %}
+                        <a href="{% if 'http' in artist.instagram %}{{ artist.instagram }}{% else %}https://instagram.com/{{ artist.instagram }}{% endif %}" target="_blank" class="text-[10px] font-black text-white/30 hover:text-white transition-colors tracking-widest uppercase">IG</a>
+                        {% endif %}
+                    </div>
+                    <a href="{% if artist.instagram %}{% if 'http' in artist.instagram %}{{ artist.instagram }}{% else %}https://instagram.com/{{ artist.instagram }}{% endif %}{% else %}#{% endif %}" target="_blank" class="px-8 py-2.5 rounded-full glass border border-white/10 text-[10px] font-bold hover:bg-whn-purple hover:text-white hover:border-whn-purple transition-all uppercase tracking-[0.2em]">View Profile</a>
                 </div>
-                <h3 class="text-2xl font-black text-white mb-2 tracking-tight">{{ artist.name }}</h3>
-                <p class="text-whn-tertiary text-[10px] font-bold uppercase tracking-[0.3em] mb-4">{{ artist.genre }}</p>
-                <div class="flex items-center gap-6 mb-8">
-                    {% if artist.instagram %}
-                    <a href="{% if 'http' in artist.instagram %}{{ artist.instagram }}{% else %}https://instagram.com/{{ artist.instagram }}{% endif %}" target="_blank" class="text-[10px] font-black text-white/30 hover:text-white transition-colors tracking-widest uppercase">IG</a>
-                    {% endif %}
+                {% empty %}
+                <div class="w-full text-center py-20">
+                    <p class="text-whn-tertiary text-sm italic">No featured artists yet.</p>
                 </div>
-                <a href="{% if artist.instagram %}{% if 'http' in artist.instagram %}{{ artist.instagram }}{% else %}https://instagram.com/{{ artist.instagram }}{% endif %}{% else %}#{% endif %}" target="_blank" class="px-8 py-2.5 rounded-full glass border border-white/10 text-[10px] font-bold hover:bg-whn-purple hover:text-white hover:border-whn-purple transition-all uppercase tracking-[0.2em]">View Profile</a>
+                {% endfor %}
             </div>
-            {% empty %}
-            <div class="col-span-full text-center py-20">
-                <p class="text-whn-tertiary text-sm italic">No featured artists yet.</p>
-            </div>
-            {% endfor %}
         </div>
     </div>
 </section>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const track = document.getElementById("artist-carousel-track");
+        const prevBtn = document.getElementById("artist-prev");
+        const nextBtn = document.getElementById("artist-next");
+        const wrapper = document.querySelector(".artist-carousel-wrapper");
+
+        if (!track || !prevBtn || !nextBtn) return;
+
+        let currentIndex = 0;
+
+        const getItemsPerSlide = () => {
+            const width = window.innerWidth;
+            if (width >= 1024) return 4;
+            if (width >= 768) return 3;
+            if (width >= 640) return 2;
+            return 1;
+        };
+
+        const getGap = () => {
+            return 32; // gap-8 = 32px
+        };
+
+        const updateCarousel = () => {
+            const cards = track.querySelectorAll(".artist-carousel-card");
+            if (cards.length === 0) return;
+
+            const itemsPerSlide = getItemsPerSlide();
+            const maxIndex = Math.max(0, cards.length - itemsPerSlide);
+
+            // Bounds index
+            if (currentIndex > maxIndex) currentIndex = maxIndex;
+            if (currentIndex < 0) currentIndex = 0;
+
+            const cardWidth = cards[0].getBoundingClientRect().width;
+            const gap = getGap();
+            const offset = currentIndex * (cardWidth + gap);
+
+            track.style.transform = `translateX(-${offset}px)`;
+
+            // Button Visual states
+            if (currentIndex === 0) {
+                prevBtn.style.opacity = "0.3";
+                prevBtn.style.pointerEvents = "none";
+            } else {
+                prevBtn.style.opacity = "1";
+                prevBtn.style.pointerEvents = "auto";
+            }
+
+            if (currentIndex >= maxIndex) {
+                nextBtn.style.opacity = "0.3";
+                nextBtn.style.pointerEvents = "none";
+            } else {
+                nextBtn.style.opacity = "1";
+                nextBtn.style.pointerEvents = "auto";
+            }
+        };
+
+        prevBtn.addEventListener("click", () => {
+            if (currentIndex > 0) {
+                currentIndex--;
+                updateCarousel();
+            }
+        });
+
+        nextBtn.addEventListener("click", () => {
+            const cards = track.querySelectorAll(".artist-carousel-card");
+            const itemsPerSlide = getItemsPerSlide();
+            const maxIndex = Math.max(0, cards.length - itemsPerSlide);
+            if (currentIndex < maxIndex) {
+                currentIndex++;
+                updateCarousel();
+            }
+        });
+
+        // Swipe support
+        let isDragging = false;
+        let startX = 0;
+        let currentTranslate = 0;
+        let prevTranslate = 0;
+        let animationID = 0;
+
+        const getTranslateX = () => {
+            const style = window.getComputedStyle(track);
+            const matrix = new WebKitCSSMatrix(style.transform);
+            return matrix.m41;
+        };
+
+        const dragStart = (e) => {
+            isDragging = true;
+            startX = e.type.includes("touch") ? e.touches[0].clientX : e.clientX;
+            prevTranslate = getTranslateX();
+            track.style.transition = "none";
+            animationID = requestAnimationFrame(animation);
+        };
+
+        const dragMove = (e) => {
+            if (!isDragging) return;
+            const currentX = e.type.includes("touch") ? e.touches[0].clientX : e.clientX;
+            const diff = currentX - startX;
+            currentTranslate = prevTranslate + diff;
+        };
+
+        const dragEnd = () => {
+            isDragging = false;
+            cancelAnimationFrame(animationID);
+            track.style.transition = "transform 0.6s cubic-bezier(0.25, 1, 0.5, 1)";
+
+            const cards = track.querySelectorAll(".artist-carousel-card");
+            if (cards.length === 0) return;
+
+            const itemsPerSlide = getItemsPerSlide();
+            const maxIndex = Math.max(0, cards.length - itemsPerSlide);
+
+            const movedBy = currentTranslate - prevTranslate;
+
+            if (movedBy < -80 && currentIndex < maxIndex) {
+                currentIndex++;
+            } else if (movedBy > 80 && currentIndex > 0) {
+                currentIndex--;
+            }
+
+            updateCarousel();
+        };
+
+        const animation = () => {
+            if (isDragging) {
+                track.style.transform = `translateX(${currentTranslate}px)`;
+                requestAnimationFrame(animation);
+            }
+        };
+
+        wrapper.addEventListener("mousedown", dragStart);
+        wrapper.addEventListener("mousemove", dragMove);
+        wrapper.addEventListener("mouseup", dragEnd);
+        wrapper.addEventListener("mouseleave", dragEnd);
+
+        wrapper.addEventListener("touchstart", dragStart, { passive: true });
+        wrapper.addEventListener("touchmove", dragMove, { passive: true });
+        wrapper.addEventListener("touchend", dragEnd);
+
+        window.addEventListener("resize", updateCarousel);
+        updateCarousel();
+    });
+</script>
+
+<!-- Featured Upcoming Events -->
+<section id="events" class="py-32 bg-grid relative overflow-hidden">
+    <div class="container mx-auto px-6">
+        <style>
+            /* Events Carousel Sizing & Layout */
+            .events-carousel-wrapper {
+                position: relative;
+                width: 100%;
+                overflow: hidden;
+            }
+            .events-carousel-track {
+                display: flex;
+                transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+                will-change: transform;
+            }
+            .events-carousel-card {
+                width: 100%;
+                flex-shrink: 0;
+            }
+            @media (min-width: 640px) {
+                .events-carousel-card {
+                    width: calc((100% - 32px) / 2); /* Tablet: 2 items, 32px gap */
+                }
+            }
+            @media (min-width: 768px) {
+                .events-carousel-card {
+                    width: calc((100% - 64px) / 3); /* Large Tablet: 3 items, 32px gap */
+                }
+            }
+            @media (min-width: 1024px) {
+                .events-carousel-card {
+                    width: calc((100% - 96px) / 4); /* Desktop: 4 items, 32px gap */
+                }
+            }
+        </style>
+
+        <div class="flex flex-col md:flex-row items-start md:items-end justify-between gap-8 mb-20">
+            <div data-aos="fade-right">
+                <span class="text-whn-purple font-bold tracking-[0.3em] uppercase text-[10px] mb-4 block">Selected Experiences</span>
+                <h2 class="text-6xl md:text-7xl font-black text-white tracking-tighter">Events</h2>
+            </div>
+            
+            <div class="flex items-center gap-8 z-10" data-aos="fade-left">
+                <!-- Slider Buttons -->
+                <div class="flex items-center gap-4">
+                    <button id="events-prev" class="w-12 h-12 rounded-full glass border border-white/10 hover:border-whn-purple/50 flex items-center justify-center text-white hover:text-whn-purple hover:shadow-[0_0_20px_rgba(124,58,237,0.3)] hover:scale-110 active:scale-95 transition-all duration-300">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                        </svg>
+                    </button>
+                    <button id="events-next" class="w-12 h-12 rounded-full glass border border-white/10 hover:border-whn-purple/50 flex items-center justify-center text-white hover:text-whn-purple hover:shadow-[0_0_20px_rgba(124,58,237,0.3)] hover:scale-110 active:scale-95 transition-all duration-300">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </button>
+                </div>
+                
+                <a href="{% url 'all_events' %}" class="group flex items-center gap-4 text-whn-purple font-bold tracking-widest text-xs uppercase">
+                    View All
+                    <span class="w-10 h-10 rounded-full border border-whn-purple/30 flex items-center justify-center group-hover:bg-whn-purple group-hover:text-white transition-all duration-500">→</span>
+                </a>
+            </div>
+        </div>
+
+        <div class="events-carousel-wrapper select-none cursor-grab active:cursor-grabbing">
+            <div id="events-carousel-track" class="events-carousel-track gap-8">
+                {% for event in events %}
+                <!-- Dynamic Event Card -->
+                <div class="events-carousel-card group" data-aos="fade-up" data-aos-delay="{{ forloop.counter|add:forloop.counter }}00">
+                    <div class="relative aspect-[4/5] overflow-hidden rounded-[2rem] glass border border-white/5 mb-6 group-hover:border-whn-purple/30 transition-all duration-700">
+                        {% if event.event_image %}
+                        <img src="{{ event.event_image.url }}" alt="{{ event.event_name }}" class="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110 grayscale-[0.2] group-hover:grayscale-0 pointer-events-none">
+                        {% else %}
+                        <div class="w-full h-full bg-white/5 flex items-center justify-center text-5xl">🎇</div>
+                        {% endif %}
+                        <div class="absolute inset-0 bg-gradient-to-t from-whn-dark via-transparent to-transparent opacity-80"></div>
+                    </div>
+                    <div class="px-2">
+                        <div class="text-whn-purple font-bold text-[10px] uppercase tracking-[0.2em] mb-3">{{ event.event_date|date:"d M" }} · {{ event.event_time|time:"H:i" }}</div>
+                        <h3 class="text-2xl font-black text-white mb-3 group-hover:text-whn-purple transition-colors leading-tight tracking-tight">{{ event.event_name }}</h3>
+                        <p class="text-white/40 text-sm font-medium tracking-wide">{{ event.venue_name }}, {{ event.location }}</p>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="w-full text-center py-20">
+                    <p class="text-whn-tertiary italic">Stay tuned for upcoming experiences.</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const track = document.getElementById("events-carousel-track");
+        const prevBtn = document.getElementById("events-prev");
+        const nextBtn = document.getElementById("events-next");
+        const wrapper = document.querySelector(".events-carousel-wrapper");
+
+        if (!track || !prevBtn || !nextBtn) return;
+
+        let currentIndex = 0;
+
+        const getItemsPerSlide = () => {
+            const width = window.innerWidth;
+            if (width >= 1024) return 4;
+            if (width >= 768) return 3;
+            if (width >= 640) return 2;
+            return 1;
+        };
+
+        const getGap = () => {
+            return 32; // gap-8 = 32px
+        };
+
+        const updateCarousel = () => {
+            const cards = track.querySelectorAll(".events-carousel-card");
+            if (cards.length === 0) return;
+
+            const itemsPerSlide = getItemsPerSlide();
+            const maxIndex = Math.max(0, cards.length - itemsPerSlide);
+
+            // Bounds index
+            if (currentIndex > maxIndex) currentIndex = maxIndex;
+            if (currentIndex < 0) currentIndex = 0;
+
+            const cardWidth = cards[0].getBoundingClientRect().width;
+            const gap = getGap();
+            const offset = currentIndex * (cardWidth + gap);
+
+            track.style.transform = `translateX(-${offset}px)`;
+
+            // Button Visual states
+            if (currentIndex === 0) {
+                prevBtn.style.opacity = "0.3";
+                prevBtn.style.pointerEvents = "none";
+            } else {
+                prevBtn.style.opacity = "1";
+                prevBtn.style.pointerEvents = "auto";
+            }
+
+            if (currentIndex >= maxIndex) {
+                nextBtn.style.opacity = "0.3";
+                nextBtn.style.pointerEvents = "none";
+            } else {
+                nextBtn.style.opacity = "1";
+                nextBtn.style.pointerEvents = "auto";
+            }
+        };
+
+        prevBtn.addEventListener("click", () => {
+            if (currentIndex > 0) {
+                currentIndex--;
+                updateCarousel();
+            }
+        });
+
+        nextBtn.addEventListener("click", () => {
+            const cards = track.querySelectorAll(".events-carousel-card");
+            const itemsPerSlide = getItemsPerSlide();
+            const maxIndex = Math.max(0, cards.length - itemsPerSlide);
+            if (currentIndex < maxIndex) {
+                currentIndex++;
+                updateCarousel();
+            }
+        });
+
+        // Swipe support
+        let isDragging = false;
+        let startX = 0;
+        let currentTranslate = 0;
+        let prevTranslate = 0;
+        let animationID = 0;
+
+        const getTranslateX = () => {
+            const style = window.getComputedStyle(track);
+            const matrix = new WebKitCSSMatrix(style.transform);
+            return matrix.m41;
+        };
+
+        const dragStart = (e) => {
+            isDragging = true;
+            startX = e.type.includes("touch") ? e.touches[0].clientX : e.clientX;
+            prevTranslate = getTranslateX();
+            track.style.transition = "none";
+            animationID = requestAnimationFrame(animation);
+        };
+
+        const dragMove = (e) => {
+            if (!isDragging) return;
+            const currentX = e.type.includes("touch") ? e.touches[0].clientX : e.clientX;
+            const diff = currentX - startX;
+            currentTranslate = prevTranslate + diff;
+        };
+
+        const dragEnd = () => {
+            isDragging = false;
+            cancelAnimationFrame(animationID);
+            track.style.transition = "transform 0.6s cubic-bezier(0.25, 1, 0.5, 1)";
+
+            const cards = track.querySelectorAll(".events-carousel-card");
+            if (cards.length === 0) return;
+
+            const itemsPerSlide = getItemsPerSlide();
+            const maxIndex = Math.max(0, cards.length - itemsPerSlide);
+
+            const movedBy = currentTranslate - prevTranslate;
+
+            if (movedBy < -80 && currentIndex < maxIndex) {
+                currentIndex++;
+            } else if (movedBy > 80 && currentIndex > 0) {
+                currentIndex--;
+            }
+
+            updateCarousel();
+        };
+
+        const animation = () => {
+            if (isDragging) {
+                track.style.transform = `translateX(${currentTranslate}px)`;
+                requestAnimationFrame(animation);
+            }
+        };
+
+        wrapper.addEventListener("mousedown", dragStart);
+        wrapper.addEventListener("mousemove", dragMove);
+        wrapper.addEventListener("mouseup", dragEnd);
+        wrapper.addEventListener("mouseleave", dragEnd);
+
+        wrapper.addEventListener("touchstart", dragStart, { passive: true });
+        wrapper.addEventListener("touchmove", dragMove, { passive: true });
+        wrapper.addEventListener("touchend", dragEnd);
+
+        window.addEventListener("resize", updateCarousel);
+        updateCarousel();
+    });
+</script>
 
 <!-- About Section -->
 <section id="about" class="py-32 bg-grid relative overflow-hidden">
@@ -131,7 +525,7 @@
                 <span class="text-whn-purple font-bold tracking-[0.2em] uppercase text-sm mb-4 block">The Platform</span>
                 <h2 class="text-5xl md:text-6xl font-black text-white mb-8 leading-tight">About Wild<br>High Nights</h2>
                 <p class="text-xl text-whn-tertiary leading-relaxed mb-8">
-                    Wild High Nights is a modern nightlife and artist booking platform connecting audiences with unforgettable events, DJs, performers, and nightlife experiences across the globe.
+                    Wild High Nights is an artist booking platform connecting audiences with unforgettable events, DJs, performers, and nightlife experiences across the globe.
                 </p>
                 <p class="text-lg text-whn-tertiary leading-relaxed mb-12">
                     We bridge the gap between world-class artists and energetic audiences, ensuring every night is a cinematic masterpiece of music and lights.
