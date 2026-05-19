@@ -24,6 +24,18 @@ class Artist(models.Model):
     def __str__(self):
         return self.name
 
+class ArtistAvailability(models.Model):
+    artist = models.ForeignKey(Artist, on_delete=models.CASCADE)
+    date = models.DateField()
+    status = models.CharField(max_length=20, choices=[('busy', 'Busy')])
+    note = models.TextField(blank=True, null=True)
+
+    class Meta:
+        unique_together = ('artist', 'date')
+
+    def __str__(self):
+        return f"{self.artist.name} - {self.date} ({self.status})"
+
 class Booking(models.Model):
     EVENT_TYPE_CHOICES = [
         ('Private', 'Private'),
@@ -63,9 +75,10 @@ class Booking(models.Model):
     
     travel_pdf = models.FileField(upload_to="booking_docs/travel/", blank=True, null=True)
     accommodation_pdf = models.FileField(upload_to="booking_docs/accommodation/", blank=True, null=True)
+    accommodation_details = models.TextField(blank=True, null=True)
     
     ground_transport = models.CharField(max_length=5, choices=YES_NO_CHOICES, default='No')
-    ground_transport_attachment = models.FileField(upload_to="booking_docs/transport/", blank=True, null=True)
+    transport_details = models.TextField(blank=True, null=True)
     
     sound_check = models.CharField(max_length=5, choices=YES_NO_CHOICES, default='No')
     artwork_attachment = models.FileField(upload_to="booking_docs/artwork/", blank=True, null=True)

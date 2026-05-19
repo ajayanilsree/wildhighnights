@@ -6,7 +6,7 @@ from django.contrib import messages
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.contrib.auth.models import User
 from django.utils import timezone
-from .models import Artist, Booking, SiteSettings, ActivityLog, Event, GalleryImage, BookingExpense
+from .models import Artist, Booking, SiteSettings, ActivityLog, Event, GalleryImage, BookingExpense, ArtistAvailability
 
 @ensure_csrf_cookie
 def index(request):
@@ -117,11 +117,13 @@ def add_booking_view(request):
         sound_check = request.POST.get('sound_check')
         status = request.POST.get('status')
         notes = request.POST.get('notes')
+        
+        accommodation_details = request.POST.get('accommodation_details')
+        transport_details = request.POST.get('transport_details')
 
         # Files
         travel_pdf = request.FILES.get('travel_pdf')
         accommodation_pdf = request.FILES.get('accommodation_pdf')
-        ground_transport_attachment = request.FILES.get('ground_transport_attachment')
         artwork_attachment = request.FILES.get('artwork_attachment')
 
         artist = get_object_or_404(Artist, id=artist_id)
@@ -140,8 +142,9 @@ def add_booking_view(request):
             deal_amount=deal_amount,
             travel_pdf=travel_pdf,
             accommodation_pdf=accommodation_pdf,
+            accommodation_details=accommodation_details,
             ground_transport=ground_transport,
-            ground_transport_attachment=ground_transport_attachment if ground_transport == 'Yes' else None,
+            transport_details=transport_details if ground_transport == 'Yes' else None,
             sound_check=sound_check,
             artwork_attachment=artwork_attachment,
             status=status,
@@ -401,6 +404,9 @@ def edit_booking_view(request, booking_id):
         sound_check = request.POST.get('sound_check')
         status = request.POST.get('status')
         notes = request.POST.get('notes')
+        
+        accommodation_details = request.POST.get('accommodation_details')
+        transport_details = request.POST.get('transport_details')
 
         artist = get_object_or_404(Artist, id=artist_id)
         
@@ -418,20 +424,20 @@ def edit_booking_view(request, booking_id):
         booking.sound_check = sound_check
         booking.status = status
         booking.notes = notes
+        booking.accommodation_details = accommodation_details
+        booking.transport_details = transport_details if ground_transport == 'Yes' else None
 
         # Update files if supplied
         if 'travel_pdf' in request.FILES:
             booking.travel_pdf = request.FILES.get('travel_pdf')
         if 'accommodation_pdf' in request.FILES:
             booking.accommodation_pdf = request.FILES.get('accommodation_pdf')
-        if 'ground_transport_attachment' in request.FILES:
-            booking.ground_transport_attachment = request.FILES.get('ground_transport_attachment')
         if 'artwork_attachment' in request.FILES:
             booking.artwork_attachment = request.FILES.get('artwork_attachment')
 
-        # Clean transport attachment if transport is changed to 'No'
+        # Clean transport details if transport is changed to 'No'
         if ground_transport == 'No':
-            booking.ground_transport_attachment = None
+            booking.transport_details = None
 
         booking.save()
 
@@ -467,14 +473,87 @@ def delete_booking_view(request, booking_id):
     return redirect('manage_bookings')
 
 
+@login_required(login_url='login')
+def total_bookings_view(request):
+    if not (request.user.is_staff or request.user.is_superuser):
+        messages.error(request, "Access Denied: Administrative privileges required.")
+        return redirect('login')
+        
+    now = timezone.now()
+    selected_month = request.GET.get('month')
+    selected_year = request.GET.get('year')
+    
+    if selected_month:
+        try:
+            selected_month = int(selected_month)
+        except ValueError:
+            selected_month = now.month
+    else:
+        selected_month = now.month
+        
+    if selected_year:
+        try:
+            selected_year = int(selected_year)
+        except ValueError:
+            selected_year = now.year
+    else:
+        selected_year = now.year
+        
+    bookings = Booking.objects.filter(date__year=selected_year, date__month=selected_month).order_by('-date')
+    
+    total_count = bookings.count()
+    confirmed_count = bookings.filter(status='Confirmed').count()
+    tentative_count = bookings.filter(status='Tentative').count()
+    cancelled_count = bookings.filter(status='Cancelled').count()
+    
+    months_list = [
+        {'value': 1, 'name': 'January'},
+        {'value': 2, 'name': 'February'},
+        {'value': 3, 'name': 'March'},
+        {'value': 4, 'name': 'April'},
+        {'value': 5, 'name': 'May'},
+        {'value': 6, 'name': 'June'},
+        {'value': 7, 'name': 'July'},
+        {'value': 8, 'name': 'August'},
+        {'value': 9, 'name': 'September'},
+        {'value': 10, 'name': 'October'},
+        {'value': 11, 'name': 'November'},
+        {'value': 12, 'name': 'December'},
+    ]
+    
+    years_list = range(2020, 2031)
+    
+    context = {
+        'bookings': bookings,
+        'selected_month': selected_month,
+        'selected_year': selected_year,
+        'total_count': total_count,
+        'confirmed_count': confirmed_count,
+        'tentative_count': tentative_count,
+        'cancelled_count': cancelled_count,
+        'months': months_list,
+        'years': years_list,
+    }
+    return render(request, 'bookings/total_bookings.html', context)
+
+
 # =========================================================================
 # Artist Portal Views & Security Decorator
 # =========================================================================
 
 def artist_required(view_func):
-    @login_required(login_url='login')
     def _wrapped_view(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.path.startswith('/api/'):
+                from django.http import JsonResponse
+                return JsonResponse({'error': 'Authentication required.'}, status=401)
+            from django.contrib.auth.views import redirect_to_login
+            return redirect_to_login(request.get_full_path(), login_url='login')
+            
         if not hasattr(request.user, 'artist'):
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.path.startswith('/api/'):
+                from django.http import JsonResponse
+                return JsonResponse({'error': 'Access Denied: You do not have an active Artist profile.'}, status=403)
             messages.error(request, "Access Denied: You do not have an active Artist profile.")
             return redirect('login')
         return view_func(request, *args, **kwargs)
@@ -498,13 +577,155 @@ def artist_dashboard_view(request):
 
 
 @artist_required
+@ensure_csrf_cookie
 def artist_calendar_view(request):
     artist = request.user.artist
-    bookings = Booking.objects.filter(artist=artist).order_by('date', 'time')
     return render(request, 'bookings/artist_calendar.html', {
         'artist': artist,
-        'bookings': bookings
     })
+
+
+@login_required(login_url='login')
+def admin_calendar_view(request):
+    if not (request.user.is_staff or request.user.is_superuser):
+        messages.error(request, "Access Denied: Administrative privileges required.")
+        return redirect('login')
+        
+    artists = Artist.objects.all().order_by('name')
+    return render(request, 'bookings/admin_calendar.html', {
+        'artists': artists,
+    })
+
+
+@login_required(login_url='login')
+def api_artist_calendar_events(request):
+    # Enforce role-based access
+    if request.user.is_staff or request.user.is_superuser:
+        artist_id = request.GET.get('artist_id')
+        if not artist_id:
+            first_artist = Artist.objects.first()
+            if not first_artist:
+                return JsonResponse({'bookings': [], 'busy_dates': []})
+            artist = first_artist
+        else:
+            try:
+                artist = Artist.objects.get(id=artist_id)
+            except Artist.DoesNotExist:
+                return JsonResponse({'error': 'Artist not found'}, status=404)
+    else:
+        if not hasattr(request.user, 'artist'):
+            return JsonResponse({'error': 'Access Denied: You do not have an active Artist profile.'}, status=403)
+        artist = request.user.artist
+    
+    # Bookings
+    bookings = Booking.objects.filter(artist=artist)
+    bookings_data = []
+    for b in bookings:
+        deal_amount = float(b.deal_amount)
+        gst_percentage = 18
+        gst_amount = deal_amount * gst_percentage / 100
+        total_amount = deal_amount + gst_amount
+        expenses_data = [{'name': e.name, 'amount': float(e.amount)} for e in b.expenses.all()]
+        
+        bookings_data.append({
+            'id': b.id,
+            'type': 'booking',
+            'date': b.date.strftime('%Y-%m-%d'),
+            'time': b.time.strftime('%H:%M') if b.time else 'TBA',
+            'venue': b.venue,
+            'location': b.location,
+            'duration': b.duration or 'Standard Set',
+            'event_type': b.event_type,
+            'status': b.status,  # 'Confirmed' or 'Tentative'
+            'notes': b.notes or '',
+            'artist': b.artist.name,
+            'booking_type': b.booking_type,
+            'deal_type': b.deal_type,
+            'deal_amount': deal_amount,
+            'gst_amount': gst_amount,
+            'total_amount': total_amount,
+            'travel_pdf': b.travel_pdf.url if b.travel_pdf else '',
+            'accommodation_pdf': b.accommodation_pdf.url if b.accommodation_pdf else '',
+            'accommodation_details': b.accommodation_details or '',
+            'ground_transport': b.ground_transport,
+            'transport_details': b.transport_details or '',
+            'sound_check': b.sound_check,
+            'artwork_attachment': b.artwork_attachment.url if b.artwork_attachment else '',
+            'expenses': expenses_data
+        })
+    
+    # Availabilities (marked busy)
+    availabilities = ArtistAvailability.objects.filter(artist=artist, status='busy')
+    busy_data = []
+    for a in availabilities:
+        busy_data.append({
+            'id': a.id,
+            'type': 'busy',
+            'date': a.date.strftime('%Y-%m-%d'),
+            'note': a.note or ''
+        })
+    
+    return JsonResponse({
+        'bookings': bookings_data,
+        'busy_dates': busy_data
+    })
+
+
+@artist_required
+def api_add_busy_date(request):
+    from django.views.decorators.http import require_POST
+    import json
+    from datetime import datetime
+    
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST method required'}, status=405)
+        
+    try:
+        data = json.loads(request.body)
+        date_str = data.get('date')
+        note = data.get('note', '')
+        if not date_str:
+            return JsonResponse({'error': 'Date is required'}, status=400)
+        
+        artist = request.user.artist
+        parsed_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+        
+        # Check if booking exists on this date
+        if Booking.objects.filter(artist=artist, date=parsed_date).exists():
+            return JsonResponse({'error': 'Cannot mark busy on a booked date.'}, status=400)
+        
+        obj, created = ArtistAvailability.objects.update_or_create(
+            artist=artist,
+            date=parsed_date,
+            defaults={'status': 'busy', 'note': note}
+        )
+        return JsonResponse({'success': True, 'id': obj.id})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@artist_required
+def api_remove_busy_date(request):
+    from django.views.decorators.http import require_POST
+    import json
+    from datetime import datetime
+    
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST method required'}, status=405)
+        
+    try:
+        data = json.loads(request.body)
+        date_str = data.get('date')
+        if not date_str:
+            return JsonResponse({'error': 'Date is required'}, status=400)
+        
+        artist = request.user.artist
+        parsed_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+        
+        ArtistAvailability.objects.filter(artist=artist, date=parsed_date, status='busy').delete()
+        return JsonResponse({'success': True})
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
 
 
 @artist_required
@@ -536,8 +757,20 @@ def artist_accounts_view(request):
 @artist_required
 def artist_earnings_view(request):
     artist = request.user.artist
+    
+    # Extract query params
+    selected_month = request.GET.get('month', '')
+    selected_year = request.GET.get('year', '')
+    
+    # Base bookings queryset for this artist
     bookings = Booking.objects.filter(artist=artist).order_by('-date')
     
+    # Filter bookings based on selections
+    if selected_year and selected_year.isdigit():
+        bookings = bookings.filter(date__year=int(selected_year))
+    if selected_month and selected_month.isdigit():
+        bookings = bookings.filter(date__month=int(selected_month))
+        
     now = timezone.now()
     current_month = now.month
     current_year = now.year
@@ -551,6 +784,15 @@ def artist_earnings_view(request):
     yearly_earnings = Decimal('0.00')
     
     events_ledger = []
+    
+    # For "This Month" card: if a month is filtered, show that month's earnings.
+    # Otherwise, show current month's earnings (filtered by year if year is selected).
+    target_month = int(selected_month) if (selected_month and selected_month.isdigit()) else current_month
+    target_year_for_month = int(selected_year) if (selected_year and selected_year.isdigit()) else current_year
+    
+    # For "This Year" card: if a year is filtered, show that year's earnings.
+    # Otherwise, show current year's earnings.
+    target_year = int(selected_year) if (selected_year and selected_year.isdigit()) else current_year
     
     for booking in bookings:
         # Commission splits: Sale = 85%, Lead = 90%
@@ -569,12 +811,11 @@ def artist_earnings_view(request):
         total_expenses += expenses
         net_earnings += net
         
-        # Check time matching for current month/year
-        if booking.date.year == current_year:
+        if booking.date.year == target_year:
             yearly_earnings += earning
-            if booking.date.month == current_month:
-                monthly_earnings += earning
-                
+        if booking.date.year == target_year_for_month and booking.date.month == target_month:
+            monthly_earnings += earning
+            
         events_ledger.append({
             'booking': booking,
             'pct_str': pct_str,
@@ -583,6 +824,27 @@ def artist_earnings_view(request):
             'net': net
         })
         
+    # Get available years for the filter dropdown
+    available_years = Booking.objects.filter(artist=artist).dates('date', 'year')
+    years = sorted(list(set(d.year for d in available_years)), reverse=True)
+    if not years:
+        years = [current_year]
+        
+    months = [
+        {'value': 1, 'name': 'January'},
+        {'value': 2, 'name': 'February'},
+        {'value': 3, 'name': 'March'},
+        {'value': 4, 'name': 'April'},
+        {'value': 5, 'name': 'May'},
+        {'value': 6, 'name': 'June'},
+        {'value': 7, 'name': 'July'},
+        {'value': 8, 'name': 'August'},
+        {'value': 9, 'name': 'September'},
+        {'value': 10, 'name': 'October'},
+        {'value': 11, 'name': 'November'},
+        {'value': 12, 'name': 'December'},
+    ]
+        
     return render(request, 'bookings/artist_earnings.html', {
         'artist': artist,
         'events_ledger': events_ledger,
@@ -590,5 +852,9 @@ def artist_earnings_view(request):
         'total_expenses': total_expenses,
         'net_earnings': net_earnings,
         'monthly_earnings': monthly_earnings,
-        'yearly_earnings': yearly_earnings
+        'yearly_earnings': yearly_earnings,
+        'years': years,
+        'months': months,
+        'selected_month': selected_month,
+        'selected_year': selected_year,
     })

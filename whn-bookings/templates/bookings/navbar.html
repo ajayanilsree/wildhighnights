@@ -8,17 +8,28 @@
 
         <!-- Desktop Links -->
         <div class="hidden md:flex items-center gap-8">
-            <a href="/#events" class="text-sm font-semibold text-white/70 hover:text-white transition-colors">Events</a>
-            <a href="/#artists" class="text-sm font-semibold text-white/70 hover:text-white transition-colors">Artists</a>
-            <a href="/#about" class="text-sm font-semibold text-white/70 hover:text-white transition-colors">About</a>
             {% if user.is_authenticated %}
-            <a href="{% url 'dashboard' %}" class="px-6 py-2 rounded-full bg-whn-purple text-white text-sm font-bold shadow-[0_0_20px_rgba(124,58,237,0.3)] transition-all duration-300 scale-100 hover:scale-105 active:scale-95">
-                Dashboard
-            </a>
+                {% if user.is_superuser or user.is_staff %}
+                    <!-- Admin Navigation -->
+                    <a href="{% url 'dashboard' %}" class="px-6 py-2 rounded-full bg-whn-purple text-white text-sm font-bold shadow-[0_0_20px_rgba(124,58,237,0.3)] transition-all duration-300 scale-100 hover:scale-105 active:scale-95">
+                        Dashboard
+                    </a>
+                    <a href="{% url 'logout' %}" class="text-sm font-semibold text-white/70 hover:text-white transition-colors">Logout</a>
+                {% else %}
+                    <!-- Artist Navigation -->
+                    <a href="{% url 'artist_dashboard' %}" class="px-6 py-2 rounded-full bg-whn-purple text-white text-sm font-bold shadow-[0_0_20px_rgba(124,58,237,0.3)] transition-all duration-300 scale-100 hover:scale-105 active:scale-95">
+                        Dashboard
+                    </a>
+                    <a href="{% url 'logout' %}" class="text-sm font-semibold text-white/70 hover:text-white transition-colors">Logout</a>
+                {% endif %}
             {% else %}
-            <a href="{% url 'login' %}" class="px-6 py-2 rounded-full glass border border-whn-purple/30 text-sm font-bold hover:bg-whn-purple hover:text-white hover:shadow-[0_0_20px_rgba(124,58,237,0.5)] transition-all duration-300 scale-100 hover:scale-105 active:scale-95">
-                Login
-            </a>
+                <!-- Public Navigation -->
+                <a href="/#events" class="text-sm font-semibold text-white/70 hover:text-white transition-colors">Events</a>
+                <a href="/#artists" class="text-sm font-semibold text-white/70 hover:text-white transition-colors">Artists</a>
+                <a href="/#about" class="text-sm font-semibold text-white/70 hover:text-white transition-colors">About</a>
+                <a href="{% url 'login' %}" class="px-6 py-2 rounded-full glass border border-whn-purple/30 text-sm font-bold hover:bg-whn-purple hover:text-white hover:shadow-[0_0_20px_rgba(124,58,237,0.5)] transition-all duration-300 scale-100 hover:scale-105 active:scale-95">
+                    Login
+                </a>
             {% endif %}
         </div>
 
@@ -37,13 +48,22 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
         </button>
-        <a href="/#events" class="text-3xl font-bold hover:text-whn-purple transition-colors mobile-link">Events</a>
-        <a href="/#artists" class="text-3xl font-bold hover:text-whn-purple transition-colors mobile-link">Artists</a>
-        <a href="/#about" class="text-3xl font-bold hover:text-whn-purple transition-colors mobile-link">About</a>
         {% if user.is_authenticated %}
-        <a href="{% url 'dashboard' %}" class="mt-4 px-10 py-3 rounded-full bg-whn-purple text-white text-xl font-bold transition-all mobile-link">Dashboard</a>
+            {% if user.is_superuser or user.is_staff %}
+                <!-- Admin Mobile Navigation -->
+                <a href="{% url 'dashboard' %}" class="text-3xl font-bold hover:text-whn-purple transition-colors mobile-link">Dashboard</a>
+                <a href="{% url 'logout' %}" class="mt-4 px-10 py-3 rounded-full bg-red-500 hover:bg-red-600 text-white text-xl font-bold transition-all mobile-link">Logout</a>
+            {% else %}
+                <!-- Artist Mobile Navigation -->
+                <a href="{% url 'artist_dashboard' %}" class="text-3xl font-bold hover:text-whn-purple transition-colors mobile-link">Dashboard</a>
+                <a href="{% url 'logout' %}" class="mt-4 px-10 py-3 rounded-full bg-red-500 hover:bg-red-600 text-white text-xl font-bold transition-all mobile-link">Logout</a>
+            {% endif %}
         {% else %}
-        <a href="{% url 'login' %}" class="mt-4 px-10 py-3 rounded-full glass border border-whn-purple/50 text-xl font-bold hover:bg-whn-purple hover:text-white transition-all mobile-link">Login</a>
+            <!-- Public Mobile Navigation -->
+            <a href="/#events" class="text-3xl font-bold hover:text-whn-purple transition-colors mobile-link">Events</a>
+            <a href="/#artists" class="text-3xl font-bold hover:text-whn-purple transition-colors mobile-link">Artists</a>
+            <a href="/#about" class="text-3xl font-bold hover:text-whn-purple transition-colors mobile-link">About</a>
+            <a href="{% url 'login' %}" class="mt-4 px-10 py-3 rounded-full glass border border-whn-purple/50 text-xl font-bold hover:bg-whn-purple hover:text-white transition-all mobile-link">Login</a>
         {% endif %}
     </div>
 </nav>

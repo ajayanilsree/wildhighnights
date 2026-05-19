@@ -1,0 +1,182 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+    /* Custom Scrollbar for Table Wrapper */
+    .table-responsive::-webkit-scrollbar {
+        height: 6px;
+    }
+    .table-responsive::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.02);
+        border-radius: 10px;
+    }
+    .table-responsive::-webkit-scrollbar-thumb {
+        background: linear-gradient(to right, #7C3AED, #007AFF);
+        border-radius: 10px;
+    }
+</style>
+
+<div class="min-h-screen bg-whn-dark pt-32 pb-20 px-6">
+    <div class="container mx-auto">
+        <!-- Header -->
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-12" data-aos="fade-down">
+            <div>
+                <a href="{% url 'manage_bookings' %}" class="text-whn-purple font-bold tracking-[0.3em] uppercase text-[10px] mb-4 flex items-center gap-2 hover:translate-x-[-4px] transition-transform w-fit">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                    </svg>
+                    Back to Bookings
+                </a>
+                <h1 class="text-6xl md:text-7xl font-black text-white tracking-tighter">Total Bookings</h1>
+            </div>
+            
+            <!-- Filters -->
+            <form method="get" action="{% url 'total_bookings' %}" class="flex flex-wrap items-center gap-4 bg-white/[0.02] border border-white/5 p-4 rounded-3xl glass">
+                <div class="flex flex-col gap-1">
+                    <label class="text-[9px] text-whn-tertiary font-bold uppercase tracking-wider pl-1">Month</label>
+                    <select name="month" onchange="this.form.submit()" class="px-5 py-2.5 rounded-xl bg-whn-dark border border-white/10 text-white font-bold text-xs focus:border-whn-purple/50 focus:outline-none transition-all cursor-pointer">
+                        {% for m in months %}
+                        <option value="{{ m.value }}" {% if m.value == selected_month %}selected{% endif %}>{{ m.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="flex flex-col gap-1">
+                    <label class="text-[9px] text-whn-tertiary font-bold uppercase tracking-wider pl-1">Year</label>
+                    <select name="year" onchange="this.form.submit()" class="px-5 py-2.5 rounded-xl bg-whn-dark border border-white/10 text-white font-bold text-xs focus:border-whn-purple/50 focus:outline-none transition-all cursor-pointer">
+                        {% for y in years %}
+                        <option value="{{ y }}" {% if y == selected_year %}selected{% endif %}>{{ y }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </form>
+        </div>
+
+        <!-- Summary Stats Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
+            <!-- Total Bookings -->
+            <div class="glass-card p-8 rounded-[2.5rem] border border-white/5 hover:border-whn-purple/30 transition-all duration-500 group" data-aos="fade-up" data-aos-delay="100">
+                <div class="flex items-center justify-between mb-6">
+                    <div class="w-12 h-12 rounded-2xl bg-whn-purple/10 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">📊</div>
+                    <span class="text-[10px] font-bold text-whn-purple uppercase tracking-widest">Total Bookings</span>
+                </div>
+                <div class="text-4xl font-black text-white mb-2">{{ total_count }}</div>
+                <p class="text-whn-tertiary text-xs">For selected period</p>
+            </div>
+
+            <!-- Confirmed -->
+            <div class="glass-card p-8 rounded-[2.5rem] border border-white/5 hover:border-green-500/30 transition-all duration-500 group" data-aos="fade-up" data-aos-delay="200">
+                <div class="flex items-center justify-between mb-6">
+                    <div class="w-12 h-12 rounded-2xl bg-green-500/10 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">✅</div>
+                    <span class="text-[10px] font-bold text-green-500 uppercase tracking-widest">Confirmed</span>
+                </div>
+                <div class="text-4xl font-black text-white mb-2">{{ confirmed_count }}</div>
+                <p class="text-whn-tertiary text-xs">Ready to execute</p>
+            </div>
+
+            <!-- Tentative -->
+            <div class="glass-card p-8 rounded-[2.5rem] border border-white/5 hover:border-yellow-500/30 transition-all duration-500 group" data-aos="fade-up" data-aos-delay="300">
+                <div class="flex items-center justify-between mb-6">
+                    <div class="w-12 h-12 rounded-2xl bg-yellow-500/10 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">⏳</div>
+                    <span class="text-[10px] font-bold text-yellow-500 uppercase tracking-widest">Tentative</span>
+                </div>
+                <div class="text-4xl font-black text-white mb-2">{{ tentative_count }}</div>
+                <p class="text-whn-tertiary text-xs">Awaiting confirmation</p>
+            </div>
+
+            <!-- Cancelled -->
+            <div class="glass-card p-8 rounded-[2.5rem] border border-white/5 hover:border-red-500/30 transition-all duration-500 group" data-aos="fade-up" data-aos-delay="400">
+                <div class="flex items-center justify-between mb-6">
+                    <div class="w-12 h-12 rounded-2xl bg-red-500/10 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">❌</div>
+                    <span class="text-[10px] font-bold text-red-500 uppercase tracking-widest">Cancelled</span>
+                </div>
+                <div class="text-4xl font-black text-white mb-2">{{ cancelled_count }}</div>
+                <p class="text-whn-tertiary text-xs">Removed schedules</p>
+            </div>
+        </div>
+
+        <!-- Bookings Table Card -->
+        <div class="glass-card rounded-[2.5rem] p-8 md:p-10 border border-white/5 shadow-2xl" data-aos="fade-up">
+            <div class="table-responsive overflow-x-auto">
+                <table class="w-full text-left border-collapse min-w-[1000px]">
+                    <thead>
+                        <tr class="border-b border-white/5 text-whn-tertiary">
+                            <th class="pb-6 text-[10px] font-black uppercase tracking-widest pl-4">Artist</th>
+                            <th class="pb-6 text-[10px] font-black uppercase tracking-widest">Event Type</th>
+                            <th class="pb-6 text-[10px] font-black uppercase tracking-widest">Venue</th>
+                            <th class="pb-6 text-[10px] font-black uppercase tracking-widest">Location</th>
+                            <th class="pb-6 text-[10px] font-black uppercase tracking-widest">Date</th>
+                            <th class="pb-6 text-[10px] font-black uppercase tracking-widest">Time</th>
+                            <th class="pb-6 text-[10px] font-black uppercase tracking-widest">Deal Amount</th>
+                            <th class="pb-6 text-[10px] font-black uppercase tracking-widest">Booking Type</th>
+                            <th class="pb-6 text-[10px] font-black uppercase tracking-widest text-right pr-4">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-white/5">
+                        {% for booking in bookings %}
+                        <tr class="group hover:bg-white/[0.01] transition-all duration-300">
+                            <!-- Artist -->
+                            <td class="py-6 pl-4">
+                                <div class="flex items-center gap-3">
+                                    {% if booking.artist.artist_image %}
+                                    <img src="{{ booking.artist.artist_image.url }}" alt="{{ booking.artist.name }}" class="w-8 h-8 rounded-full object-cover border border-white/10 group-hover:border-whn-purple/40 transition-colors">
+                                    {% else %}
+                                    <div class="w-8 h-8 rounded-full bg-whn-purple/20 flex items-center justify-center text-xs font-bold text-whn-purple">🎧</div>
+                                    {% endif %}
+                                    <span class="text-white font-bold text-sm group-hover:text-whn-purple transition-colors">{{ booking.artist.name }}</span>
+                                </div>
+                            </td>
+
+                            <!-- Event Type -->
+                            <td class="py-6 text-sm text-white/80 font-medium">{{ booking.event_type }}</td>
+
+                            <!-- Venue -->
+                            <td class="py-6 text-sm text-white font-bold">{{ booking.venue }}</td>
+
+                            <!-- Location -->
+                            <td class="py-6 text-sm text-whn-tertiary">{{ booking.location }}</td>
+
+                            <!-- Date -->
+                            <td class="py-6 text-sm text-white/80 font-semibold">{{ booking.date|date:"d M Y" }}</td>
+
+                            <!-- Time -->
+                            <td class="py-6 text-sm text-whn-tertiary">
+                                {% if booking.time %}
+                                    {{ booking.time|time:"H:i" }}
+                                {% else %}
+                                    <span class="italic text-white/10">TBA</span>
+                                {% endif %}
+                            </td>
+
+                            <!-- Deal Amount -->
+                            <td class="py-6 text-sm font-bold text-white">
+                                ₹{{ booking.deal_amount }}
+                            </td>
+
+                            <!-- Booking Type -->
+                            <td class="py-6 text-sm text-white/80 font-semibold">{{ booking.booking_type }}</td>
+
+                            <!-- Status -->
+                            <td class="py-6 text-right pr-4">
+                                {% if booking.status == 'Confirmed' %}
+                                <span class="px-3 py-1.5 rounded-full bg-green-500/10 border border-green-500/30 text-green-500 text-[9px] font-bold uppercase tracking-widest shadow-[0_0_15px_rgba(34,197,94,0.1)]">Confirmed</span>
+                                {% elif booking.status == 'Tentative' %}
+                                <span class="px-3 py-1.5 rounded-full bg-yellow-500/10 border border-yellow-500/30 text-yellow-500 text-[9px] font-bold uppercase tracking-widest shadow-[0_0_15px_rgba(234,179,8,0.1)]">Tentative</span>
+                                {% else %}
+                                <span class="px-3 py-1.5 rounded-full bg-red-500/10 border border-red-500/30 text-red-500 text-[9px] font-bold uppercase tracking-widest shadow-[0_0_15px_rgba(239,68,68,0.1)]">Cancelled</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="9" class="py-20 text-center text-whn-tertiary text-sm italic">No bookings found matching selected filters.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

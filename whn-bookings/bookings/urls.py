@@ -8,6 +8,7 @@ urlpatterns = [
     path('logout/', views.logout_view, name='logout'),
     path('dashboard/', views.dashboard_view, name='dashboard'),
     path('dashboard/bookings/', views.manage_bookings_view, name='manage_bookings'),
+    path('dashboard/bookings/total/', views.total_bookings_view, name='total_bookings'),
     path('dashboard/bookings/add/', views.add_booking_view, name='add_booking'),
     path('dashboard/bookings/<int:booking_id>/edit/', views.edit_booking_view, name='edit_booking'),
     path('dashboard/bookings/<int:booking_id>/delete/', views.delete_booking_view, name='delete_booking'),
@@ -24,6 +25,7 @@ urlpatterns = [
     path('dashboard/artists/<int:artist_id>/edit/', views.edit_artist_view, name='edit_artist'),
     path('dashboard/artists/<int:artist_id>/delete/', views.delete_artist_view, name='delete_artist'),
     path('dashboard/settings/', views.dashboard_settings_view, name='dashboard_settings'),
+    path('dashboard/calendar/', views.admin_calendar_view, name='admin_calendar'),
     
     # Artist Portal Routes
     path('artist/dashboard/', views.artist_dashboard_view, name='artist_dashboard'),
@@ -33,4 +35,7 @@ urlpatterns = [
     
     path('api/artists/', views.api_artists, name='api_artists'),
     path('api/bookings/', views.api_bookings, name='api_bookings'),
+    path('api/artist/calendar/', views.api_artist_calendar_events, name='api_artist_calendar_events'),
+    path('api/artist/calendar/busy/add/', views.api_add_busy_date, name='api_add_busy_date'),
+    path('api/artist/calendar/busy/remove/', views.api_remove_busy_date, name='api_remove_busy_date'),
 ]

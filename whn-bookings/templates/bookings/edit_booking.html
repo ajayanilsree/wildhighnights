@@ -11,7 +11,7 @@
         transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s ease-in-out, margin-top 0.5s ease-in-out;
     }
     .collapsible-container.show {
-        max-height: 200px;
+        max-height: 300px;
         opacity: 1;
         margin-top: 1.5rem;
     }
@@ -156,9 +156,11 @@
                         <h3 class="text-lg font-black text-white uppercase tracking-wider">Logistics & Documents</h3>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <!-- Travel Upload -->
+                        <!-- Travel Upload with Icon -->
                         <div class="relative group">
-                            <label class="text-[10px] font-bold text-whn-tertiary uppercase tracking-[0.2em] ml-1 mb-3 block group-focus-within:text-whn-purple transition-colors">Travel Info (PDF)</label>
+                            <label class="text-[10px] font-bold text-whn-tertiary uppercase tracking-[0.2em] ml-1 mb-3 block group-focus-within:text-whn-purple transition-colors flex items-center gap-1.5">
+                                <span>✈️</span> Travel Info (PDF)
+                            </label>
                             <input type="file" name="travel_pdf" accept="application/pdf" class="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-whn-purple/50 focus:ring-4 focus:ring-whn-purple/10 transition-all file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-white/10 file:text-white hover:file:bg-white/20">
                             {% if booking.travel_pdf %}
                             <p class="text-[10px] text-whn-purple font-medium mt-2 flex items-center gap-1.5">
@@ -167,15 +169,29 @@
                             {% endif %}
                         </div>
 
-                        <!-- Accommodation Upload -->
+                        <!-- Accommodation Upload with Icon -->
                         <div class="relative group">
-                            <label class="text-[10px] font-bold text-whn-tertiary uppercase tracking-[0.2em] ml-1 mb-3 block group-focus-within:text-whn-purple transition-colors">Accommodation (PDF)</label>
+                            <label class="text-[10px] font-bold text-whn-tertiary uppercase tracking-[0.2em] ml-1 mb-3 block group-focus-within:text-whn-purple transition-colors flex items-center gap-1.5">
+                                <span>🏨</span> Accommodation (PDF)
+                            </label>
                             <input type="file" name="accommodation_pdf" accept="application/pdf" class="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-whn-purple/50 focus:ring-4 focus:ring-whn-purple/10 transition-all file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-white/10 file:text-white hover:file:bg-white/20">
                             {% if booking.accommodation_pdf %}
                             <p class="text-[10px] text-whn-purple font-medium mt-2 flex items-center gap-1.5">
                                 📎 Current file: <a href="{{ booking.accommodation_pdf.url }}" target="_blank" class="underline hover:text-white transition-colors">View Accommodation</a>
                             </p>
                             {% endif %}
+                        </div>
+
+                        <!-- Hotel / Accommodation Details [NEW] -->
+                        <div class="relative group md:col-span-2">
+                            <label class="text-[10px] font-bold text-whn-tertiary uppercase tracking-[0.2em] ml-1 mb-3 block group-focus-within:text-whn-purple transition-colors flex items-center gap-1.5">
+                                <span>🏢</span> Hotel / Accommodation Details
+                            </label>
+                            <textarea name="accommodation_details" rows="3" maxlength="500" placeholder="Hotel name, address, check-in/check-out dates, room details, contact number..." class="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-whn-purple/50 focus:ring-4 focus:ring-whn-purple/10 transition-all placeholder:text-white/10 resize-none text-sm auto-expand">{% if booking.accommodation_details %}{{ booking.accommodation_details }}{% endif %}</textarea>
+                            <div class="flex justify-between items-center mt-2 px-1 text-[9px] text-whn-tertiary uppercase tracking-wider">
+                                <span>Character limit</span>
+                                <span class="char-count">0/500</span>
+                            </div>
                         </div>
 
                         <!-- Ground Transport Toggle -->
@@ -192,15 +208,18 @@
                                 </label>
                             </div>
 
-                            <!-- Ground Transport Document Upload -->
+                            <!-- Ground Transport Details [NEW] -->
                             <div id="transport-attachment-container" class="collapsible-container {% if booking.ground_transport == 'Yes' %}show{% endif %}">
-                                <label class="text-[10px] font-bold text-whn-tertiary uppercase tracking-[0.2em] ml-1 mb-3 block group-focus-within:text-whn-purple transition-colors">Transport Document</label>
-                                <input type="file" name="ground_transport_attachment" class="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-whn-purple/50 focus:ring-4 focus:ring-whn-purple/10 transition-all file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-white/10 file:text-white hover:file:bg-white/20">
-                                {% if booking.ground_transport_attachment %}
-                                <p class="text-[10px] text-whn-purple font-medium mt-2 flex items-center gap-1.5">
-                                    📎 Current file: <a href="{{ booking.ground_transport_attachment.url }}" target="_blank" class="underline hover:text-white transition-colors">View Transport Document</a>
-                                </p>
-                                {% endif %}
+                                <div class="group">
+                                    <label class="text-[10px] font-bold text-whn-tertiary uppercase tracking-[0.2em] ml-1 mb-3 block group-focus-within:text-whn-purple transition-colors flex items-center gap-1.5">
+                                        <span>🚗</span> Vehicle / Transport Details
+                                    </label>
+                                    <textarea name="transport_details" rows="3" maxlength="500" placeholder="Vehicle type, pickup timings, driver contact, airport pickup info, cab details..." class="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-whn-purple/50 focus:ring-4 focus:ring-whn-purple/10 transition-all placeholder:text-white/10 resize-none text-sm auto-expand">{% if booking.transport_details %}{{ booking.transport_details }}{% endif %}</textarea>
+                                    <div class="flex justify-between items-center mt-2 px-1 text-[9px] text-whn-tertiary uppercase tracking-wider">
+                                        <span>Character limit</span>
+                                        <span class="char-count">0/500</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -362,6 +381,31 @@
 
             expensesContainer.appendChild(row);
             bindRemoveHandler(row);
+        });
+
+        // Auto-expand textareas and Character counts
+        const textareas = document.querySelectorAll(".auto-expand");
+        textareas.forEach(textarea => {
+            const charCountSpan = textarea.parentElement.querySelector(".char-count");
+            
+            const updateCount = () => {
+                const len = textarea.value.length;
+                if (charCountSpan) {
+                    charCountSpan.textContent = `${len}/500`;
+                }
+            };
+            
+            textarea.addEventListener("input", () => {
+                // Auto expand
+                textarea.style.height = 'auto';
+                textarea.style.height = textarea.scrollHeight + 'px';
+                updateCount();
+            });
+            
+            // Run initially
+            textarea.style.height = 'auto';
+            textarea.style.height = textarea.scrollHeight + 'px';
+            updateCount();
         });
     });
 </script>

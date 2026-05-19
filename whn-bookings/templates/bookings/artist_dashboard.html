@@ -2,6 +2,98 @@
 {% load static %}
 
 {% block content %}
+<style>
+    .luxury-card {
+        position: relative;
+        overflow: hidden;
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(15px);
+        -webkit-backdrop-filter: blur(15px);
+        transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    
+    .luxury-card:hover {
+        transform: translateY(-8px) scale(1.02);
+        background: rgba(255, 255, 255, 0.04);
+    }
+    
+    /* Dynamic border glows on hover */
+    .card-purple:hover {
+        border-color: rgba(124, 58, 237, 0.4);
+        box-shadow: 0 30px 60px -15px rgba(124, 58, 237, 0.3), 0 0 0 1px rgba(124, 58, 237, 0.2);
+    }
+    .card-blue:hover {
+        border-color: rgba(0, 122, 255, 0.4);
+        box-shadow: 0 30px 60px -15px rgba(0, 122, 255, 0.3), 0 0 0 1px rgba(0, 122, 255, 0.2);
+    }
+    .card-pink-gold:hover {
+        border-color: rgba(236, 72, 153, 0.4);
+        box-shadow: 0 30px 60px -15px rgba(236, 72, 153, 0.3), 0 0 0 1px rgba(236, 72, 153, 0.2);
+    }
+    
+    /* Decorative corner light spots */
+    .light-spot {
+        position: absolute;
+        top: -20px;
+        right: -20px;
+        width: 130px;
+        height: 130px;
+        border-radius: 50%;
+        filter: blur(40px);
+        opacity: 0.12;
+        transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        pointer-events: none;
+    }
+    
+    .card-purple .light-spot {
+        background: radial-gradient(circle, #7C3AED 0%, transparent 70%);
+    }
+    .card-blue .light-spot {
+        background: radial-gradient(circle, #007AFF 0%, transparent 70%);
+    }
+    .card-pink-gold .light-spot {
+        background: radial-gradient(circle, #EC4899 0%, #EAB308 50%, transparent 80%);
+    }
+    
+    /* Hover states for light spots */
+    .card-purple:hover .light-spot {
+        opacity: 0.35;
+        transform: scale(1.4) translate(-10px, 10px);
+    }
+    .card-blue:hover .light-spot {
+        opacity: 0.35;
+        transform: scale(1.4) translate(-10px, 10px);
+    }
+    .card-pink-gold:hover .light-spot {
+        opacity: 0.35;
+        transform: scale(1.4) translate(-10px, 10px);
+    }
+
+    /* Icon Backing Styling */
+    .icon-container {
+        position: relative;
+        transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    
+    .card-purple:hover .icon-container {
+        background-color: rgba(124, 58, 237, 0.15);
+        border-color: rgba(124, 58, 237, 0.3);
+        box-shadow: 0 0 20px rgba(124, 58, 237, 0.2);
+    }
+    .card-blue:hover .icon-container {
+        background-color: rgba(0, 122, 255, 0.15);
+        border-color: rgba(0, 122, 255, 0.3);
+        box-shadow: 0 0 20px rgba(0, 122, 255, 0.2);
+    }
+    .card-pink-gold:hover .icon-container {
+        background-color: rgba(236, 72, 153, 0.15);
+        border-color: rgba(236, 72, 153, 0.3);
+        box-shadow: 0 0 20px rgba(236, 72, 153, 0.2);
+    }
+</style>
+
 <div class="min-h-screen bg-whn-dark pt-32 pb-20 px-6">
     <div class="container mx-auto max-w-6xl">
         <!-- Dashboard Header -->
@@ -52,42 +144,24 @@
             </div>
         </div>
 
-        <!-- 3 Main Interactive Dashboard Cards -->
-        <h2 class="text-2xl font-black text-white uppercase tracking-wider mb-8" data-aos="fade-right">Select Service</h2>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <!-- Main Interactive Dashboard Cards -->
+        <h2 class="text-2xl font-black text-white uppercase tracking-wider mb-8 text-center" data-aos="fade-right">Select Service</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
             <!-- 1. Calendar -->
-            <a href="{% url 'artist_calendar' %}" class="glass-card p-10 rounded-[3rem] border border-white/5 hover:border-whn-purple/50 hover:shadow-[0_0_50px_rgba(124,58,237,0.2)] transition-all duration-500 flex flex-col justify-between aspect-square group" data-aos="zoom-in" data-aos-delay="100">
-                <div class="w-16 h-16 rounded-[1.5rem] bg-whn-purple/10 flex items-center justify-center text-4xl group-hover:scale-110 transition-all duration-500">📅</div>
-                <div>
-                    <h3 class="text-3xl font-black text-white mb-4 group-hover:text-whn-purple transition-colors leading-tight">Calendar</h3>
-                    <p class="text-whn-tertiary text-sm leading-relaxed">View all scheduled dates, venues, performance times, and specific booking status details.</p>
-                </div>
-                <div class="text-right">
-                    <span class="text-whn-purple font-bold tracking-widest text-xs uppercase group-hover:translate-x-2 transition-transform inline-block">Explore →</span>
+            <a href="{% url 'artist_calendar' %}" class="luxury-card card-purple p-10 rounded-[3rem] aspect-square flex flex-col justify-between group" data-aos="zoom-in" data-aos-delay="100">
+                <div class="light-spot"></div>
+                <div class="w-20 h-20 rounded-[1.8rem] bg-white/[0.02] icon-container flex items-center justify-center text-4xl group-hover:scale-110">📅</div>
+                <div class="mt-auto">
+                    <h3 class="text-3xl font-black text-white group-hover:text-whn-purple transition-colors leading-none tracking-tight">Calendar</h3>
                 </div>
             </a>
 
             <!-- 2. Accounts -->
-            <a href="{% url 'artist_accounts' %}" class="glass-card p-10 rounded-[3rem] border border-white/5 hover:border-whn-blue/50 hover:shadow-[0_0_50px_rgba(0,122,255,0.2)] transition-all duration-500 flex flex-col justify-between aspect-square group" data-aos="zoom-in" data-aos-delay="200">
-                <div class="w-16 h-16 rounded-[1.5rem] bg-whn-blue/10 flex items-center justify-center text-4xl group-hover:scale-110 transition-all duration-500">💎</div>
-                <div>
-                    <h3 class="text-3xl font-black text-white mb-4 group-hover:text-whn-blue transition-colors leading-tight">Accounts</h3>
-                    <p class="text-whn-tertiary text-sm leading-relaxed">Access full contracts, client details, deal parameters, GST statements, and download essential documents (PDFs).</p>
-                </div>
-                <div class="text-right">
-                    <span class="text-whn-blue font-bold tracking-widest text-xs uppercase group-hover:translate-x-2 transition-transform inline-block">Explore →</span>
-                </div>
-            </a>
-
-            <!-- 3. Earnings & Expenses -->
-            <a href="{% url 'artist_earnings' %}" class="glass-card p-10 rounded-[3rem] border border-white/5 hover:border-pink-500/50 hover:shadow-[0_0_50px_rgba(236,72,153,0.2)] transition-all duration-500 flex flex-col justify-between aspect-square group" data-aos="zoom-in" data-aos-delay="300">
-                <div class="w-16 h-16 rounded-[1.5rem] bg-pink-500/10 flex items-center justify-center text-4xl group-hover:scale-110 transition-all duration-500">📊</div>
-                <div>
-                    <h3 class="text-3xl font-black text-white mb-4 group-hover:text-pink-500 transition-colors leading-tight">Earnings & Expenses</h3>
-                    <p class="text-whn-tertiary text-sm leading-relaxed">Deep-dive into payout calculations, commission splits, deductable production costs, and annual statements.</p>
-                </div>
-                <div class="text-right">
-                    <span class="text-pink-500 font-bold tracking-widest text-xs uppercase group-hover:translate-x-2 transition-transform inline-block">Explore →</span>
+            <a href="{% url 'artist_earnings' %}" class="luxury-card card-pink-gold p-10 rounded-[3rem] aspect-square flex flex-col justify-between group" data-aos="zoom-in" data-aos-delay="300">
+                <div class="light-spot"></div>
+                <div class="w-20 h-20 rounded-[1.8rem] bg-white/[0.02] icon-container flex items-center justify-center text-4xl group-hover:scale-110">📊</div>
+                <div class="mt-auto">
+                    <h3 class="text-3xl font-black text-white group-hover:text-pink-500 transition-colors leading-none tracking-tight">Accounts</h3>
                 </div>
             </a>
         </div>

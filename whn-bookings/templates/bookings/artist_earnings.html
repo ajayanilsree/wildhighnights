@@ -16,6 +16,174 @@
             <h1 class="text-5xl md:text-6xl font-black text-white tracking-tighter">Earnings & Expenses</h1>
         </div>
 
+        <!-- Custom scrollbar styles -->
+        <style>
+            .custom-scrollbar::-webkit-scrollbar {
+                width: 6px;
+            }
+            .custom-scrollbar::-webkit-scrollbar-track {
+                background: rgba(255, 255, 255, 0.02);
+                border-radius: 10px;
+            }
+            .custom-scrollbar::-webkit-scrollbar-thumb {
+                background: #7C3AED;
+                border-radius: 10px;
+            }
+        </style>
+
+        <!-- Filter Controls -->
+        <div class="glass-card p-6 md:p-8 rounded-3xl border border-white/5 mb-12 relative z-50" data-aos="fade-up" data-aos-delay="50">
+            <form id="filter-form" method="GET" class="flex flex-col md:flex-row md:items-end gap-6">
+                <!-- Month Dropdown -->
+                <div class="flex-1">
+                    <label class="text-[9px] font-bold text-whn-tertiary uppercase tracking-widest block mb-2">Filter by Month</label>
+                    <div class="relative custom-dropdown">
+                        <button type="button" class="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-5 py-3.5 text-white text-sm flex items-center justify-between focus:outline-none focus:border-whn-purple/50 focus:ring-4 focus:ring-whn-purple/10 transition-all dropdown-trigger">
+                            <span class="selected-label">All Months</span>
+                            <svg class="h-4 w-4 text-white/40 transition-transform dropdown-arrow" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+                        <input type="hidden" name="month" value="{{ selected_month }}">
+                        <ul class="absolute z-[9999] left-0 right-0 mt-2 bg-[#14141d] border border-white/10 rounded-2xl py-2 shadow-2xl hidden opacity-0 scale-95 origin-top transition-all duration-200 dropdown-menu max-h-60 overflow-y-auto custom-scrollbar">
+                            <li class="px-5 py-3 text-sm text-white/60 hover:text-white hover:bg-whn-purple/30 cursor-pointer transition-colors" data-value="">All Months</li>
+                            {% for m in months %}
+                            <li class="px-5 py-3 text-sm text-white/60 hover:text-white hover:bg-whn-purple/30 cursor-pointer transition-colors" data-value="{{ m.value }}">{{ m.name }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Year Dropdown -->
+                <div class="flex-1">
+                    <label class="text-[9px] font-bold text-whn-tertiary uppercase tracking-widest block mb-2">Filter by Year</label>
+                    <div class="relative custom-dropdown">
+                        <button type="button" class="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-5 py-3.5 text-white text-sm flex items-center justify-between focus:outline-none focus:border-whn-purple/50 focus:ring-4 focus:ring-whn-purple/10 transition-all dropdown-trigger">
+                            <span class="selected-label">All Years</span>
+                            <svg class="h-4 w-4 text-white/40 transition-transform dropdown-arrow" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+                        <input type="hidden" name="year" value="{{ selected_year }}">
+                        <ul class="absolute z-[9999] left-0 right-0 mt-2 bg-[#14141d] border border-white/10 rounded-2xl py-2 shadow-2xl hidden opacity-0 scale-95 origin-top transition-all duration-200 dropdown-menu max-h-60 overflow-y-auto custom-scrollbar">
+                            <li class="px-5 py-3 text-sm text-white/60 hover:text-white hover:bg-whn-purple/30 cursor-pointer transition-colors" data-value="">All Years</li>
+                            {% for y in years %}
+                            <li class="px-5 py-3 text-sm text-white/60 hover:text-white hover:bg-whn-purple/30 cursor-pointer transition-colors" data-value="{{ y }}">{{ y }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex items-center gap-4">
+                    <button type="submit" class="px-8 py-3.5 rounded-2xl bg-whn-purple hover:bg-whn-purple/90 text-white text-xs font-black shadow-[0_0_20px_rgba(124,58,237,0.3)] transition-all hover:scale-105">Apply Filter</button>
+                    <a href="{% url 'artist_earnings' %}" class="px-6 py-3.5 rounded-2xl bg-white/5 border border-white/10 text-white text-xs font-bold hover:bg-white/10 transition-all text-center">Reset</a>
+                </div>
+            </form>
+        </div>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                const dropdowns = document.querySelectorAll('.custom-dropdown');
+                
+                dropdowns.forEach(dropdown => {
+                    const trigger = dropdown.querySelector('.dropdown-trigger');
+                    const arrow = dropdown.querySelector('.dropdown-arrow');
+                    const menu = dropdown.querySelector('.dropdown-menu');
+                    const input = dropdown.querySelector('input[type="hidden"]');
+                    const label = dropdown.querySelector('.selected-label');
+                    const items = dropdown.querySelectorAll('li');
+                    
+                    // Initialize selected item on page load
+                    const initialVal = input.value;
+                    let found = false;
+                    items.forEach(item => {
+                        if (item.getAttribute('data-value') === initialVal) {
+                            label.innerText = item.innerText;
+                            item.classList.add('bg-whn-purple/40', 'text-white', 'font-bold');
+                            item.classList.remove('text-white/60');
+                            found = true;
+                        } else {
+                            item.classList.remove('bg-whn-purple/40', 'text-white', 'font-bold');
+                            item.classList.add('text-white/60');
+                        }
+                    });
+                    if (!found && items.length > 0) {
+                        label.innerText = items[0].innerText;
+                        items[0].classList.add('bg-whn-purple/40', 'text-white', 'font-bold');
+                        items[0].classList.remove('text-white/60');
+                    }
+                    
+                    // Toggle menu
+                    trigger.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        
+                        // Close other dropdowns
+                        document.querySelectorAll('.dropdown-menu').forEach(m => {
+                            if (m !== menu) {
+                                m.classList.add('hidden', 'opacity-0', 'scale-95');
+                                const otherArrow = m.closest('.custom-dropdown').querySelector('.dropdown-arrow');
+                                if (otherArrow) otherArrow.classList.remove('rotate-180');
+                            }
+                        });
+                        
+                        const isHidden = menu.classList.contains('hidden');
+                        if (isHidden) {
+                            menu.classList.remove('hidden');
+                            setTimeout(() => {
+                                menu.classList.remove('opacity-0', 'scale-95');
+                            }, 10);
+                            arrow.classList.add('rotate-180');
+                        } else {
+                            menu.classList.add('opacity-0', 'scale-95');
+                            arrow.classList.remove('rotate-180');
+                            setTimeout(() => {
+                                menu.classList.add('hidden');
+                            }, 200);
+                        }
+                    });
+                    
+                    // Select item
+                    items.forEach(item => {
+                        item.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            
+                            const val = item.getAttribute('data-value');
+                            input.value = val;
+                            label.innerText = item.innerText;
+                            
+                            // Highlight item
+                            items.forEach(i => {
+                                i.classList.remove('bg-whn-purple/40', 'text-white', 'font-bold');
+                                i.classList.add('text-white/60');
+                            });
+                            item.classList.add('bg-whn-purple/40', 'text-white', 'font-bold');
+                            item.classList.remove('text-white/60');
+                            
+                            // Close menu
+                            menu.classList.add('opacity-0', 'scale-95');
+                            arrow.classList.remove('rotate-180');
+                            setTimeout(() => {
+                                menu.classList.add('hidden');
+                            }, 200);
+                        });
+                    });
+                });
+                
+                // Close dropdowns on outside click
+                document.addEventListener('click', () => {
+                    document.querySelectorAll('.dropdown-menu').forEach(menu => {
+                        menu.classList.add('opacity-0', 'scale-95');
+                        const arrow = menu.closest('.custom-dropdown').querySelector('.dropdown-arrow');
+                        if (arrow) arrow.classList.remove('rotate-180');
+                        setTimeout(() => {
+                            menu.classList.add('hidden');
+                        }, 200);
+                    });
+                });
+            });
+        </script>
+
         <!-- Aggregate Summary Piles -->
         <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6 mb-16">
             <!-- Total Earnings -->

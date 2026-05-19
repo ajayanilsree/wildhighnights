@@ -65,6 +65,18 @@
                                 <span class="text-[10px] text-whn-tertiary uppercase tracking-wider block">Event Venue & City</span>
                                 <span class="text-white font-bold text-sm">{{ item.booking.venue }}, {{ item.booking.location }}</span>
                             </div>
+                            <div>
+                                <span class="text-[10px] text-whn-tertiary uppercase tracking-wider block">Event Type</span>
+                                <span class="text-white font-bold text-sm">{{ item.booking.event_type }}</span>
+                            </div>
+                            <div>
+                                <span class="text-[10px] text-whn-tertiary uppercase tracking-wider block">Sound Check Required</span>
+                                <span class="text-white font-bold text-sm">{{ item.booking.sound_check }}</span>
+                            </div>
+                            <div>
+                                <span class="text-[10px] text-whn-tertiary uppercase tracking-wider block">Ground Transport</span>
+                                <span class="text-white font-bold text-sm">{{ item.booking.ground_transport }}</span>
+                            </div>
                         </div>
                     </div>
 
@@ -127,18 +139,7 @@
                             </div>
                             {% endif %}
 
-                            <!-- Ground Transport attachment -->
-                            {% if item.booking.ground_transport_attachment %}
-                            <a href="{{ item.booking.ground_transport_attachment.url }}" download class="w-full px-5 py-3 rounded-xl bg-white/[0.03] border border-white/10 hover:border-whn-purple/50 flex items-center justify-between text-xs font-bold text-white hover:text-whn-purple transition-all duration-300">
-                                <span>🚗 Transport Attachment</span>
-                                <span class="text-[10px] uppercase tracking-widest opacity-60">Download</span>
-                            </a>
-                            {% else %}
-                            <div class="w-full px-5 py-3 rounded-xl bg-white/[0.01] border border-white/5 flex items-center justify-between text-xs text-white/30 cursor-not-allowed">
-                                <span>🚗 Ground Transport</span>
-                                <span class="text-[10px] uppercase tracking-widest opacity-35">TBA</span>
-                            </div>
-                            {% endif %}
+
 
                             <!-- Artwork attachment -->
                             {% if item.booking.artwork_attachment %}
@@ -156,6 +157,52 @@
                     </div>
 
                 </div>
+
+                <!-- Accommodation & Transport Details Row [NEW] -->
+                {% if item.booking.accommodation_details or item.booking.ground_transport == 'Yes' %}
+                <div class="mt-8 pt-8 border-t border-white/5 grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <!-- Hotel / Accommodation Details -->
+                    {% if item.booking.accommodation_details %}
+                    <div class="space-y-3">
+                        <span class="text-[10px] text-whn-tertiary uppercase tracking-wider block flex items-center gap-1.5 font-bold">
+                            <span>🏨</span> Hotel / Accommodation Details
+                        </span>
+                        <div class="p-5 rounded-2xl bg-white/[0.02] border border-white/5 text-whn-tertiary text-sm leading-relaxed whitespace-pre-line hover:border-whn-purple/20 transition-all duration-300">
+                            {{ item.booking.accommodation_details }}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Vehicle / Transport Details -->
+                    {% if item.booking.ground_transport == 'Yes' %}
+                    <div class="space-y-3">
+                        <span class="text-[10px] text-whn-tertiary uppercase tracking-wider block flex items-center gap-1.5 font-bold">
+                            <span>🚗</span> Vehicle / Transport Details
+                        </span>
+                        <div class="p-5 rounded-2xl bg-white/[0.02] border border-white/5 text-whn-tertiary text-sm leading-relaxed whitespace-pre-line hover:border-whn-purple/20 transition-all duration-300">
+                            {{ item.booking.transport_details|default:"Details to be announced shortly." }}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+                <!-- Expenses Breakdown Row [NEW] -->
+                {% if item.booking.expenses.all %}
+                <div class="mt-8 pt-8 border-t border-white/5">
+                    <span class="text-[10px] text-whn-tertiary uppercase tracking-wider block mb-4 font-bold flex items-center gap-1.5">
+                        <span>🧾</span> Additional Expenses Breakdown
+                    </span>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {% for exp in item.booking.expenses.all %}
+                        <div class="p-5 rounded-2xl bg-white/[0.02] border border-white/5 flex items-center justify-between text-sm hover:border-whn-purple/20 transition-all duration-300">
+                            <span class="text-whn-tertiary">{{ exp.name }}</span>
+                            <span class="text-white font-black">₹{{ exp.amount }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
 
                 <!-- Notes / Remarks row -->
                 {% if item.booking.notes %}
