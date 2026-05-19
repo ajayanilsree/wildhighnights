@@ -1,0 +1,23 @@
+# Environmental variables
+.env
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Python caching
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Databases and local configuration files
+db.sqlite3
+
+# Media/uploads & compiled static files
+media/
+staticfiles/
+
+# OS-specific files
+.DS_Store
+Thumbs.db
