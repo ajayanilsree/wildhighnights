@@ -562,32 +562,270 @@
 </section>
 
 <!-- Gallery Section -->
-<section class="py-32 bg-grid">
+<section class="py-32 bg-grid relative overflow-hidden">
     <div class="container mx-auto px-6">
+        <style>
+            /* Gallery Carousel Sizing & Layout */
+            .gallery-carousel-wrapper {
+                position: relative;
+                width: 100%;
+                overflow: hidden;
+            }
+            .gallery-carousel-track {
+                display: flex;
+                transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+                will-change: transform;
+            }
+            .gallery-carousel-card {
+                width: 100%;
+                flex-shrink: 0;
+            }
+            @media (min-width: 640px) {
+                .gallery-carousel-card {
+                    width: calc((100% - 24px) / 2); /* Tablet Small: 2 items, 24px gap */
+                }
+            }
+            @media (min-width: 768px) {
+                .gallery-carousel-card {
+                    width: calc((100% - 48px) / 3); /* Tablet Large: 3 items, 24px gap */
+                }
+            }
+            @media (min-width: 1024px) {
+                .gallery-carousel-card {
+                    width: calc((100% - 72px) / 4); /* Desktop Small: 4 items, 24px gap */
+                }
+            }
+            @media (min-width: 1280px) {
+                .gallery-carousel-card {
+                    width: calc((100% - 96px) / 5); /* Desktop Large: 5 items, 24px gap */
+                }
+            }
+        </style>
+
         <div class="text-center mb-20" data-aos="fade-up">
             <span class="text-whn-purple font-bold tracking-[0.2em] uppercase text-sm mb-4 block">Moments</span>
             <h2 class="text-5xl md:text-6xl font-black text-white">Gallery</h2>
         </div>
         
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {% for img in gallery_images %}
-            <div class="group relative aspect-square overflow-hidden rounded-[2rem] glass border border-white/5" data-aos="zoom-in" data-aos-delay="{{ forloop.counter }}00">
-                <img src="{{ img.image.url }}" alt="{{ img.title|default:'Gallery Image' }}" class="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110">
-                <div class="absolute inset-0 bg-gradient-to-t from-whn-dark via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex flex-col justify-end p-8">
-                    {% if img.title %}
-                    <p class="text-white font-black text-lg tracking-tight translate-y-4 group-hover:translate-y-0 transition-transform duration-500">{{ img.title }}</p>
-                    <p class="text-whn-tertiary text-[10px] uppercase tracking-widest mt-2 translate-y-4 group-hover:translate-y-0 transition-transform duration-500 delay-100">Wild High Nights</p>
-                    {% endif %}
+        {% if gallery_images %}
+        <div class="relative w-full px-2" data-aos="fade-up">
+            <!-- Carousel Wrapper -->
+            <div class="gallery-carousel-wrapper select-none cursor-grab active:cursor-grabbing opacity-0 transition-opacity duration-300">
+                <div id="gallery-carousel-track" class="gallery-carousel-track gap-6">
+                    {% for img in gallery_images %}
+                    <!-- Gallery Card -->
+                    <div class="gallery-carousel-card group">
+                        <div class="relative aspect-square overflow-hidden rounded-[2rem] glass border border-white/5">
+                            <img src="{{ img.image.url }}" alt="{{ img.title|default:'Gallery Image' }}" class="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110 pointer-events-none">
+                            <div class="absolute inset-0 bg-gradient-to-t from-whn-dark via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex flex-col justify-end p-8">
+                                {% if img.title %}
+                                <p class="text-white font-black text-lg tracking-tight translate-y-4 group-hover:translate-y-0 transition-transform duration-500">{{ img.title }}</p>
+                                <p class="text-whn-tertiary text-[10px] uppercase tracking-widest mt-2 translate-y-4 group-hover:translate-y-0 transition-transform duration-500 delay-100">Wild High Nights</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
                 </div>
             </div>
-            {% empty %}
-            <div class="col-span-full text-center py-20">
-                <p class="text-whn-tertiary italic">Gallery is being updated. Check back soon!</p>
-            </div>
-            {% endfor %}
+            
+            <!-- Navigation Buttons -->
+            <button id="gallery-prev" class="absolute left-0 md:-left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 md:w-14 md:h-14 rounded-full bg-whn-dark/60 backdrop-blur-md border border-white/10 hover:border-whn-purple/50 flex items-center justify-center text-white hover:text-whn-purple hover:shadow-[0_0_25px_rgba(124,58,237,0.4),_0_0_50px_rgba(0,122,255,0.2)] hover:scale-110 active:scale-95 transition-all duration-300">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 md:h-6 md:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg>
+            </button>
+            <button id="gallery-next" class="absolute right-0 md:-right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 md:w-14 md:h-14 rounded-full bg-whn-dark/60 backdrop-blur-md border border-white/10 hover:border-whn-purple/50 flex items-center justify-center text-white hover:text-whn-purple hover:shadow-[0_0_25px_rgba(124,58,237,0.4),_0_0_50px_rgba(0,122,255,0.2)] hover:scale-110 active:scale-95 transition-all duration-300">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 md:h-6 md:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+            </button>
         </div>
+        {% else %}
+        <div class="w-full text-center py-20" data-aos="fade-up">
+            <p class="text-whn-tertiary italic">Gallery is being updated. Check back soon!</p>
+        </div>
+        {% endif %}
     </div>
 </section>
+
+{% if gallery_images %}
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const track = document.getElementById("gallery-carousel-track");
+        const prevBtn = document.getElementById("gallery-prev");
+        const nextBtn = document.getElementById("gallery-next");
+        const wrapper = document.querySelector(".gallery-carousel-wrapper");
+
+        if (!track || !prevBtn || !nextBtn || !wrapper) return;
+
+        const originalCards = Array.from(track.querySelectorAll(".gallery-carousel-card"));
+        const N = originalCards.length;
+        if (N === 0) return;
+
+        const numClones = 5;
+
+        // Clone first N/5 items and append/prepend
+        // Append clones to end
+        for (let i = 0; i < numClones; i++) {
+            const clone = originalCards[i % N].cloneNode(true);
+            clone.removeAttribute('data-aos');
+            track.appendChild(clone);
+        }
+
+        // Prepend clones to start (maintain chronological order)
+        for (let i = 0; i < numClones; i++) {
+            const index = (N - numClones + i) % N;
+            const safeIndex = (index + N) % N;
+            const clone = originalCards[safeIndex].cloneNode(true);
+            clone.removeAttribute('data-aos');
+            track.insertBefore(clone, track.firstChild);
+        }
+
+        let currentIndex = numClones;
+        let isTransitioning = false;
+
+        const getItemsPerSlide = () => {
+            const width = window.innerWidth;
+            if (width >= 1280) return 5;
+            if (width >= 1024) return 4;
+            if (width >= 768) return 3;
+            if (width >= 640) return 2;
+            return 1;
+        };
+
+        const getGap = () => {
+            const style = window.getComputedStyle(track);
+            return parseFloat(style.gap) || 24;
+        };
+
+        const updateCarousel = (animate = true) => {
+            const cards = track.querySelectorAll(".gallery-carousel-card");
+            if (cards.length === 0) return;
+
+            const cardWidth = cards[0].getBoundingClientRect().width;
+            const gap = getGap();
+            const offset = currentIndex * (cardWidth + gap);
+
+            if (animate) {
+                track.style.transition = "transform 0.6s cubic-bezier(0.25, 1, 0.5, 1)";
+                isTransitioning = true;
+            } else {
+                track.style.transition = "none";
+            }
+
+            track.style.transform = `translateX(-${offset}px)`;
+        };
+
+        // Transition End handling for infinite loop jumping
+        track.addEventListener("transitionend", () => {
+            isTransitioning = false;
+            if (currentIndex >= N + numClones) {
+                currentIndex = currentIndex - N;
+                updateCarousel(false);
+            } else if (currentIndex < numClones) {
+                currentIndex = currentIndex + N;
+                updateCarousel(false);
+            }
+        });
+
+        prevBtn.addEventListener("click", () => {
+            if (isTransitioning) return;
+            currentIndex--;
+            updateCarousel(true);
+        });
+
+        nextBtn.addEventListener("click", () => {
+            if (isTransitioning) return;
+            currentIndex++;
+            updateCarousel(true);
+        });
+
+        // Swipe/Drag support
+        let isDragging = false;
+        let startX = 0;
+        let currentTranslate = 0;
+        let prevTranslate = 0;
+        let animationID = 0;
+
+        const getTranslateX = () => {
+            const style = window.getComputedStyle(track);
+            const matrix = new WebKitCSSMatrix(style.transform);
+            return matrix.m41;
+        };
+
+        const dragStart = (e) => {
+            // Check if user is clicking on buttons or their SVG contents to prevent drag taking over
+            if (e.target.closest('#gallery-prev') || e.target.closest('#gallery-next')) return;
+            
+            isDragging = true;
+            startX = e.type.includes("touch") ? e.touches[0].clientX : e.clientX;
+            prevTranslate = getTranslateX();
+            track.style.transition = "none";
+            animationID = requestAnimationFrame(animation);
+        };
+
+        const dragMove = (e) => {
+            if (!isDragging) return;
+            const currentX = e.type.includes("touch") ? e.touches[0].clientX : e.clientX;
+            const diff = currentX - startX;
+            currentTranslate = prevTranslate + diff;
+        };
+
+        const dragEnd = () => {
+            if (!isDragging) return;
+            isDragging = false;
+            cancelAnimationFrame(animationID);
+            track.style.transition = "transform 0.6s cubic-bezier(0.25, 1, 0.5, 1)";
+
+            const movedBy = currentTranslate - prevTranslate;
+
+            // Swipe threshold check
+            if (movedBy < -80) {
+                currentIndex++;
+            } else if (movedBy > 80) {
+                currentIndex--;
+            }
+
+            updateCarousel(true);
+        };
+
+        const animation = () => {
+            if (isDragging) {
+                track.style.transform = `translateX(${currentTranslate}px)`;
+                requestAnimationFrame(animation);
+            }
+        };
+
+        // Desktop drag events
+        wrapper.addEventListener("mousedown", dragStart);
+        window.addEventListener("mousemove", dragMove);
+        window.addEventListener("mouseup", dragEnd);
+
+        // Mobile touch events
+        wrapper.addEventListener("touchstart", dragStart, { passive: true });
+        window.addEventListener("touchmove", dragMove, { passive: true });
+        window.addEventListener("touchend", dragEnd);
+
+        // Recalculate layout on window resize
+        let resizeTimeout;
+        window.addEventListener("resize", () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                updateCarousel(false);
+            }, 100);
+        });
+
+        // Initialize Carousel
+        setTimeout(() => {
+            updateCarousel(false);
+            wrapper.classList.remove("opacity-0");
+            wrapper.classList.add("opacity-100");
+        }, 150);
+    });
+</script>
+{% endif %}
+
 
 <!-- CTA Section -->
 <section class="py-40 relative overflow-hidden">
