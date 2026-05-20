@@ -45,7 +45,6 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'cloudinary_storage',
     'django.contrib.staticfiles',
     'cloudinary',
     'bookings',
@@ -174,7 +173,6 @@ if CLOUDINARY_CLOUD_NAME and CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET:
         'API_KEY': CLOUDINARY_API_KEY,
         'API_SECRET': CLOUDINARY_API_SECRET,
     }
-    DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
     STORAGES = {
         "default": {
             "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
@@ -194,7 +192,6 @@ if CLOUDINARY_CLOUD_NAME and CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET:
     except ImportError:
         pass
 else:
-    DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
     STORAGES = {
         "default": {
             "BACKEND": "django.core.files.storage.FileSystemStorage",
