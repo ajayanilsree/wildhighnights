@@ -30,11 +30,46 @@
                 <div class="relative group">
                     <label class="text-[10px] font-bold text-whn-tertiary uppercase tracking-[0.2em] ml-1 mb-3 block group-focus-within:text-whn-purple transition-colors">Upload Picture</label>
                     <div class="relative">
-                        <input type="file" name="image" required accept=".jpg,.jpeg,.png,.webp" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
+                        <!-- Transparent file input positioned on top (z-20) to intercept general click events -->
+                        <input type="file" id="image" name="image" required accept=".jpg,.jpeg,.png,.webp" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20">
+                        
                         <div class="w-full bg-white/[0.03] border border-white/10 border-dashed rounded-2xl px-6 py-10 text-center group-hover:border-whn-purple/50 transition-all">
-                            <div class="text-4xl mb-3">📸</div>
-                            <p class="text-xs text-whn-tertiary font-bold uppercase tracking-widest">Click to upload gallery image</p>
-                            <p class="text-[8px] text-white/20 mt-2 uppercase tracking-widest">JPG, PNG, WEBP ONLY</p>
+                            <!-- 1. Placeholder State -->
+                            <div id="placeholder-container" class="transition-all duration-300">
+                                <div class="text-4xl mb-3">📸</div>
+                                <p class="text-xs text-whn-tertiary font-bold uppercase tracking-widest">Click to upload gallery image</p>
+                                <p class="text-[8px] text-white/20 mt-2 uppercase tracking-widest">JPG, PNG, WEBP ONLY</p>
+                            </div>
+
+                            <!-- 2. Preview State (Hidden by default) -->
+                            <div id="preview-container" class="hidden flex flex-col items-center justify-center transition-all duration-300">
+                                <!-- Success Badge -->
+                                <div class="flex items-center gap-2 mb-4 bg-emerald-500/10 border border-emerald-500/20 px-4 py-1.5 rounded-full">
+                                    <span class="text-emerald-400 text-xs">✓</span>
+                                    <span class="text-[9px] font-bold text-emerald-400 uppercase tracking-widest">Image Selected</span>
+                                </div>
+                                
+                                <!-- Image Thumbnail -->
+                                <div class="relative w-36 h-36 rounded-2xl overflow-hidden border border-white/10 shadow-lg mb-4 hover:border-whn-purple/50 transition-colors">
+                                    <img id="image-preview" src="" alt="Preview" class="w-full h-full object-cover">
+                                </div>
+                                
+                                <!-- File Info and Action Buttons -->
+                                <div class="text-center w-full max-w-xs">
+                                    <p id="filename-text" class="text-xs text-white font-medium truncate mb-3 px-4"></p>
+                                    <div class="flex items-center justify-center gap-3">
+                                        <!-- Buttons marked with relative z-30 so they intercept click events instead of the z-20 transparent input -->
+                                        <button type="button" id="btn-change-image" class="relative z-30 px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-[9px] font-bold text-whn-tertiary uppercase tracking-widest hover:bg-whn-purple/20 hover:border-whn-purple/50 hover:text-white transition-all">
+                                            Change Image
+                                        </button>
+                                        <button type="button" id="btn-remove-image" class="relative z-30 p-2 rounded-xl bg-red-500/10 border border-red-500/25 text-red-400 hover:bg-red-500/20 hover:border-red-500/50 hover:text-white transition-all" title="Remove Image">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -61,4 +96,46 @@
         </div>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const fileInput = document.getElementById('image');
+        const placeholderContainer = document.getElementById('placeholder-container');
+        const previewContainer = document.getElementById('preview-container');
+        const imagePreview = document.getElementById('image-preview');
+        const filenameText = document.getElementById('filename-text');
+        const btnChange = document.getElementById('btn-change-image');
+        const btnRemove = document.getElementById('btn-remove-image');
+
+        fileInput.addEventListener('change', function(e) {
+            const file = this.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    imagePreview.src = event.target.result;
+                    filenameText.textContent = file.name;
+                    placeholderContainer.classList.add('hidden');
+                    previewContainer.classList.remove('hidden');
+                };
+                reader.readAsDataURL(file);
+            } else {
+                imagePreview.src = '';
+                filenameText.textContent = '';
+                placeholderContainer.classList.remove('hidden');
+                previewContainer.classList.add('hidden');
+            }
+        });
+
+        btnChange.addEventListener('click', (e) => {
+            e.stopPropagation();
+            fileInput.click();
+        });
+
+        btnRemove.addEventListener('click', (e) => {
+            e.stopPropagation();
+            fileInput.value = '';
+            fileInput.dispatchEvent(new Event('change'));
+        });
+    });
+</script>
 {% endblock %}
