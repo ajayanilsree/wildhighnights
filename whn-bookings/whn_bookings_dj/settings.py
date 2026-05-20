@@ -84,7 +84,7 @@ WSGI_APPLICATION = 'whn_bookings_dj.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-DATABASE_URL = os.getenv('DATABASE_URL')
+DATABASE_URL = os.getenv('DATABASE_URL', '').strip()
 
 if DATABASE_URL:
     DATABASES = {
@@ -97,6 +97,7 @@ else:
             'NAME': BASE_DIR / 'db.sqlite3',
         }
     }
+
 
 
 # Password validation
