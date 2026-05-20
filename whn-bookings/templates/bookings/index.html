@@ -663,27 +663,10 @@
         const N = originalCards.length;
         if (N === 0) return;
 
-        const numClones = 5;
-
-        // Clone first N/5 items and append/prepend
-        // Append clones to end
-        for (let i = 0; i < numClones; i++) {
-            const clone = originalCards[i % N].cloneNode(true);
-            clone.removeAttribute('data-aos');
-            track.appendChild(clone);
-        }
-
-        // Prepend clones to start (maintain chronological order)
-        for (let i = 0; i < numClones; i++) {
-            const index = (N - numClones + i) % N;
-            const safeIndex = (index + N) % N;
-            const clone = originalCards[safeIndex].cloneNode(true);
-            clone.removeAttribute('data-aos');
-            track.insertBefore(clone, track.firstChild);
-        }
-
-        let currentIndex = numClones;
+        let currentIndex = 0;
         let isTransitioning = false;
+        let numClones = 0;
+        let isCarouselEnabled = false;
 
         const getItemsPerSlide = () => {
             const width = window.innerWidth;
@@ -699,7 +682,77 @@
             return parseFloat(style.gap) || 24;
         };
 
+        const setupCarouselDOM = () => {
+            const itemsPerSlide = getItemsPerSlide();
+            
+            // Clear current track contents
+            track.innerHTML = "";
+            
+            if (N <= itemsPerSlide) {
+                // All items fit on the current screen size. No cloning or scrolling needed.
+                isCarouselEnabled = false;
+                numClones = 0;
+                currentIndex = 0;
+                
+                // Append original cards only
+                originalCards.forEach(card => {
+                    track.appendChild(card);
+                });
+                
+                // Align items nicely
+                track.style.justifyContent = "center";
+                track.style.transform = "none";
+                track.style.transition = "none";
+                
+                // Hide navigation buttons
+                prevBtn.style.display = "none";
+                nextBtn.style.display = "none";
+            } else {
+                // Not all items fit on the screen. Enable loop carousel with clones.
+                isCarouselEnabled = true;
+                numClones = 5; // Use 5 clones to ensure visual continuity on wide screens
+                
+                // 1. Prepend clones (N - numClones to N)
+                for (let i = 0; i < numClones; i++) {
+                    const index = (N - numClones + i) % N;
+                    const safeIndex = (index + N) % N;
+                    const clone = originalCards[safeIndex].cloneNode(true);
+                    clone.removeAttribute('data-aos');
+                    track.appendChild(clone);
+                }
+                
+                // 2. Append original cards
+                originalCards.forEach(card => {
+                    track.appendChild(card);
+                });
+                
+                // 3. Append clones (0 to numClones)
+                for (let i = 0; i < numClones; i++) {
+                    const clone = originalCards[i % N].cloneNode(true);
+                    clone.removeAttribute('data-aos');
+                    track.appendChild(clone);
+                }
+                
+                track.style.justifyContent = "flex-start";
+                currentIndex = numClones;
+                
+                // Show navigation buttons
+                prevBtn.style.display = "flex";
+                nextBtn.style.display = "flex";
+                
+                // Reset button states
+                prevBtn.style.opacity = "1";
+                prevBtn.style.pointerEvents = "auto";
+                nextBtn.style.opacity = "1";
+                nextBtn.style.pointerEvents = "auto";
+                
+                updateCarousel(false);
+            }
+        };
+
         const updateCarousel = (animate = true) => {
+            if (!isCarouselEnabled) return;
+            
             const cards = track.querySelectorAll(".gallery-carousel-card");
             if (cards.length === 0) return;
 
@@ -719,6 +772,7 @@
 
         // Transition End handling for infinite loop jumping
         track.addEventListener("transitionend", () => {
+            if (!isCarouselEnabled) return;
             isTransitioning = false;
             if (currentIndex >= N + numClones) {
                 currentIndex = currentIndex - N;
@@ -730,13 +784,13 @@
         });
 
         prevBtn.addEventListener("click", () => {
-            if (isTransitioning) return;
+            if (!isCarouselEnabled || isTransitioning) return;
             currentIndex--;
             updateCarousel(true);
         });
 
         nextBtn.addEventListener("click", () => {
-            if (isTransitioning) return;
+            if (!isCarouselEnabled || isTransitioning) return;
             currentIndex++;
             updateCarousel(true);
         });
@@ -755,6 +809,7 @@
         };
 
         const dragStart = (e) => {
+            if (!isCarouselEnabled) return;
             // Check if user is clicking on buttons or their SVG contents to prevent drag taking over
             if (e.target.closest('#gallery-prev') || e.target.closest('#gallery-next')) return;
             
@@ -812,13 +867,13 @@
         window.addEventListener("resize", () => {
             clearTimeout(resizeTimeout);
             resizeTimeout = setTimeout(() => {
-                updateCarousel(false);
+                setupCarouselDOM();
             }, 100);
         });
 
         // Initialize Carousel
         setTimeout(() => {
-            updateCarousel(false);
+            setupCarouselDOM();
             wrapper.classList.remove("opacity-0");
             wrapper.classList.add("opacity-100");
         }, 150);
