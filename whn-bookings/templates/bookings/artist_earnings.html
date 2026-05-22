@@ -257,7 +257,13 @@
                             </td>
                             <!-- Split % -->
                             <td class="py-5 px-6 text-center">
-                                <span class="text-whn-purple font-bold text-sm">{{ ledger.pct_str }}</span>
+                                <span class="text-whn-purple font-bold text-sm">
+                                    {% if ledger.booking.booking_type == 'Custom' %}
+                                        {{ ledger.booking.custom_artist_percentage|floatformat:"-2" }}%
+                                    {% else %}
+                                        {{ ledger.pct_str }}
+                                    {% endif %}
+                                </span>
                             </td>
                             <!-- Share -->
                             <td class="py-5 px-6 text-right">

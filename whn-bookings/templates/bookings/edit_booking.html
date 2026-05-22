@@ -119,7 +119,7 @@
                         <!-- Booking Type -->
                         <div class="relative group">
                             <label class="text-[10px] font-bold text-whn-tertiary uppercase tracking-[0.2em] ml-1 mb-3 block group-focus-within:text-whn-purple transition-colors">Booking Type</label>
-                            <div class="grid grid-cols-2 gap-4">
+                            <div class="grid grid-cols-3 gap-4">
                                 <label class="relative cursor-pointer">
                                     <input type="radio" name="booking_type" value="Sale" {% if booking.booking_type == 'Sale' %}checked{% endif %} class="peer sr-only">
                                     <div class="p-4 rounded-2xl bg-white/[0.03] border border-white/10 text-center text-xs font-bold uppercase tracking-widest text-whn-tertiary peer-checked:bg-whn-purple/10 peer-checked:border-whn-purple/50 peer-checked:text-white transition-all">Sale</div>
@@ -127,6 +127,10 @@
                                 <label class="relative cursor-pointer">
                                     <input type="radio" name="booking_type" value="Lead" {% if booking.booking_type == 'Lead' %}checked{% endif %} class="peer sr-only">
                                     <div class="p-4 rounded-2xl bg-white/[0.03] border border-white/10 text-center text-xs font-bold uppercase tracking-widest text-whn-tertiary peer-checked:bg-whn-purple/10 peer-checked:border-whn-purple/50 peer-checked:text-white transition-all">Lead</div>
+                                </label>
+                                <label class="relative cursor-pointer">
+                                    <input type="radio" name="booking_type" value="Custom" {% if booking.booking_type == 'Custom' %}checked{% endif %} class="peer sr-only">
+                                    <div class="p-4 rounded-2xl bg-white/[0.03] border border-white/10 text-center text-xs font-bold uppercase tracking-widest text-whn-tertiary peer-checked:bg-whn-purple/10 peer-checked:border-whn-purple/50 peer-checked:text-white transition-all">Custom</div>
                                 </label>
                             </div>
                         </div>
@@ -139,6 +143,14 @@
                                 <option value="++ Deal" {% if booking.deal_type == '++ Deal' %}selected{% endif %} class="bg-whn-dark">++ Deal</option>
                                 <option value="All Inclusive Deal" {% if booking.deal_type == 'All Inclusive Deal' %}selected{% endif %} class="bg-whn-dark">All Inclusive Deal</option>
                             </select>
+                        </div>
+
+                        <!-- Custom Percentage Input (Collapsible) -->
+                        <div id="custom-percentage-container" class="collapsible-container md:col-span-2 {% if booking.booking_type == 'Custom' %}show{% endif %}">
+                            <div class="relative group">
+                                <label class="text-[10px] font-bold text-whn-tertiary uppercase tracking-[0.2em] ml-1 mb-3 block group-focus-within:text-whn-purple transition-colors">Custom Artist Share (%)</label>
+                                <input type="number" step="0.01" min="0" max="100" name="custom_artist_percentage" id="custom-percentage-input" {% if booking.custom_artist_percentage %}value="{{ booking.custom_artist_percentage|floatformat:"-2" }}"{% endif %} placeholder="e.g. 80" class="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-whn-purple/50 focus:ring-4 focus:ring-whn-purple/10 transition-all placeholder:text-white/10">
+                            </div>
                         </div>
 
                         <!-- Deal Amount -->
@@ -290,7 +302,7 @@
                         <!-- Status Selection -->
                         <div class="relative group">
                             <label class="text-[10px] font-bold text-whn-tertiary uppercase tracking-[0.2em] ml-1 mb-3 block group-focus-within:text-whn-purple transition-colors">Booking Status</label>
-                            <div class="grid grid-cols-3 gap-4">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                                 <label class="relative cursor-pointer">
                                     <input type="radio" name="status" value="Tentative" {% if booking.status == 'Tentative' %}checked{% endif %} class="peer sr-only">
                                     <div class="p-4 rounded-2xl bg-white/[0.03] border border-white/10 text-center text-xs font-bold uppercase tracking-widest text-whn-tertiary peer-checked:bg-yellow-500/10 peer-checked:border-yellow-500/50 peer-checked:text-yellow-500 transition-all">Tentative</div>
@@ -342,6 +354,45 @@
 
         yesRadio.addEventListener("change", updateTransportUI);
         noRadio.addEventListener("change", updateTransportUI);
+
+        // Booking Type Custom Percentage Trigger
+        const bookingTypeRadios = document.querySelectorAll('input[name="booking_type"]');
+        const customPercentageContainer = document.getElementById("custom-percentage-container");
+        const customPercentageInput = document.getElementById("custom-percentage-input");
+
+        const updateBookingTypeUI = () => {
+            let selectedType = "";
+            bookingTypeRadios.forEach(radio => {
+                if (radio.checked) selectedType = radio.value;
+            });
+
+            if (selectedType === "Custom") {
+                customPercentageContainer.classList.add("show");
+                customPercentageInput.setAttribute("required", "required");
+            } else {
+                customPercentageContainer.classList.remove("show");
+                customPercentageInput.removeAttribute("required");
+            }
+        };
+
+        bookingTypeRadios.forEach(radio => {
+            radio.addEventListener("change", updateBookingTypeUI);
+        });
+
+        // Clamp percentage input between 0 and 100
+        if (customPercentageInput) {
+            customPercentageInput.addEventListener("input", () => {
+                let val = parseFloat(customPercentageInput.value);
+                if (val > 100) {
+                    customPercentageInput.value = 100;
+                } else if (val < 0) {
+                    customPercentageInput.value = 0;
+                }
+            });
+        }
+
+        // Run initially to set the right state
+        updateBookingTypeUI();
 
         // Dynamic Expense Builder
         const addBtn = document.getElementById("add-expense-btn");

@@ -45,6 +45,7 @@ class Booking(models.Model):
     BOOKING_TYPE_CHOICES = [
         ('Sale', 'Sale'),
         ('Lead', 'Lead'),
+        ('Custom', 'Custom'),
     ]
     DEAL_TYPE_CHOICES = [
         ('++ Deal', '++ Deal'),
@@ -70,6 +71,7 @@ class Booking(models.Model):
     duration = models.CharField(max_length=100, blank=True, null=True)
     
     booking_type = models.CharField(max_length=10, choices=BOOKING_TYPE_CHOICES, default='Sale')
+    custom_artist_percentage = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True)
     deal_type = models.CharField(max_length=30, choices=DEAL_TYPE_CHOICES, default='Landed Deal')
     deal_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
     

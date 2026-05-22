@@ -103,6 +103,24 @@
                                 <span class="text-[10px] text-whn-tertiary uppercase tracking-wider block">Total Amount (Inc. GST)</span>
                                 <span class="text-whn-purple font-black text-sm">₹{{ item.total_amount|floatformat:2 }}</span>
                             </div>
+                            <div>
+                                <span class="text-[10px] text-whn-tertiary uppercase tracking-wider block">Split %</span>
+                                <span class="text-white font-bold text-sm">
+                                    {% if item.booking.booking_type == 'Custom' %}
+                                        {{ item.booking.custom_artist_percentage|floatformat:"-2" }}%
+                                    {% else %}
+                                        {{ item.pct_str }}
+                                    {% endif %}
+                                </span>
+                            </div>
+                            <div>
+                                <span class="text-[10px] text-whn-tertiary uppercase tracking-wider block">My Share</span>
+                                <span class="text-white font-bold text-sm">₹{{ item.earning|floatformat:2 }}</span>
+                            </div>
+                            <div>
+                                <span class="text-[10px] text-whn-tertiary uppercase tracking-wider block">Net Amount</span>
+                                <span class="text-green-400 font-black text-sm">₹{{ item.net|floatformat:2 }}</span>
+                            </div>
                         </div>
                     </div>
 

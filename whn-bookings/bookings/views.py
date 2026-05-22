@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
+from decimal import Decimal
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -7,6 +8,16 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from django.contrib.auth.models import User
 from django.utils import timezone
 from .models import Artist, Booking, SiteSettings, ActivityLog, Event, GalleryImage, BookingExpense, ArtistAvailability
+
+def format_percentage(val):
+    if val is None:
+        return "0%"
+    val = Decimal(str(val)).quantize(Decimal('0.01'))
+    val_str = str(val)
+    if '.' in val_str:
+        val_str = val_str.rstrip('0').rstrip('.')
+    return f"{val_str}%"
+
 
 @ensure_csrf_cookie
 def index(request):
@@ -110,6 +121,19 @@ def add_booking_view(request):
         duration = request.POST.get('duration')
         
         booking_type = request.POST.get('booking_type')
+        custom_pct_val = request.POST.get('custom_artist_percentage')
+        if booking_type == 'Custom' and custom_pct_val:
+            try:
+                custom_artist_percentage = Decimal(custom_pct_val)
+                if custom_artist_percentage < Decimal('0'):
+                    custom_artist_percentage = Decimal('0')
+                elif custom_artist_percentage > Decimal('100'):
+                    custom_artist_percentage = Decimal('100')
+            except:
+                custom_artist_percentage = Decimal('0')
+        else:
+            custom_artist_percentage = None
+
         deal_type = request.POST.get('deal_type')
         deal_amount = request.POST.get('deal_amount') or 0.00
         
@@ -138,6 +162,7 @@ def add_booking_view(request):
             time=time if time else None,
             duration=duration,
             booking_type=booking_type,
+            custom_artist_percentage=custom_artist_percentage,
             deal_type=deal_type,
             deal_amount=deal_amount,
             travel_pdf=travel_pdf,
@@ -397,6 +422,19 @@ def edit_booking_view(request, booking_id):
         duration = request.POST.get('duration')
         
         booking_type = request.POST.get('booking_type')
+        custom_pct_val = request.POST.get('custom_artist_percentage')
+        if booking_type == 'Custom' and custom_pct_val:
+            try:
+                custom_artist_percentage = Decimal(custom_pct_val)
+                if custom_artist_percentage < Decimal('0'):
+                    custom_artist_percentage = Decimal('0')
+                elif custom_artist_percentage > Decimal('100'):
+                    custom_artist_percentage = Decimal('100')
+            except:
+                custom_artist_percentage = Decimal('0')
+        else:
+            custom_artist_percentage = None
+
         deal_type = request.POST.get('deal_type')
         deal_amount = request.POST.get('deal_amount') or 0.00
         
@@ -418,6 +456,7 @@ def edit_booking_view(request, booking_id):
         booking.time = time if time else None
         booking.duration = duration
         booking.booking_type = booking_type
+        booking.custom_artist_percentage = custom_artist_percentage
         booking.deal_type = deal_type
         booking.deal_amount = deal_amount
         booking.ground_transport = ground_transport
@@ -621,11 +660,29 @@ def api_artist_calendar_events(request):
     bookings = Booking.objects.filter(artist=artist)
     bookings_data = []
     for b in bookings:
-        deal_amount = float(b.deal_amount)
-        gst_percentage = 18
-        gst_amount = deal_amount * gst_percentage / 100
+        deal_amount = b.deal_amount
+        gst_percentage = Decimal('18')
+        gst_amount = deal_amount * gst_percentage / Decimal('100')
         total_amount = deal_amount + gst_amount
-        expenses_data = [{'name': e.name, 'amount': float(e.amount)} for e in b.expenses.all()]
+        expenses_data = [{'name': e.name, 'amount': float(e.amount.quantize(Decimal('0.01')))} for e in b.expenses.all()]
+        
+        if b.booking_type == 'Sale':
+            pct = Decimal('0.85')
+            pct_str = "85%"
+        elif b.booking_type == 'Lead':
+            pct = Decimal('0.90')
+            pct_str = "90%"
+        elif b.booking_type == 'Custom':
+            custom_pct = b.custom_artist_percentage or Decimal('0.00')
+            pct = custom_pct / Decimal('100')
+            pct_str = format_percentage(custom_pct)
+        else:
+            pct = Decimal('0.90')
+            pct_str = "90%"
+            
+        earning = b.deal_amount * pct
+        expenses = sum((exp.amount for exp in b.expenses.all()), Decimal('0.00'))
+        net = earning - expenses
         
         bookings_data.append({
             'id': b.id,
@@ -641,9 +698,12 @@ def api_artist_calendar_events(request):
             'artist': b.artist.name,
             'booking_type': b.booking_type,
             'deal_type': b.deal_type,
-            'deal_amount': deal_amount,
-            'gst_amount': gst_amount,
-            'total_amount': total_amount,
+            'deal_amount': float(deal_amount.quantize(Decimal('0.01'))),
+            'gst_amount': float(gst_amount.quantize(Decimal('0.01'))),
+            'total_amount': float(total_amount.quantize(Decimal('0.01'))),
+            'split_percentage': pct_str,
+            'artist_share': float(earning.quantize(Decimal('0.01'))),
+            'net_amount': float(net.quantize(Decimal('0.01'))),
             'travel_pdf': b.travel_pdf.url if b.travel_pdf else '',
             'accommodation_pdf': b.accommodation_pdf.url if b.accommodation_pdf else '',
             'accommodation_details': b.accommodation_details or '',
@@ -737,15 +797,35 @@ def artist_accounts_view(request):
     booking_details = []
     for booking in bookings:
         deal_amount = booking.deal_amount
-        # GST is dynamically 18% in UI
-        gst_percentage = 18
-        gst_amount = deal_amount * gst_percentage / 100
+        gst_percentage = Decimal('18')
+        gst_amount = deal_amount * gst_percentage / Decimal('100')
         total_amount = deal_amount + gst_amount
+        
+        if booking.booking_type == 'Sale':
+            pct = Decimal('0.85')
+            pct_str = "85%"
+        elif booking.booking_type == 'Lead':
+            pct = Decimal('0.90')
+            pct_str = "90%"
+        elif booking.booking_type == 'Custom':
+            custom_pct = booking.custom_artist_percentage or Decimal('0.00')
+            pct = custom_pct / Decimal('100')
+            pct_str = format_percentage(custom_pct)
+        else:
+            pct = Decimal('0.90')
+            pct_str = "90%"
+            
+        earning = booking.deal_amount * pct
+        expenses = sum((exp.amount for exp in booking.expenses.all()), Decimal('0.00'))
+        net = earning - expenses
         
         booking_details.append({
             'booking': booking,
-            'gst_amount': gst_amount,
-            'total_amount': total_amount
+            'gst_amount': gst_amount.quantize(Decimal('0.01')),
+            'total_amount': total_amount.quantize(Decimal('0.01')),
+            'pct_str': pct_str,
+            'earning': earning.quantize(Decimal('0.01')),
+            'net': net.quantize(Decimal('0.01'))
         })
         
     return render(request, 'bookings/artist_accounts.html', {
@@ -775,8 +855,6 @@ def artist_earnings_view(request):
     current_month = now.month
     current_year = now.year
     
-    from decimal import Decimal
-    
     total_earnings = Decimal('0.00')
     total_expenses = Decimal('0.00')
     net_earnings = Decimal('0.00')
@@ -795,10 +873,17 @@ def artist_earnings_view(request):
     target_year = int(selected_year) if (selected_year and selected_year.isdigit()) else current_year
     
     for booking in bookings:
-        # Commission splits: Sale = 85%, Lead = 90%
+        # Commission splits: Sale = 85%, Lead = 90%, Custom = custom_artist_percentage
         if booking.booking_type == 'Sale':
             pct = Decimal('0.85')
             pct_str = "85%"
+        elif booking.booking_type == 'Lead':
+            pct = Decimal('0.90')
+            pct_str = "90%"
+        elif booking.booking_type == 'Custom':
+            custom_pct = booking.custom_artist_percentage or Decimal('0.00')
+            pct = custom_pct / Decimal('100')
+            pct_str = format_percentage(custom_pct)
         else:
             pct = Decimal('0.90')
             pct_str = "90%"
@@ -819,9 +904,9 @@ def artist_earnings_view(request):
         events_ledger.append({
             'booking': booking,
             'pct_str': pct_str,
-            'earning': earning,
-            'expenses': expenses,
-            'net': net
+            'earning': earning.quantize(Decimal('0.01')),
+            'expenses': expenses.quantize(Decimal('0.01')),
+            'net': net.quantize(Decimal('0.01'))
         })
         
     # Get available years for the filter dropdown
@@ -848,11 +933,11 @@ def artist_earnings_view(request):
     return render(request, 'bookings/artist_earnings.html', {
         'artist': artist,
         'events_ledger': events_ledger,
-        'total_earnings': total_earnings,
-        'total_expenses': total_expenses,
-        'net_earnings': net_earnings,
-        'monthly_earnings': monthly_earnings,
-        'yearly_earnings': yearly_earnings,
+        'total_earnings': total_earnings.quantize(Decimal('0.01')),
+        'total_expenses': total_expenses.quantize(Decimal('0.01')),
+        'net_earnings': net_earnings.quantize(Decimal('0.01')),
+        'monthly_earnings': monthly_earnings.quantize(Decimal('0.01')),
+        'yearly_earnings': yearly_earnings.quantize(Decimal('0.01')),
         'years': years,
         'months': months,
         'selected_month': selected_month,

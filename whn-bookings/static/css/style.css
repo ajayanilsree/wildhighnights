@@ -32,6 +32,9 @@
 }
 
 html, body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
   height: 100%;
   background: var(--bg);
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
