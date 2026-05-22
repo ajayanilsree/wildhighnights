@@ -41,36 +41,64 @@
         </button>
     </div>
 
-    <!-- Mobile Menu -->
-    <div id="mobileMenu" class="fixed inset-0 bg-whn-dark/95 backdrop-blur-xl z-[101] flex flex-col items-center justify-center gap-8 transition-transform duration-500 translate-x-full">
-        <button id="closeMenu" class="absolute top-6 right-6 text-white p-2">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-        </button>
+</nav>
+
+<!-- Custom Styles for Mobile Menu Overlay & Body Lock -->
+<style>
+    #mobileMenu {
+        position: fixed;
+        inset: 0;
+        width: 100vw;
+        height: 100dvh;
+        z-index: 99999;
+        background: #050505;
+        display: none; /* Hidden by default */
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 2rem;
+    }
+    body.menu-open {
+        overflow: hidden;
+        position: fixed;
+        width: 100%;
+    }
+</style>
+
+<!-- Mobile Menu Overlay -->
+<div id="mobileMenu">
+    <!-- Single Top-Right Close Button -->
+    <button id="closeMenu" class="absolute top-6 right-6 text-white p-2 focus:outline-none hover:text-whn-purple transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+    </button>
+    
+    <!-- Centered Menu Links with Premium Dark Luxury Styling -->
+    <div class="flex flex-col items-center justify-center gap-8 w-full">
+        <a href="/#events" class="text-3xl font-extrabold text-white/90 hover:text-whn-purple transition-colors tracking-tight mobile-link">Events</a>
+        <a href="/#artists" class="text-3xl font-extrabold text-white/90 hover:text-whn-purple transition-colors tracking-tight mobile-link">Artists</a>
+        <a href="/#about" class="text-3xl font-extrabold text-white/90 hover:text-whn-purple transition-colors tracking-tight mobile-link">About</a>
+        
         {% if user.is_authenticated %}
             {% if user.is_superuser or user.is_staff %}
-                <!-- Admin Mobile Navigation -->
-                <a href="{% url 'dashboard' %}" class="text-3xl font-bold hover:text-whn-purple transition-colors mobile-link">Dashboard</a>
-                <a href="{% url 'logout' %}" class="mt-4 px-10 py-3 rounded-full bg-red-500 hover:bg-red-600 text-white text-xl font-bold transition-all mobile-link">Logout</a>
+                <a href="{% url 'dashboard' %}" class="text-3xl font-extrabold text-white/90 hover:text-whn-purple transition-colors tracking-tight mobile-link">Dashboard</a>
             {% else %}
-                <!-- Artist Mobile Navigation -->
-                <a href="{% url 'artist_dashboard' %}" class="text-3xl font-bold hover:text-whn-purple transition-colors mobile-link">Dashboard</a>
-                <a href="{% url 'logout' %}" class="mt-4 px-10 py-3 rounded-full bg-red-500 hover:bg-red-600 text-white text-xl font-bold transition-all mobile-link">Logout</a>
+                <a href="{% url 'artist_dashboard' %}" class="text-3xl font-extrabold text-white/90 hover:text-whn-purple transition-colors tracking-tight mobile-link">Dashboard</a>
             {% endif %}
+            <a href="{% url 'logout' %}" class="mt-4 px-10 py-3.5 rounded-full glass border border-red-500/30 text-xl font-bold hover:bg-red-500 hover:text-white transition-all duration-300 shadow-[0_0_20px_rgba(239,68,68,0.15)] mobile-link uppercase tracking-wider">Logout</a>
         {% else %}
-            <!-- Public Mobile Navigation -->
-            <a href="/#events" class="text-3xl font-bold hover:text-whn-purple transition-colors mobile-link">Events</a>
-            <a href="/#artists" class="text-3xl font-bold hover:text-whn-purple transition-colors mobile-link">Artists</a>
-            <a href="/#about" class="text-3xl font-bold hover:text-whn-purple transition-colors mobile-link">About</a>
-            <a href="{% url 'login' %}" class="mt-4 px-10 py-3 rounded-full glass border border-whn-purple/50 text-xl font-bold hover:bg-whn-purple hover:text-white transition-all mobile-link">Login</a>
+            <a href="{% url 'login' %}" class="mt-4 px-10 py-3.5 rounded-full glass border border-whn-purple/50 text-xl font-bold hover:bg-whn-purple hover:text-white transition-all duration-300 shadow-[0_0_20px_rgba(124,58,237,0.25)] mobile-link uppercase tracking-wider">Login</a>
         {% endif %}
     </div>
-</nav>
+</div>
 
 <script>
     const navbar = document.getElementById('navbar');
     window.addEventListener('scroll', () => {
+        // Prevent navbar transition class modifications when mobile menu is open
+        if (document.body.classList.contains('menu-open')) return;
+        
         if (window.scrollY > 50) {
             navbar.classList.add('glass', 'py-3');
             navbar.classList.remove('py-4');
@@ -85,9 +113,60 @@
     const mobileMenu = document.getElementById('mobileMenu');
     const mobileLinks = document.querySelectorAll('.mobile-link');
 
-    const toggleMenu = () => mobileMenu.classList.toggle('translate-x-full');
+    let scrollPosition = 0;
 
-    menuToggle.addEventListener('click', toggleMenu);
-    closeMenu.addEventListener('click', toggleMenu);
-    mobileLinks.forEach(link => link.addEventListener('click', toggleMenu));
+    const openMenu = () => {
+        // Store current scroll position to restore later
+        scrollPosition = window.pageYOffset || document.documentElement.scrollTop;
+        
+        // Lock body scroll and position
+        document.body.classList.add('menu-open');
+        document.body.style.top = `-${scrollPosition}px`;
+        
+        // Display the menu
+        mobileMenu.style.display = 'flex';
+    };
+
+    const closeMenuFunc = () => {
+        // Unlock body scroll
+        document.body.classList.remove('menu-open');
+        document.body.style.top = '';
+        
+        // Restore scroll position
+        window.scrollTo(0, scrollPosition);
+        
+        // Hide the menu
+        mobileMenu.style.display = 'none';
+    };
+
+    menuToggle.addEventListener('click', openMenu);
+    closeMenu.addEventListener('click', closeMenuFunc);
+
+    mobileLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+            const href = link.getAttribute('href');
+            const isHomepage = window.location.pathname === '/' || window.location.pathname === '';
+            
+            if (isHomepage && (href.startsWith('/#') || href.startsWith('#'))) {
+                e.preventDefault();
+                const targetId = href.split('#')[1];
+                const targetElement = document.getElementById(targetId);
+                
+                // Close menu first (restores body scroll and position)
+                closeMenuFunc();
+                
+                // Scroll to target element smoothly
+                if (targetElement) {
+                    setTimeout(() => {
+                        targetElement.scrollIntoView({ behavior: 'smooth' });
+                        // Update URL hash without causing visual jumps
+                        history.pushState(null, null, `#${targetId}`);
+                    }, 50);
+                }
+            } else {
+                // For regular page navigation, dashboard, login, or logout
+                closeMenuFunc();
+            }
+        });
+    });
 </script>
