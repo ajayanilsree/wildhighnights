@@ -36,6 +36,16 @@ if allowed_hosts_str:
 else:
     ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
+# Ensure critical production domains are always included in ALLOWED_HOSTS
+production_hosts = [
+    'wildhighnights.com',
+    'www.wildhighnights.com',
+    'wildhighnights.onrender.com'
+]
+for host in production_hosts:
+    if host not in ALLOWED_HOSTS:
+        ALLOWED_HOSTS.append(host)
+
 
 # Application definition
 

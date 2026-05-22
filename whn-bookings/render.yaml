@@ -1,0 +1,6 @@
+services:
+  - type: web
+    name: whn-bookings
+    env: python
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn whn_bookings_dj.wsgi:application --bind 0.0.0.0:$PORT"
