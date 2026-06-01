@@ -7,14 +7,14 @@
         <!-- Back navigation & Header -->
         <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12" data-aos="fade-down">
             <div>
-                <a href="{% url 'dashboard' %}" class="text-whn-purple font-bold tracking-[0.3em] uppercase text-[10px] mb-4 flex items-center gap-2 hover:translate-x-[-4px] transition-transform w-fit">
+                <a href="{% url 'employee_dashboard' %}" class="text-whn-purple font-bold tracking-[0.3em] uppercase text-[10px] mb-4 flex items-center gap-2 hover:translate-x-[-4px] transition-transform w-fit">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                     </svg>
                     Back to Dashboard
                 </a>
-                <span class="text-whn-purple font-bold tracking-[0.3em] uppercase text-[10px] mb-2 block">Admin Planner</span>
-                <h1 class="text-5xl md:text-6xl font-black text-white tracking-tighter">Manage Calendar</h1>
+                <span class="text-whn-purple font-bold tracking-[0.3em] uppercase text-[10px] mb-2 block">Employee Portal</span>
+                <h1 class="text-5xl md:text-6xl font-black text-white tracking-tighter">Artist Calendar</h1>
             </div>
             
             <!-- Calendar Controls -->
@@ -44,7 +44,7 @@
                 <label for="artistSelect" class="text-[10px] text-whn-tertiary font-bold uppercase tracking-widest">Filter by Artist:</label>
                 <select id="artistSelect" class="px-6 py-3.5 rounded-2xl bg-white/[0.03] border border-white/10 text-white font-black text-xs tracking-wider focus:border-whn-purple/50 focus:outline-none transition-all cursor-pointer">
                     {% for artist in artists %}
-                    <option value="{{ artist.id }}" {% if selected_artist_id == artist.id|stringformat:"s" %}selected{% endif %} class="bg-whn-dark text-white">{{ artist.name }}</option>
+                    <option value="{{ artist.id }}" class="bg-whn-dark text-white" {% if selected_artist_id == artist.id|stringformat:"s" %}selected{% endif %}>{{ artist.name }}</option>
                     {% empty %}
                     <option value="" class="bg-whn-dark text-white">No active artists found</option>
                     {% endfor %}
@@ -100,7 +100,7 @@
     </div>
 </div>
 
-<!-- Scheduler Interaction Modal (Read-Only Overview for Admin) -->
+<!-- Scheduler Interaction Modal (Read-Only Overview for Employees) -->
 <div id="calendarModal" class="fixed inset-0 z-[150] hidden flex items-center justify-center p-4 bg-whn-dark/80 backdrop-blur-md opacity-0 transition-opacity duration-300">
     <div class="glass-card w-full max-w-lg rounded-[2.5rem] border border-white/10 p-5 sm:p-8 md:p-10 shadow-[0_0_50px_rgba(124,58,237,0.15)] transform scale-95 transition-transform duration-300">
         <!-- Close Button -->
@@ -217,7 +217,7 @@
     function manageBookingUrl(dateStr) {
         const params = new URLSearchParams({
             date: dateStr,
-            source: 'calendar'
+            source: 'employee_calendar'
         });
         if (artistSelect && artistSelect.value) {
             params.set('artist', artistSelect.value);
@@ -388,7 +388,7 @@
         }
     }
 
-    // Cell Click Interactions (Read-only Overview for administrators)
+    // Cell Click Interactions (Read-only Overview)
     function handleCellClick(dateStr, booking, busy) {
         selectedDate = dateStr;
         
@@ -420,7 +420,7 @@
                     </div>
                     <div class="p-4 rounded-xl bg-white/[0.03] border border-white/5">
                         <span class="text-[9px] text-whn-tertiary uppercase tracking-wider block mb-1">Internal Remarks</span>
-                        <p class="text-xs text-white/60 leading-relaxed">${booking.notes || 'No remarks provided by administrator.'}</p>
+                        <p class="text-xs text-white/60 leading-relaxed">${booking.notes || 'No remarks provided.'}</p>
                     </div>
                     <div class="p-4 rounded-2xl bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 text-xs font-bold flex items-center gap-2">
                         <span>Read-only</span> <span>Calendar details are view-only from this modal.</span>
@@ -435,7 +435,7 @@
             modalTitle.innerText = "Busy Availability";
             modalBody.innerHTML = `
                 <div class="space-y-4">
-                    <p class="text-sm text-whn-tertiary">The artist marked this date as unavailable/busy. Admins are cautioned when matching shows here.</p>
+                    <p class="text-sm text-whn-tertiary">The artist marked this date as unavailable/busy. Employees are cautioned when matching shows here.</p>
                     <div class="p-4 rounded-xl bg-white/[0.03] border border-white/5">
                         <span class="text-[9px] text-whn-tertiary uppercase tracking-wider block mb-1">Artist Notes</span>
                         <p class="text-xs text-white leading-relaxed whitespace-pre-line">${busy.note || 'No notes added.'}</p>

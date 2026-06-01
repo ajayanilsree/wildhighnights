@@ -19,16 +19,16 @@
             
             <!-- Calendar Controls -->
             <div class="flex items-center gap-3">
-                <button id="todayBtn" class="px-5 py-2.5 rounded-xl glass border border-white/10 text-xs font-bold text-white hover:bg-white/5 active:scale-95 transition-all uppercase tracking-wider">
+                <button id="todayBtn" type="button" onclick="goToToday()" class="px-5 py-2.5 rounded-xl glass border border-white/10 text-xs font-bold text-white hover:bg-white/5 active:scale-95 transition-all uppercase tracking-wider">
                     Today
                 </button>
                 <div class="flex items-center rounded-xl glass border border-white/10 p-1">
-                    <button id="prevMonth" class="p-2 text-white/70 hover:text-white hover:bg-white/5 rounded-lg transition-colors">
+                    <button id="prevMonth" type="button" onclick="goToPreviousMonth()" class="p-2 text-white/70 hover:text-white hover:bg-white/5 rounded-lg transition-colors">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                         </svg>
                     </button>
-                    <button id="nextMonth" class="p-2 text-white/70 hover:text-white hover:bg-white/5 rounded-lg transition-colors">
+                    <button id="nextMonth" type="button" onclick="goToNextMonth()" class="p-2 text-white/70 hover:text-white hover:bg-white/5 rounded-lg transition-colors">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                         </svg>
@@ -39,10 +39,10 @@
 
         <!-- Month Label & Color Legend -->
         <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8" data-aos="fade-up">
-            <h2 id="currentMonthYear" class="text-3xl md:text-4xl font-black text-white tracking-tight">Loading Calendar...</h2>
+            <h2 id="currentMonthYear" class="text-3xl md:text-4xl font-black text-white tracking-tight">{{ current_month_name|default:"Loading" }} {{ current_year|default:"Calendar" }}</h2>
             
             <!-- Color Legend -->
-            <div class="flex flex-wrap items-center gap-6 p-4 rounded-2xl bg-white/[0.02] border border-white/5 text-xs font-bold tracking-wider">
+            <div class="flex flex-wrap items-center gap-3 sm:gap-6 p-3 sm:p-4 rounded-2xl bg-white/[0.02] border border-white/5 text-xs font-bold tracking-wider">
                 <div class="flex items-center gap-2">
                     <span class="w-3.5 h-3.5 rounded-full bg-green-500/20 border border-green-500/50 shadow-[0_0_10px_rgba(34,197,94,0.3)]"></span>
                     <span class="text-white/80">Confirmed Booking</span>
@@ -77,15 +77,44 @@
 
             <!-- Calendar Cells Grid -->
             <div id="calendarGrid" class="grid grid-cols-7 gap-2 md:gap-3 min-h-[500px]">
-                <!-- Days will be dynamically loaded via JS -->
+                {% comment %}
+                {% if calendar_cells %}
+                    {% for week in calendar_cells %}
+                        {% for cell in week %}
+                            <div class="calendar-cell p-3 rounded-2xl border flex flex-col justify-between {% if cell.in_month %}bg-white/[0.02] border-white/5 cursor-pointer{% else %}empty-cell rounded-2xl bg-white/[0.01] border border-white/5 cursor-not-allowed opacity-30{% endif %} {% if cell.is_today %}today-cell{% endif %} {% if cell.is_confirmed %}cell-booking-confirmed{% elif cell.is_tentative %}cell-booking-tentative{% elif cell.is_busy %}cell-busy{% endif %}" data-date="{{ cell.date_str }}" {% if cell.in_month %}role="button" tabindex="0" onclick="openCalendarDate('{{ cell.date_str }}')" onkeydown="handleCalendarCellKey(event, '{{ cell.date_str }}')"{% endif %}>
+                                <span class="text-sm font-black text-white/50 block mb-1 text-right">{{ cell.day }}</span>
+                                {% if cell.has_booking %}
+                                    <div class="flex-1 flex flex-col justify-end">
+                                        {% if cell.is_confirmed %}
+                                            <span class="pointer-events-none text-[9px] font-black text-green-400 bg-green-500/10 px-2 py-1 rounded-lg block truncate max-w-full text-center tracking-widest uppercase">
+                                                ✅ {{ cell.booking.venue }}
+                                            </span>
+                                        {% else %}
+                                            <span class="pointer-events-none text-[9px] font-black text-yellow-400 bg-yellow-500/10 px-2 py-1 rounded-lg block truncate max-w-full text-center tracking-widest uppercase">
+                                                ⏳ {{ cell.booking.venue }}
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                {% elif cell.is_busy %}
+                                    <div class="flex-1 flex flex-col justify-end">
+                                        <span class="pointer-events-none text-[9px] font-black text-whn-purple bg-whn-purple/10 px-2 py-1 rounded-lg block truncate max-w-full text-center tracking-widest uppercase">
+                                            🔴 Busy
+                                        </span>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    {% endfor %}
+                {% endif %}
+                {% endcomment %}
             </div>
         </div>
     </div>
 </div>
 
 <!-- Scheduler Interaction Modal -->
-<div id="calendarModal" class="fixed inset-0 z-[150] hidden flex items-center justify-center p-4 bg-whn-dark/80 backdrop-blur-md opacity-0 transition-opacity duration-300">
-    <div class="glass-card w-full max-w-lg rounded-[2.5rem] border border-white/10 p-8 md:p-10 shadow-[0_0_50px_rgba(124,58,237,0.15)] transform scale-95 transition-transform duration-300">
+<div id="calendarModal" class="fixed inset-0 z-[150] hidden pointer-events-none items-center justify-center p-4 bg-whn-dark/80 backdrop-blur-md opacity-0 transition-opacity duration-300">
+    <div class="glass-card w-full max-w-lg rounded-[2.5rem] border border-white/10 p-5 sm:p-8 md:p-10 shadow-[0_0_50px_rgba(124,58,237,0.15)] transform scale-95 transition-transform duration-300">
         <!-- Close Button -->
         <button id="closeModal" class="absolute top-6 right-6 text-white/50 hover:text-white p-2 rounded-full hover:bg-white/5 transition-colors">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -110,6 +139,8 @@
         </div>
     </div>
 </div>
+
+{{ artist_calendar_payload|json_script:"artist-calendar-data" }}
 
 <!-- Inline CSS to style the responsive calendar grid -->
 <style>
@@ -191,7 +222,10 @@
     const csrftoken = getCookie('csrftoken') || '{{ csrf_token }}';
     let currentYear = new Date().getFullYear();
     let currentMonth = new Date().getMonth(); // 0-indexed
-    let calendarEvents = { bookings: [], busy_dates: [] };
+    const initialCalendarDataEl = document.getElementById('artist-calendar-data');
+    let calendarEvents = normalizeCalendarPayload(
+        initialCalendarDataEl ? JSON.parse(initialCalendarDataEl.textContent) : { bookings: [], busy_dates: [] }
+    );
     let isSaving = false;
     let selectedDate = null;
     
@@ -210,16 +244,107 @@
     const modalBody = document.getElementById('modalBody');
     const modalFooter = document.getElementById('modalFooter');
 
+    function normalizeCalendarPayload(payload) {
+        const safePayload = payload && typeof payload === 'object' ? payload : {};
+        return {
+            bookings: Array.isArray(safePayload.bookings) ? safePayload.bookings : [],
+            busy_dates: Array.isArray(safePayload.busy_dates) ? safePayload.busy_dates : []
+        };
+    }
+
+    function getBookingForDate(dateStr) {
+        return (calendarEvents.bookings || []).find(b => String(b?.date || '') === dateStr) || null;
+    }
+
+    function getBusyForDate(dateStr) {
+        return (calendarEvents.busy_dates || []).find(b => String(b?.date || '') === dateStr) || null;
+    }
+
+    function getCalendarCellDate(cellEl) {
+        return cellEl ? String(cellEl.dataset.date || '') : '';
+    }
+
+    function goToPreviousMonth() {
+        currentMonth--;
+        if (currentMonth < 0) {
+            currentMonth = 11;
+            currentYear--;
+        }
+        renderArtistMonthlyCalendar();
+    }
+
+    function goToNextMonth() {
+        currentMonth++;
+        if (currentMonth > 11) {
+            currentMonth = 0;
+            currentYear++;
+        }
+        renderArtistMonthlyCalendar();
+    }
+
+    function goToToday() {
+        const today = new Date();
+        currentYear = today.getFullYear();
+        currentMonth = today.getMonth();
+        renderArtistMonthlyCalendar();
+    }
+
+    function handleCalendarCellKey(event, dateStr) {
+        if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            openDateDetails(dateStr);
+        }
+    }
+
+    function bindCalendarGridEvents() {
+        if (!calendarGrid || calendarGrid.dataset.bound === 'true') return;
+        calendarGrid.dataset.bound = 'true';
+
+        calendarGrid.addEventListener('click', (event) => {
+            const cell = event.target.closest('.calendar-cell');
+            if (!cell || cell.classList.contains('empty-cell')) return;
+            const dateStr = getCalendarCellDate(cell);
+            if (!dateStr) return;
+            openDateDetails(dateStr);
+        });
+    }
+
+    function openDateDetails(dateStr) {
+        const booking = getBookingForDate(dateStr);
+        const busy = getBusyForDate(dateStr);
+        handleCellClick(dateStr, booking, busy);
+    }
+
+    function openCalendarDate(dateStr) {
+        openDateDetails(dateStr);
+    }
+
     // Fetch and initialize events
     async function loadEventsAndRender() {
+        // Render the month grid immediately so the calendar never stays stuck on the loading label
+        renderArtistMonthlyCalendar();
+
+        const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+        const timeoutId = setTimeout(() => {
+            if (controller) controller.abort();
+        }, 8000);
+
         try {
-            const response = await fetch('/api/artist/calendar/');
+            const fetchOptions = { credentials: 'same-origin' };
+            if (controller) {
+                fetchOptions.signal = controller.signal;
+            }
+            const response = await fetch('/api/artist/calendar/', fetchOptions);
             if (!response.ok) throw new Error('Failed to fetch events');
-            calendarEvents = await response.json();
+            const contentType = response.headers.get('content-type') || '';
+            if (!contentType.includes('application/json')) {
+                const responseText = await response.text();
+                throw new Error(`Unexpected response format: ${responseText.slice(0, 120)}`);
+            }
+            calendarEvents = normalizeCalendarPayload(await response.json());
             renderArtistMonthlyCalendar();
         } catch (error) {
             console.error('Error loading calendar events:', error);
-            calendarEvents = { bookings: [], busy_dates: [] };
             renderArtistMonthlyCalendar();
             
             const container = document.querySelector('.container');
@@ -231,12 +356,14 @@
                 errorBanner.innerHTML = "<span>⚠️</span> <span>Unable to sync with live schedule database. Displaying local grid layout.</span>";
                 container.appendChild(errorBanner);
             }
+        } finally {
+            clearTimeout(timeoutId);
         }
     }
 
     // Modal helpers (immediate close with flex/hidden toggling)
     function showModal() {
-        calendarModal.classList.remove('hidden');
+        calendarModal.classList.remove('hidden', 'pointer-events-none');
         calendarModal.classList.add('flex', 'active', 'show', 'open');
         calendarModal.querySelector('.glass-card')?.classList.add('active', 'show', 'open');
         document.body.classList.add('modal-open');
@@ -255,7 +382,7 @@
     });
 
     function closeModal() {
-        calendarModal.classList.add('hidden', 'opacity-0');
+        calendarModal.classList.add('hidden', 'opacity-0', 'pointer-events-none');
         calendarModal.classList.remove('flex', 'active', 'show', 'open');
         calendarModal.querySelector('.glass-card')?.classList.remove('active', 'show', 'open');
         document.body.classList.remove('modal-open');
@@ -275,6 +402,8 @@
 
     // Render Calendar
     function renderArtistMonthlyCalendar() {
+        if (!calendarGrid || !currentMonthYearLabel) return;
+
         calendarGrid.innerHTML = '';
         
         const monthNames = [
@@ -302,23 +431,30 @@
             const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
             const cell = document.createElement('div');
             cell.className = "calendar-cell p-3 rounded-2xl bg-white/[0.02] border border-white/5 flex flex-col justify-between";
+            cell.dataset.date = dateStr;
+            cell.setAttribute('role', 'button');
+            cell.setAttribute('tabindex', '0');
+            cell.addEventListener('click', () => openDateDetails(dateStr));
+            cell.addEventListener('keydown', (event) => handleCalendarCellKey(event, dateStr));
             
             if (isCurrentMonth && today.getDate() === day) {
                 cell.classList.add('today-cell');
             }
             
-            const booking = bookingsList.find(b => b.date === dateStr);
-            const busy = busyList.find(b => b.date === dateStr);
+            const booking = bookingsList.find(b => String(b?.date || '') === dateStr);
+            const busy = busyList.find(b => String(b?.date || '') === dateStr);
             
             let cellContent = `<span class="text-sm font-black text-white/50 block mb-1 text-right">${day}</span>`;
             
             if (booking) {
-                if (booking.status === 'Confirmed') {
+                const bookingStatus = String(booking.status || '').toLowerCase();
+                if (bookingStatus === 'confirmed') {
                     cell.classList.add('cell-booking-confirmed');
                     cellContent += `
                         <div class="flex-1 flex flex-col justify-end">
                             <span class="text-[9px] font-black text-green-400 bg-green-500/10 px-2 py-1 rounded-lg block truncate max-w-full text-center tracking-widest uppercase">
-                                ✅ ${booking.venue}
+                                <span class="hidden md:inline">✅ ${booking.venue}</span>
+                                <span class="md:hidden">✅</span>
                             </span>
                         </div>
                     `;
@@ -327,7 +463,8 @@
                     cellContent += `
                         <div class="flex-1 flex flex-col justify-end">
                             <span class="text-[9px] font-black text-yellow-400 bg-yellow-500/10 px-2 py-1 rounded-lg block truncate max-w-full text-center tracking-widest uppercase">
-                                ⏳ ${booking.venue}
+                                <span class="hidden md:inline">⏳ ${booking.venue}</span>
+                                <span class="md:hidden">⏳</span>
                             </span>
                         </div>
                     `;
@@ -337,14 +474,14 @@
                 cellContent += `
                     <div class="flex-1 flex flex-col justify-end">
                         <span class="text-[9px] font-black text-whn-purple bg-whn-purple/10 px-2 py-1 rounded-lg block truncate max-w-full text-center tracking-widest uppercase">
-                            🔴 Busy
+                            <span class="hidden md:inline">🔴 Busy</span>
+                            <span class="md:hidden">🔴</span>
                         </span>
                     </div>
                 `;
             }
             
             cell.innerHTML = cellContent;
-            cell.addEventListener('click', () => handleCellClick(dateStr, booking, busy));
             calendarGrid.appendChild(cell);
         }
     }
@@ -408,24 +545,38 @@
                 <button type="button" onclick="removeBusyDate('${dateStr}', this)" class="px-6 py-2.5 rounded-xl bg-red-500/20 hover:bg-red-500/30 border border-red-500/50 text-xs font-black text-red-400 transition-all">Remove Busy Mark</button>
             `;
         } 
-        // State C: Free date (Mark busy action)
+        // State C: Free date (No booking message)
         else {
-            modalTitle.innerText = "Mark Date as Busy";
+            modalTitle.innerText = "No Booking";
             modalBody.innerHTML = `
                 <form id="busyForm" class="space-y-4">
-                    <p class="text-sm text-whn-tertiary">Set yourself as unavailable for this date. Administrators will be blocked from matching shows here.</p>
-                    <div>
-                        <label class="text-[10px] text-whn-tertiary font-bold uppercase tracking-widest block mb-2">Note / Reason (Optional)</label>
-                        <textarea id="busyNote" rows="3" placeholder="e.g. Travel, Personal, Private Show..." class="w-full px-5 py-4 rounded-2xl bg-white/[0.03] border border-white/10 text-white placeholder-white/30 text-sm focus:border-whn-purple/50 focus:outline-none transition-all resize-none"></textarea>
-                    </div>
+                    <p class="text-sm text-white/80">No booking on this date.</p>
                 </form>
             `;
             modalFooter.classList.remove('hidden');
             modalFooter.innerHTML = `
-                <button type="button" onclick="addBusyDate('${dateStr}', this)" class="px-6 py-2.5 rounded-xl bg-whn-purple text-white text-xs font-black shadow-[0_0_20px_rgba(124,58,237,0.3)] hover:scale-105 transition-all">Mark as Busy</button>
+                <button type="button" onclick="showBusyMarkForm('${dateStr}')" class="px-6 py-2.5 rounded-xl bg-whn-purple text-white text-xs font-black shadow-[0_0_20px_rgba(124,58,237,0.3)] hover:scale-105 transition-all">Mark as Busy</button>
             `;
         }
         
+        showModal();
+    }
+
+    function showBusyMarkForm(dateStr) {
+        modalTitle.innerText = "Mark Date as Busy";
+        modalBody.innerHTML = `
+            <form id="busyForm" class="space-y-4">
+                <p class="text-sm text-whn-tertiary">Set yourself as unavailable for this date. Administrators will be blocked from matching shows here.</p>
+                <div>
+                    <label class="text-[10px] text-whn-tertiary font-bold uppercase tracking-widest block mb-2">Note / Reason (Optional)</label>
+                    <textarea id="busyNote" rows="3" placeholder="e.g. Travel, Personal, Private Show..." class="w-full px-5 py-4 rounded-2xl bg-white/[0.03] border border-white/10 text-white placeholder-white/30 text-sm focus:border-whn-purple/50 focus:outline-none transition-all resize-none"></textarea>
+                </div>
+            </form>
+        `;
+        modalFooter.classList.remove('hidden');
+        modalFooter.innerHTML = `
+            <button type="button" onclick="addBusyDate('${dateStr}', this)" class="px-6 py-2.5 rounded-xl bg-whn-purple text-white text-xs font-black shadow-[0_0_20px_rgba(124,58,237,0.3)] hover:scale-105 transition-all">Mark as Busy</button>
+        `;
         showModal();
     }
 
@@ -525,7 +676,7 @@
                         </div>
                         <div class="bg-white/[0.02] p-3 rounded-xl border border-white/5 col-span-2">
                             <span class="text-[9px] text-whn-tertiary uppercase block">Booking Status</span>
-                            <span class="text-white font-bold">${booking.status}</span>
+                            <span class="text-white font-bold">${booking.status_label || booking.status}</span>
                         </div>
                     </div>
                 </div>
@@ -620,7 +771,7 @@
             if (result.success) {
                 const modalEl = document.getElementById('calendarModal');
                 if (modalEl) {
-                    modalEl.classList.add('hidden', 'opacity-0');
+                    modalEl.classList.add('hidden', 'opacity-0', 'pointer-events-none');
                     modalEl.classList.remove('flex', 'active', 'show', 'open');
                     modalEl.querySelector('.glass-card')?.classList.remove('active', 'show', 'open');
                 }
@@ -674,7 +825,7 @@
             if (result.success) {
                 const modalEl = document.getElementById('calendarModal');
                 if (modalEl) {
-                    modalEl.classList.add('hidden', 'opacity-0');
+                    modalEl.classList.add('hidden', 'opacity-0', 'pointer-events-none');
                     modalEl.classList.remove('flex', 'active', 'show', 'open');
                     modalEl.querySelector('.glass-card')?.classList.remove('active', 'show', 'open');
                 }
@@ -696,33 +847,415 @@
         }
     }
 
-    // Month Navigation controls
-    prevMonthBtn.addEventListener('click', () => {
-        currentMonth--;
-        if (currentMonth < 0) {
-            currentMonth = 11;
-            currentYear--;
-        }
-        renderArtistMonthlyCalendar();
-    });
-
-    nextMonthBtn.addEventListener('click', () => {
-        currentMonth++;
-        if (currentMonth > 11) {
-            currentMonth = 0;
-            currentYear++;
-        }
-        renderArtistMonthlyCalendar();
-    });
-
-    todayBtn.addEventListener('click', () => {
-        const today = new Date();
-        currentYear = today.getFullYear();
-        currentMonth = today.getMonth();
-        renderArtistMonthlyCalendar();
-    });
-
     // Start initialization
     loadEventsAndRender();
+</script>
+
+<script>
+(function () {
+    const calendarGrid = document.getElementById('calendarGrid');
+    const currentMonthYearLabel = document.getElementById('currentMonthYear');
+    const prevMonthBtn = document.getElementById('prevMonth');
+    const nextMonthBtn = document.getElementById('nextMonth');
+    const todayBtn = document.getElementById('todayBtn');
+    const calendarModal = document.getElementById('calendarModal');
+    const modalCard = calendarModal ? calendarModal.querySelector('.glass-card') : null;
+    const closeModalBtn = document.getElementById('closeModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalDateLabel = document.getElementById('modalDateLabel');
+    const modalBody = document.getElementById('modalBody');
+    const modalFooter = document.getElementById('modalFooter');
+
+    if (!calendarGrid || !currentMonthYearLabel || !calendarModal || !modalBody || !modalFooter) return;
+
+    let calendarYear = new Date().getFullYear();
+    let calendarMonth = new Date().getMonth();
+    let events = { bookings: [], busy_dates: [] };
+    let isSavingAvailability = false;
+
+    function getCookieValue(name) {
+        const cookies = document.cookie ? document.cookie.split(';') : [];
+        for (const rawCookie of cookies) {
+            const cookie = rawCookie.trim();
+            if (cookie.startsWith(name + '=')) {
+                return decodeURIComponent(cookie.slice(name.length + 1));
+            }
+        }
+        return '';
+    }
+
+    function normalizePayload(payload) {
+        const safePayload = payload && typeof payload === 'object' ? payload : {};
+        return {
+            bookings: Array.isArray(safePayload.bookings) ? safePayload.bookings : [],
+            busy_dates: Array.isArray(safePayload.busy_dates) ? safePayload.busy_dates : []
+        };
+    }
+
+    function readInitialPayload() {
+        const dataNode = document.getElementById('artist-calendar-data');
+        if (!dataNode) return { bookings: [], busy_dates: [] };
+        try {
+            return normalizePayload(JSON.parse(dataNode.textContent || '{}'));
+        } catch (error) {
+            console.error('Artist calendar JSON parse failed:', error);
+            return { bookings: [], busy_dates: [] };
+        }
+    }
+
+    function dateKey(year, month, day) {
+        return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    }
+
+    function prettyDate(dateStr) {
+        const [year, month, day] = dateStr.split('-').map(Number);
+        return new Date(year, month - 1, day).toLocaleDateString('en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+    }
+
+    function money(value) {
+        const amount = Number(value || 0);
+        return `Rs ${amount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    }
+
+    function detailValue(value, fallback = 'Not provided') {
+        return value === null || value === undefined || value === '' ? fallback : value;
+    }
+
+    function fileLink(url, label) {
+        return url
+            ? `<a href="${url}" target="_blank" class="text-whn-purple font-bold hover:underline">${label}</a>`
+            : `<span class="text-white/40 italic">Not uploaded</span>`;
+    }
+
+    function bookingForDate(dateStr) {
+        return events.bookings.find(booking => String(booking.date || '') === dateStr) || null;
+    }
+
+    function busyForDate(dateStr) {
+        return events.busy_dates.find(busy => String(busy.date || '') === dateStr) || null;
+    }
+
+    function openModal() {
+        calendarModal.classList.remove('hidden', 'pointer-events-none', 'opacity-0');
+        calendarModal.classList.add('flex');
+        if (modalCard) modalCard.classList.remove('scale-95');
+        document.body.classList.add('modal-open');
+    }
+
+    function closeArtistCalendarModal() {
+        calendarModal.classList.add('hidden', 'pointer-events-none', 'opacity-0');
+        calendarModal.classList.remove('flex');
+        if (modalCard) modalCard.classList.add('scale-95');
+        document.body.classList.remove('modal-open');
+        modalFooter.innerHTML = '';
+        modalFooter.classList.add('hidden');
+    }
+
+    function renderCalendar() {
+        calendarGrid.innerHTML = '';
+        currentMonthYearLabel.textContent = new Date(calendarYear, calendarMonth, 1).toLocaleDateString('en-US', {
+            month: 'long',
+            year: 'numeric'
+        });
+
+        const firstDayIndex = new Date(calendarYear, calendarMonth, 1).getDay();
+        const totalDays = new Date(calendarYear, calendarMonth + 1, 0).getDate();
+        const today = new Date();
+        const isCurrentMonth = today.getFullYear() === calendarYear && today.getMonth() === calendarMonth;
+
+        for (let i = 0; i < firstDayIndex; i++) {
+            const emptyCell = document.createElement('div');
+            emptyCell.className = 'calendar-cell empty-cell rounded-2xl bg-white/[0.01] border border-white/[0.02] cursor-not-allowed opacity-30';
+            calendarGrid.appendChild(emptyCell);
+        }
+
+        for (let day = 1; day <= totalDays; day++) {
+            const dateStr = dateKey(calendarYear, calendarMonth, day);
+            const booking = bookingForDate(dateStr);
+            const busy = busyForDate(dateStr);
+            const cell = document.createElement('button');
+            cell.type = 'button';
+            cell.dataset.date = dateStr;
+            cell.className = 'calendar-cell p-3 rounded-2xl bg-white/[0.02] border border-white/5 flex flex-col justify-between text-left cursor-pointer focus:outline-none focus:ring-2 focus:ring-whn-purple/70';
+
+            if (isCurrentMonth && today.getDate() === day) {
+                cell.classList.add('today-cell');
+            }
+
+            let badgeHtml = '';
+            if (booking) {
+                const status = String(booking.status || '').toLowerCase();
+                const title = booking.title || booking.venue || 'Booking';
+                if (status === 'confirmed') {
+                    cell.classList.add('cell-booking-confirmed');
+                    badgeHtml = `<span class="pointer-events-none text-[9px] font-black text-green-400 bg-green-500/10 px-2 py-1 rounded-lg block truncate max-w-full text-center tracking-widest uppercase">Confirmed ${title}</span>`;
+                } else if (status === 'cancelled') {
+                    cell.classList.add('cell-booking-cancelled');
+                    badgeHtml = `<span class="pointer-events-none text-[9px] font-black text-red-400 bg-red-500/10 px-2 py-1 rounded-lg block truncate max-w-full text-center tracking-widest uppercase">Cancelled ${title}</span>`;
+                } else {
+                    cell.classList.add('cell-booking-tentative');
+                    badgeHtml = `<span class="pointer-events-none text-[9px] font-black text-yellow-400 bg-yellow-500/10 px-2 py-1 rounded-lg block truncate max-w-full text-center tracking-widest uppercase">Tentative ${title}</span>`;
+                }
+            } else if (busy) {
+                cell.classList.add('cell-busy');
+                badgeHtml = `<span class="pointer-events-none text-[9px] font-black text-whn-purple bg-whn-purple/10 px-2 py-1 rounded-lg block truncate max-w-full text-center tracking-widest uppercase">Busy</span>`;
+            }
+
+            cell.innerHTML = `
+                <span class="pointer-events-none text-sm font-black text-white/50 block mb-1 text-right">${day}</span>
+                <div class="pointer-events-none flex-1 flex flex-col justify-end">${badgeHtml}</div>
+            `;
+            cell.addEventListener('click', () => openDateDetails(dateStr));
+            calendarGrid.appendChild(cell);
+        }
+    }
+
+    function openDateDetails(dateStr) {
+        const booking = bookingForDate(dateStr);
+        const busy = busyForDate(dateStr);
+        modalDateLabel.textContent = prettyDate(dateStr);
+
+        if (booking) {
+            modalTitle.textContent = 'Booking Overview';
+            modalBody.innerHTML = `
+                <div class="space-y-4">
+                    <div class="p-4 rounded-xl bg-white/[0.03] border border-white/5">
+                        <span class="text-[9px] text-whn-tertiary uppercase tracking-wider block mb-1">Event Venue & Details</span>
+                        <h4 class="text-xl font-black text-white">${detailValue(booking.venue)}</h4>
+                        <p class="text-xs text-white/50 mt-1">${detailValue(booking.location)}</p>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="p-4 rounded-xl bg-white/[0.03] border border-white/5">
+                            <span class="text-[9px] text-whn-tertiary uppercase tracking-wider block mb-1">Time & Duration</span>
+                            <span class="text-sm font-bold text-white">${detailValue(booking.time)} - ${detailValue(booking.duration)}</span>
+                        </div>
+                        <div class="p-4 rounded-xl bg-white/[0.03] border border-white/5">
+                            <span class="text-[9px] text-whn-tertiary uppercase tracking-wider block mb-1">Show Type</span>
+                            <span class="text-sm font-bold text-white">${detailValue(booking.event_type)}</span>
+                        </div>
+                    </div>
+                    <div class="p-4 rounded-xl bg-white/[0.03] border border-white/5">
+                        <span class="text-[9px] text-whn-tertiary uppercase tracking-wider block mb-1">Internal Remarks</span>
+                        <p class="text-xs text-white/60 leading-relaxed">${detailValue(booking.notes, 'No remarks provided by administrator.')}</p>
+                    </div>
+                    <div class="p-4 rounded-2xl bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 text-xs font-bold">
+                        This admin booking is read-only for artists.
+                    </div>
+                    <button type="button" id="artistShowDetailsBtn" class="w-full py-4 mt-2 rounded-xl bg-gradient-to-r from-whn-purple to-whn-blue text-white text-[10px] font-bold uppercase tracking-[0.2em] hover:scale-[1.02] active:scale-[0.98] transition-all text-center">Show Details</button>
+                </div>
+            `;
+            modalFooter.innerHTML = '';
+            modalFooter.classList.add('hidden');
+            openModal();
+            document.getElementById('artistShowDetailsBtn')?.addEventListener('click', () => showFullBookingDetails(booking.id));
+            return;
+        }
+
+        if (busy) {
+            modalTitle.textContent = 'Busy Availability';
+            modalBody.innerHTML = `
+                <div class="space-y-4">
+                    <p class="text-sm text-whn-tertiary">This date is marked unavailable on your artist calendar.</p>
+                    <div class="p-4 rounded-xl bg-white/[0.03] border border-white/5">
+                        <span class="text-[9px] text-whn-tertiary uppercase tracking-wider block mb-1">Busy Notes</span>
+                        <p class="text-xs text-white leading-relaxed whitespace-pre-line">${detailValue(busy.note || busy.notes, 'No notes added.')}</p>
+                    </div>
+                </div>
+            `;
+            modalFooter.classList.remove('hidden');
+            modalFooter.innerHTML = `<button type="button" id="artistUnblockDateBtn" class="px-6 py-2.5 rounded-xl bg-red-500/20 hover:bg-red-500/30 border border-red-500/50 text-xs font-black text-red-400 transition-all">Make Available</button>`;
+            openModal();
+            document.getElementById('artistUnblockDateBtn')?.addEventListener('click', () => removeBusyDate(dateStr));
+            return;
+        }
+
+        modalTitle.textContent = 'Available Date';
+        modalBody.innerHTML = `
+            <div class="space-y-4">
+                <p class="text-sm text-white/80">No booking on this date.</p>
+                <p class="text-xs text-whn-tertiary">You can mark this date as unavailable so admins see it as busy.</p>
+                <label class="text-[10px] text-whn-tertiary font-bold uppercase tracking-widest block">Note / Reason</label>
+                <textarea id="artistBusyNote" rows="3" placeholder="Optional note..." class="w-full px-5 py-4 rounded-2xl bg-white/[0.03] border border-white/10 text-white placeholder-white/30 text-sm focus:border-whn-purple/50 focus:outline-none transition-all resize-none"></textarea>
+            </div>
+        `;
+        modalFooter.classList.remove('hidden');
+        modalFooter.innerHTML = `<button type="button" id="artistBlockDateBtn" class="px-6 py-2.5 rounded-xl bg-whn-purple text-white text-xs font-black shadow-[0_0_20px_rgba(124,58,237,0.3)] hover:scale-105 transition-all">Block Date</button>`;
+        openModal();
+        document.getElementById('artistBlockDateBtn')?.addEventListener('click', () => addBusyDate(dateStr));
+    }
+
+    function showFullBookingDetails(bookingId) {
+        const booking = events.bookings.find(item => item.id === bookingId);
+        if (!booking) return;
+
+        const expensesHtml = booking.expenses && booking.expenses.length
+            ? booking.expenses.map(expense => `
+                <div class="flex items-center justify-between gap-4 border-b border-white/5 pb-2 last:border-0 last:pb-0">
+                    <span class="text-white/80 font-medium">${detailValue(expense.name)}</span>
+                    <span class="text-white font-bold">${money(expense.amount)}</span>
+                </div>
+            `).join('')
+            : `<p class="text-white/40 italic">No expenses recorded.</p>`;
+
+        modalTitle.textContent = 'Booking Details';
+        modalBody.innerHTML = `
+            <div class="space-y-6 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+                <div class="border-b border-white/5 pb-4">
+                    <h4 class="text-[11px] font-black text-whn-purple uppercase tracking-widest mb-3">Event Details</h4>
+                    <div class="grid grid-cols-2 gap-3 text-xs">
+                        <div class="bg-white/[0.02] p-3 rounded-xl border border-white/5"><span class="text-[9px] text-whn-tertiary uppercase block">Artist</span><span class="text-white font-bold">${detailValue(booking.artist)}</span></div>
+                        <div class="bg-white/[0.02] p-3 rounded-xl border border-white/5"><span class="text-[9px] text-whn-tertiary uppercase block">Event Type</span><span class="text-white font-bold">${detailValue(booking.event_type)}</span></div>
+                        <div class="bg-white/[0.02] p-3 rounded-xl border border-white/5 col-span-2"><span class="text-[9px] text-whn-tertiary uppercase block">Venue</span><span class="text-white font-bold">${detailValue(booking.venue)}</span></div>
+                        <div class="bg-white/[0.02] p-3 rounded-xl border border-white/5 col-span-2"><span class="text-[9px] text-whn-tertiary uppercase block">Location</span><span class="text-white font-bold">${detailValue(booking.location)}</span></div>
+                        <div class="bg-white/[0.02] p-3 rounded-xl border border-white/5"><span class="text-[9px] text-whn-tertiary uppercase block">Date</span><span class="text-white font-bold">${detailValue(booking.date)}</span></div>
+                        <div class="bg-white/[0.02] p-3 rounded-xl border border-white/5"><span class="text-[9px] text-whn-tertiary uppercase block">Time / Duration</span><span class="text-white font-bold">${detailValue(booking.time)} / ${detailValue(booking.duration)}</span></div>
+                    </div>
+                </div>
+                <div class="border-b border-white/5 pb-4">
+                    <h4 class="text-[11px] font-black text-whn-purple uppercase tracking-widest mb-3">Deal & Status</h4>
+                    <div class="grid grid-cols-2 gap-3 text-xs">
+                        <div class="bg-white/[0.02] p-3 rounded-xl border border-white/5"><span class="text-[9px] text-whn-tertiary uppercase block">Deal Amount</span><span class="text-white font-bold">${money(booking.deal_amount)}</span></div>
+                        <div class="bg-white/[0.02] p-3 rounded-xl border border-white/5"><span class="text-[9px] text-whn-tertiary uppercase block">GST</span><span class="text-white font-bold">${money(booking.gst_amount)}</span></div>
+                        <div class="bg-white/[0.02] p-3 rounded-xl border border-white/5 col-span-2"><span class="text-[9px] text-whn-tertiary uppercase block">Total Amount</span><span class="text-white font-bold">${money(booking.total_amount)}</span></div>
+                        <div class="bg-white/[0.02] p-3 rounded-xl border border-white/5"><span class="text-[9px] text-whn-tertiary uppercase block">Booking Type</span><span class="text-white font-bold">${detailValue(booking.booking_type)}</span></div>
+                        <div class="bg-white/[0.02] p-3 rounded-xl border border-white/5"><span class="text-[9px] text-whn-tertiary uppercase block">Deal Type</span><span class="text-white font-bold">${detailValue(booking.deal_type)}</span></div>
+                        <div class="bg-white/[0.02] p-3 rounded-xl border border-white/5 col-span-2"><span class="text-[9px] text-whn-tertiary uppercase block">Artist Share</span><span class="text-green-400 font-black">${money(booking.artist_share)}</span></div>
+                        <div class="bg-white/[0.02] p-3 rounded-xl border border-white/5 col-span-2"><span class="text-[9px] text-whn-tertiary uppercase block">Booking Status</span><span class="text-white font-bold">${detailValue(booking.status_label || booking.status)}</span></div>
+                    </div>
+                </div>
+                <div class="border-b border-white/5 pb-4">
+                    <h4 class="text-[11px] font-black text-whn-purple uppercase tracking-widest mb-3">Logistics & Documents</h4>
+                    <div class="space-y-3 text-xs">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="bg-white/[0.02] p-3 rounded-xl border border-white/5"><span class="text-[9px] text-whn-tertiary uppercase block mb-1">Travel Info PDF</span>${fileLink(booking.travel_pdf, 'View travel PDF')}</div>
+                            <div class="bg-white/[0.02] p-3 rounded-xl border border-white/5"><span class="text-[9px] text-whn-tertiary uppercase block mb-1">Accommodation PDF</span>${fileLink(booking.accommodation_pdf, 'View accommodation PDF')}</div>
+                        </div>
+                        <div class="bg-white/[0.02] p-3 rounded-xl border border-white/5"><span class="text-[9px] text-whn-tertiary uppercase block">Hotel / Accommodation Details</span><p class="text-white font-semibold whitespace-pre-line mt-1">${detailValue(booking.accommodation_details, 'No accommodation details provided.')}</p></div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="bg-white/[0.02] p-3 rounded-xl border border-white/5"><span class="text-[9px] text-whn-tertiary uppercase block">Ground Transport</span><span class="text-white font-bold">${detailValue(booking.ground_transport)}</span></div>
+                            <div class="bg-white/[0.02] p-3 rounded-xl border border-white/5"><span class="text-[9px] text-whn-tertiary uppercase block">Transport Details</span><span class="text-white font-bold">${detailValue(booking.transport_details)}</span></div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="bg-white/[0.02] p-3 rounded-xl border border-white/5"><span class="text-[9px] text-whn-tertiary uppercase block">Sound Check</span><span class="text-white font-bold">${detailValue(booking.sound_check)}</span></div>
+                            <div class="bg-white/[0.02] p-3 rounded-xl border border-white/5"><span class="text-[9px] text-whn-tertiary uppercase block mb-1">Artwork / Flyer</span>${fileLink(booking.artwork_attachment, 'View artwork')}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="border-b border-white/5 pb-4"><h4 class="text-[11px] font-black text-whn-purple uppercase tracking-widest mb-3">Expenses</h4><div class="bg-white/[0.02] p-4 rounded-xl border border-white/5 text-xs space-y-2">${expensesHtml}</div></div>
+                <div><h4 class="text-[11px] font-black text-whn-purple uppercase tracking-widest mb-3">Notes</h4><div class="bg-white/[0.02] p-4 rounded-xl border border-white/5 text-xs"><p class="text-white leading-relaxed whitespace-pre-line">${detailValue(booking.notes, 'No notes added.')}</p></div></div>
+            </div>
+        `;
+        modalFooter.innerHTML = '';
+        modalFooter.classList.add('hidden');
+    }
+
+    async function addBusyDate(dateStr) {
+        if (isSavingAvailability) return;
+        isSavingAvailability = true;
+        const note = document.getElementById('artistBusyNote')?.value || '';
+        try {
+            const response = await fetch('/api/artist/calendar/busy/add/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookieValue('csrftoken')
+                },
+                body: JSON.stringify({ date: dateStr, note })
+            });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.error || 'Unable to block date.');
+            closeArtistCalendarModal();
+            await loadCalendarData();
+        } catch (error) {
+            alert(error.message);
+        } finally {
+            isSavingAvailability = false;
+        }
+    }
+
+    async function removeBusyDate(dateStr) {
+        if (isSavingAvailability) return;
+        isSavingAvailability = true;
+        try {
+            const response = await fetch('/api/artist/calendar/busy/remove/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookieValue('csrftoken')
+                },
+                body: JSON.stringify({ date: dateStr })
+            });
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.error || 'Unable to unblock date.');
+            closeArtistCalendarModal();
+            await loadCalendarData();
+        } catch (error) {
+            alert(error.message);
+        } finally {
+            isSavingAvailability = false;
+        }
+    }
+
+    async function loadCalendarData() {
+        events = readInitialPayload();
+        renderCalendar();
+        try {
+            const response = await fetch('/api/artist/calendar/', { credentials: 'same-origin' });
+            if (response.ok) {
+                events = normalizePayload(await response.json());
+                renderCalendar();
+            }
+        } catch (error) {
+            console.error('Artist calendar refresh failed:', error);
+        }
+    }
+
+    prevMonthBtn?.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        calendarMonth--;
+        if (calendarMonth < 0) {
+            calendarMonth = 11;
+            calendarYear--;
+        }
+        renderCalendar();
+    });
+
+    nextMonthBtn?.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        calendarMonth++;
+        if (calendarMonth > 11) {
+            calendarMonth = 0;
+            calendarYear++;
+        }
+        renderCalendar();
+    });
+
+    todayBtn?.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        const today = new Date();
+        calendarYear = today.getFullYear();
+        calendarMonth = today.getMonth();
+        renderCalendar();
+    });
+
+    closeModalBtn?.addEventListener('click', closeArtistCalendarModal);
+    calendarModal.addEventListener('click', (event) => {
+        if (event.target === calendarModal) closeArtistCalendarModal();
+    });
+
+    calendarModal.classList.add('hidden', 'pointer-events-none', 'opacity-0');
+    calendarModal.classList.remove('flex');
+
+    setTimeout(loadCalendarData, 0);
+    setTimeout(loadCalendarData, 250);
+})();
 </script>
 {% endblock %}

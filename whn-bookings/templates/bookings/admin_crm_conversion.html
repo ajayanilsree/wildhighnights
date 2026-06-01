@@ -1,0 +1,195 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="min-h-screen bg-whn-dark pt-32 pb-20 px-6">
+    <div class="container mx-auto">
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-10" data-aos="fade-down">
+            <div>
+                <a href="{% url 'admin_crm' %}?employee={{ selected_employee_id }}{% if selected_period %}&period={{ selected_period }}{% endif %}{% if from_date %}&from_date={{ from_date }}{% endif %}{% if to_date %}&to_date={{ to_date }}{% endif %}" class="text-whn-purple font-bold tracking-[0.3em] uppercase text-[10px] mb-4 flex items-center gap-2 hover:translate-x-[-4px] transition-transform">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                    </svg>
+                    Back to Employee CRM
+                </a>
+                <p class="text-[10px] uppercase tracking-[0.3em] text-whn-purple font-black">Conversion Tracking</p>
+                <h1 class="mt-2 text-3xl sm:text-5xl md:text-6xl font-black text-white tracking-tighter">Your Converted Pipeline</h1>
+                <p class="text-whn-tertiary mt-2">
+                    {% if selected_employee %}
+                        Conversion analytics for {{ selected_employee.name }}.
+                    {% else %}
+                        Combined conversion analytics for all employees.
+                    {% endif %}
+                </p>
+            </div>
+            <div class="flex items-center gap-3">
+                <a href="{% url 'manage_employees' %}" class="px-6 py-3 rounded-full border border-white/10 bg-white/[0.03] text-white text-[10px] font-black uppercase tracking-[0.2em] hover:border-whn-purple/40 hover:bg-white/[0.06] transition-all">Manage Employees</a>
+                <a href="{% url 'admin_crm_conversion' %}" class="px-6 py-3 rounded-full border border-white/10 bg-white/[0.03] text-white text-[10px] font-black uppercase tracking-[0.2em] hover:border-whn-blue/40 hover:bg-white/[0.06] transition-all">Reset</a>
+            </div>
+        </div>
+
+        <form id="conversionFilterForm" method="GET" class="sticky top-24 z-30 mb-8" data-aos="fade-up">
+            <div class="glass-card rounded-[2rem] p-4 md:p-5 border border-white/5 shadow-2xl">
+                <div class="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+                    <div class="grid grid-cols-1 md:grid-cols-[240px_minmax(0,1fr)] gap-4 w-full">
+                        <div class="relative">
+                            <label class="text-[10px] font-black text-whn-tertiary uppercase tracking-widest mb-2 block">Employee</label>
+                            <select name="employee" id="employeeSelect" class="employee-filter w-full bg-white/[0.03] border border-white/10 rounded-2xl px-5 py-3 text-white focus:outline-none focus:border-whn-purple/50 transition-all [color-scheme:dark]">
+                                <option value="all" {% if selected_employee_id == 'all' %}selected{% endif %}>All Employees</option>
+                                {% for employee in employees %}
+                                <option value="{{ employee.id }}" {% if selected_employee_id == employee.id|stringformat:'s' %}selected{% endif %}>{{ employee.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-black text-whn-tertiary uppercase tracking-widest mb-2 block">Date Filters</label>
+                            <div class="flex flex-wrap gap-2">
+                                <button type="button" class="conversion-filter-btn px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border border-white/10 bg-white/[0.03] text-white transition-all" data-period="today">Today</button>
+                                <button type="button" class="conversion-filter-btn px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border border-white/10 bg-white/[0.03] text-white transition-all" data-period="yesterday">Yesterday</button>
+                                <button type="button" class="conversion-filter-btn px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border border-white/10 bg-white/[0.03] text-white transition-all" data-period="week">This Week</button>
+                                <button type="button" class="conversion-filter-btn px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border border-white/10 bg-white/[0.03] text-white transition-all" data-period="month">This Month</button>
+                                <button type="button" class="conversion-filter-btn px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border border-white/10 bg-white/[0.03] text-white transition-all" data-period="year">This Year</button>
+                                <button type="button" class="conversion-filter-btn px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border border-white/10 bg-white/[0.03] text-white transition-all" data-period="custom">Custom Date Range</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <input type="hidden" name="period" id="periodInput" value="{{ selected_period|default:'' }}">
+
+                    <div id="customDateRange" class="hidden flex flex-col md:flex-row gap-3 xl:items-end">
+                        <div class="flex items-center gap-2">
+                            <span class="text-[10px] font-bold uppercase tracking-widest text-whn-tertiary">From</span>
+                            <input type="date" name="from_date" id="fromDate" value="{{ from_date|default:'' }}" class="bg-white/[0.03] border border-white/10 rounded-2xl px-4 py-2.5 text-white focus:outline-none focus:border-whn-purple/50 [color-scheme:dark]">
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-[10px] font-bold uppercase tracking-widest text-whn-tertiary">To</span>
+                            <input type="date" name="to_date" id="toDate" value="{{ to_date|default:'' }}" class="bg-white/[0.03] border border-white/10 rounded-2xl px-4 py-2.5 text-white focus:outline-none focus:border-whn-purple/50 [color-scheme:dark]">
+                        </div>
+                        <button type="button" id="applyCustomRangeBtn" class="px-5 py-3 rounded-2xl bg-whn-purple text-white text-[10px] font-black uppercase tracking-[0.2em] hover:scale-105 transition-all">Apply Range</button>
+                    </div>
+                </div>
+            </div>
+        </form>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-8" data-aos="fade-up">
+            <div class="glass-card rounded-[2rem] p-5 border border-green-500/10 bg-green-500/[0.03]">
+                <div class="text-[10px] uppercase tracking-[0.3em] text-green-300 font-bold mb-3">Lead Count</div>
+                <div class="text-3xl font-black text-white">{{ summary.lead_count|default:0 }}</div>
+            </div>
+            <div class="glass-card rounded-[2rem] p-5 border border-emerald-500/10 bg-emerald-500/[0.03]">
+                <div class="text-[10px] uppercase tracking-[0.3em] text-emerald-300 font-bold mb-3">Sale Count</div>
+                <div class="text-3xl font-black text-white">{{ summary.sale_count|default:0 }}</div>
+            </div>
+            <div class="glass-card rounded-[2rem] p-5 border border-whn-purple/10 bg-whn-purple/[0.03]">
+                <div class="text-[10px] uppercase tracking-[0.3em] text-whn-purple font-bold mb-3">Lead Value</div>
+                <div class="text-3xl font-black text-white">Rs {{ summary.lead_value|default:0 }}</div>
+            </div>
+            <div class="glass-card rounded-[2rem] p-5 border border-whn-blue/10 bg-whn-blue/[0.03]">
+                <div class="text-[10px] uppercase tracking-[0.3em] text-whn-blue font-bold mb-3">Sale Value</div>
+                <div class="text-3xl font-black text-white">Rs {{ summary.sale_value|default:0 }}</div>
+            </div>
+        </div>
+
+        <div class="glass-card rounded-[2rem] p-6 border border-whn-purple/20 mb-8 shadow-[0_20px_60px_rgba(124,58,237,0.12)]" data-aos="fade-up">
+            <div class="mb-5 flex flex-col md:flex-row md:items-end md:justify-between gap-2">
+                <div>
+                    <p class="text-[10px] uppercase tracking-[0.3em] text-whn-purple font-black">Conversion Data Table</p>
+                    <h2 class="mt-2 text-2xl font-black text-white">Employee-wise Conversion Data</h2>
+                </div>
+                <p class="text-xs text-whn-tertiary font-bold uppercase tracking-[0.2em]">Booking created conversions only</p>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full min-w-[760px] text-left">
+                    <thead>
+                        <tr class="border-b border-white/5">
+                            <th class="pb-4 text-[10px] font-black text-whn-tertiary uppercase tracking-widest">Employee Name</th>
+                            <th class="pb-4 text-[10px] font-black text-whn-tertiary uppercase tracking-widest">Converted Leads</th>
+                            <th class="pb-4 text-[10px] font-black text-whn-tertiary uppercase tracking-widest">Converted Sales</th>
+                            <th class="pb-4 text-[10px] font-black text-whn-tertiary uppercase tracking-widest">Lead Deal Amount</th>
+                            <th class="pb-4 text-[10px] font-black text-whn-tertiary uppercase tracking-widest">Sale Deal Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-white/5">
+                        {% for row in conversion_rows %}
+                        <tr>
+                            <td class="py-5 text-sm font-black text-white">{{ row.employee_name }}</td>
+                            <td class="py-5 text-sm text-whn-tertiary">{{ row.converted_leads|default:0 }}</td>
+                            <td class="py-5 text-sm text-whn-tertiary">{{ row.converted_sales|default:0 }}</td>
+                            <td class="py-5 text-sm font-bold text-white">Rs {{ row.lead_deal_amount|default:0 }}</td>
+                            <td class="py-5 text-sm font-bold text-white">Rs {{ row.sale_deal_amount|default:0 }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="py-10 text-center text-whn-tertiary text-sm italic">No employees found.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const employeeFilterStyles = document.createElement('style');
+    employeeFilterStyles.textContent = `
+        select.employee-filter {
+            background-color: #1b1b1f;
+            color: #ffffff;
+            border: 1px solid rgba(139, 92, 246, 0.6);
+            border-radius: 14px;
+        }
+
+        select.employee-filter option {
+            background-color: #111111;
+            color: #ffffff;
+        }
+
+        select.employee-filter option:checked,
+        select.employee-filter option:hover {
+            background-color: #7c3aed;
+            color: #ffffff;
+        }
+    `;
+    document.head.appendChild(employeeFilterStyles);
+
+    const conversionFilterForm = document.getElementById('conversionFilterForm');
+    const employeeSelect = document.getElementById('employeeSelect');
+    const periodInput = document.getElementById('periodInput');
+    const customDateRange = document.getElementById('customDateRange');
+    const filterButtons = Array.from(document.querySelectorAll('.conversion-filter-btn'));
+    const applyCustomRangeBtn = document.getElementById('applyCustomRangeBtn');
+
+    function setActiveFilter(period) {
+        filterButtons.forEach((btn) => {
+            const isActive = btn.dataset.period === period;
+            btn.classList.toggle('bg-whn-purple', isActive);
+            btn.classList.toggle('border-whn-purple', isActive);
+            btn.classList.toggle('text-white', isActive);
+            btn.classList.toggle('bg-white/[0.03]', !isActive);
+            btn.classList.toggle('text-whn-tertiary', !isActive);
+        });
+        customDateRange.classList.toggle('hidden', period !== 'custom');
+    }
+
+    function submitWithPeriod(period) {
+        periodInput.value = period;
+        conversionFilterForm.submit();
+    }
+
+    employeeSelect.addEventListener('change', () => {
+        conversionFilterForm.submit();
+    });
+
+    filterButtons.forEach((btn) => {
+        btn.addEventListener('click', () => submitWithPeriod(btn.dataset.period));
+    });
+
+    applyCustomRangeBtn.addEventListener('click', () => {
+        periodInput.value = 'custom';
+        conversionFilterForm.submit();
+    });
+
+    setActiveFilter(periodInput.value || '');
+</script>
+{% endblock %}

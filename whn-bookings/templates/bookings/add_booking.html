@@ -48,6 +48,35 @@
         <div class="glass-card rounded-[2.5rem] p-8 md:p-12 border border-white/5 shadow-2xl" data-aos="fade-up">
             <form method="POST" enctype="multipart/form-data" class="space-y-12">
                 {% csrf_token %}
+                {% if booking_source %}
+                <input type="hidden" name="booking_source" value="{{ booking_source }}">
+                {% endif %}
+                {% if crm_lead %}
+                <input type="hidden" name="crm_lead_id" value="{{ crm_lead.id }}">
+                <div class="rounded-[2rem] border border-emerald-400/20 bg-[#111111] p-6 shadow-[0_20px_60px_rgba(0,0,0,0.35)]">
+                    <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                        <div>
+                            <p class="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-300">CRM Conversion Draft</p>
+                            <h2 class="mt-2 text-2xl font-black text-white">{{ crm_lead.promoter_name }}</h2>
+                        </div>
+                        <span class="w-fit rounded-full border border-whn-purple/40 px-4 py-2 text-[10px] font-black uppercase tracking-[0.2em] text-whn-purple">{{ crm_lead.status }}</span>
+                    </div>
+                    <div class="mt-6 grid grid-cols-1 gap-4 md:grid-cols-3">
+                        <div class="rounded-2xl border border-white/5 bg-white/[0.03] p-4">
+                            <p class="text-[9px] font-bold uppercase tracking-[0.2em] text-whn-tertiary">Employee</p>
+                            <p class="mt-1 text-sm font-bold text-white">{{ crm_lead.employee.name }}</p>
+                        </div>
+                        <div class="rounded-2xl border border-white/5 bg-white/[0.03] p-4">
+                            <p class="text-[9px] font-bold uppercase tracking-[0.2em] text-whn-tertiary">Contact</p>
+                            <p class="mt-1 text-sm font-bold text-white">{{ crm_lead.contact_number }}</p>
+                        </div>
+                        <div class="rounded-2xl border border-white/5 bg-white/[0.03] p-4">
+                            <p class="text-[9px] font-bold uppercase tracking-[0.2em] text-whn-tertiary">Email</p>
+                            <p class="mt-1 break-words text-sm font-bold text-white">{{ crm_lead.email|default:"Not provided" }}</p>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
                 
                 <!-- Section 1: Event Details -->
                 <div class="space-y-6">
@@ -60,9 +89,9 @@
                         <div class="relative group">
                             <label class="text-[10px] font-bold text-whn-tertiary uppercase tracking-[0.2em] ml-1 mb-3 block group-focus-within:text-whn-purple transition-colors">Artist</label>
                             <select name="artist" required class="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-whn-purple/50 focus:ring-4 focus:ring-whn-purple/10 transition-all appearance-none cursor-pointer">
-                                <option value="" disabled selected class="bg-whn-dark">Select Artist</option>
+                                <option value="" disabled {% if not selected_artist_id %}selected{% endif %} class="bg-whn-dark">Select Artist</option>
                                 {% for artist in artists %}
-                                <option value="{{ artist.id }}" class="bg-whn-dark">{{ artist.name }}</option>
+                                <option value="{{ artist.id }}" {% if selected_artist_id == artist.id|stringformat:"s" %}selected{% endif %} class="bg-whn-dark">{{ artist.name }}</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -80,19 +109,19 @@
                         <!-- Venue -->
                         <div class="relative group">
                             <label class="text-[10px] font-bold text-whn-tertiary uppercase tracking-[0.2em] ml-1 mb-3 block group-focus-within:text-whn-purple transition-colors">Venue</label>
-                            <input type="text" name="venue" required placeholder="Venue Name" class="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-whn-purple/50 focus:ring-4 focus:ring-whn-purple/10 transition-all placeholder:text-white/10">
+                            <input type="text" name="venue" required value="{{ selected_venue|default:'' }}" placeholder="Venue Name" class="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-whn-purple/50 focus:ring-4 focus:ring-whn-purple/10 transition-all placeholder:text-white/10">
                         </div>
 
                         <!-- Location -->
                         <div class="relative group">
                             <label class="text-[10px] font-bold text-whn-tertiary uppercase tracking-[0.2em] ml-1 mb-3 block group-focus-within:text-whn-purple transition-colors">Location</label>
-                            <input type="text" name="location" required placeholder="City, Country" class="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-whn-purple/50 focus:ring-4 focus:ring-whn-purple/10 transition-all placeholder:text-white/10">
+                            <input type="text" name="location" required value="{{ selected_location|default:'' }}" placeholder="City, Country" class="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-whn-purple/50 focus:ring-4 focus:ring-whn-purple/10 transition-all placeholder:text-white/10">
                         </div>
 
                         <!-- Date -->
                         <div class="relative group">
                             <label class="text-[10px] font-bold text-whn-tertiary uppercase tracking-[0.2em] ml-1 mb-3 block group-focus-within:text-whn-purple transition-colors">Date</label>
-                            <input type="date" name="date" required class="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-whn-purple/50 focus:ring-4 focus:ring-whn-purple/10 transition-all [color-scheme:dark]">
+                            <input type="date" name="date" required value="{{ selected_date }}" class="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-whn-purple/50 focus:ring-4 focus:ring-whn-purple/10 transition-all [color-scheme:dark]">
                         </div>
 
                         <!-- Time -->
@@ -121,15 +150,15 @@
                             <label class="text-[10px] font-bold text-whn-tertiary uppercase tracking-[0.2em] ml-1 mb-3 block group-focus-within:text-whn-purple transition-colors">Booking Type</label>
                             <div class="grid grid-cols-3 gap-4">
                                 <label class="relative cursor-pointer">
-                                    <input type="radio" name="booking_type" value="Sale" checked class="peer sr-only">
+                                    <input type="radio" name="booking_type" value="Sale" {% if selected_booking_type == 'Sale' or not selected_booking_type %}checked{% endif %} class="peer sr-only">
                                     <div class="p-4 rounded-2xl bg-white/[0.03] border border-white/10 text-center text-xs font-bold uppercase tracking-widest text-whn-tertiary peer-checked:bg-whn-purple/10 peer-checked:border-whn-purple/50 peer-checked:text-white transition-all">Sale</div>
                                 </label>
                                 <label class="relative cursor-pointer">
-                                    <input type="radio" name="booking_type" value="Lead" class="peer sr-only">
+                                    <input type="radio" name="booking_type" value="Lead" {% if selected_booking_type == 'Lead' %}checked{% endif %} class="peer sr-only">
                                     <div class="p-4 rounded-2xl bg-white/[0.03] border border-white/10 text-center text-xs font-bold uppercase tracking-widest text-whn-tertiary peer-checked:bg-whn-purple/10 peer-checked:border-whn-purple/50 peer-checked:text-white transition-all">Lead</div>
                                 </label>
                                 <label class="relative cursor-pointer">
-                                    <input type="radio" name="booking_type" value="Custom" class="peer sr-only">
+                                    <input type="radio" name="booking_type" value="Custom" {% if selected_booking_type == 'Custom' %}checked{% endif %} class="peer sr-only">
                                     <div class="p-4 rounded-2xl bg-white/[0.03] border border-white/10 text-center text-xs font-bold uppercase tracking-widest text-whn-tertiary peer-checked:bg-whn-purple/10 peer-checked:border-whn-purple/50 peer-checked:text-white transition-all">Custom</div>
                                 </label>
                             </div>
@@ -158,7 +187,7 @@
                             <!-- Deal Amount -->
                             <div class="relative group">
                                 <label class="text-[10px] font-bold text-whn-tertiary uppercase tracking-[0.2em] ml-1 mb-3 block group-focus-within:text-whn-purple transition-colors">Deal Amount (₹)</label>
-                                <input type="number" step="0.01" name="deal_amount" id="deal-amount-input" placeholder="e.g. ₹2,00,000" class="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-whn-purple/50 focus:ring-4 focus:ring-whn-purple/10 transition-all placeholder:text-white/10">
+                                <input type="number" step="0.01" name="deal_amount" id="deal-amount-input" value="{{ selected_deal_amount|default:'' }}" placeholder="e.g. ₹2,00,000" class="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-whn-purple/50 focus:ring-4 focus:ring-whn-purple/10 transition-all placeholder:text-white/10">
                             </div>
 
                             <!-- GST -->
@@ -308,7 +337,7 @@
                         <!-- Notes -->
                         <div class="relative group">
                             <label class="text-[10px] font-bold text-whn-tertiary uppercase tracking-[0.2em] ml-1 mb-3 block group-focus-within:text-whn-purple transition-colors">Notes (Optional)</label>
-                            <textarea name="notes" rows="4" placeholder="Additional layout specifications, specific riders, or other details..." class="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-whn-purple/50 focus:ring-4 focus:ring-whn-purple/10 transition-all placeholder:text-white/10 resize-none"></textarea>
+                            <textarea name="notes" rows="4" placeholder="Additional layout specifications, specific riders, or other details..." class="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-whn-purple/50 focus:ring-4 focus:ring-whn-purple/10 transition-all placeholder:text-white/10 resize-none">{{ selected_notes|default:'' }}</textarea>
                         </div>
                     </div>
                 </div>

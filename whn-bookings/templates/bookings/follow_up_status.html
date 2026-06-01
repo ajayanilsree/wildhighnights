@@ -1,0 +1,185 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+    .follow-up-table-scroll::-webkit-scrollbar {
+        height: 8px;
+    }
+    .follow-up-table-scroll::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 999px;
+    }
+    .follow-up-table-scroll::-webkit-scrollbar-thumb {
+        background: rgba(124, 58, 237, 0.75);
+        border-radius: 999px;
+    }
+</style>
+
+<div class="min-h-screen bg-whn-dark pt-32 pb-20 px-6">
+    <div class="container mx-auto">
+        <div class="flex flex-col gap-8 mb-12 lg:flex-row lg:items-end lg:justify-between" data-aos="fade-down">
+            <div>
+                <a href="{% url 'manage_employees' %}" class="mb-4 flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.3em] text-whn-purple transition-transform hover:translate-x-[-4px]">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                    </svg>
+                    Back to Manage Employees
+                </a>
+                <p class="mb-3 text-[10px] font-black uppercase tracking-[0.45em] text-whn-purple">Employee Tracking</p>
+                <h1 class="text-3xl font-black tracking-tighter text-white sm:text-5xl md:text-6xl">Follow-up Status</h1>
+            </div>
+            <a href="{% url 'admin_crm' %}" class="self-start rounded-full border border-white/10 bg-white/[0.03] px-6 py-3 text-[10px] font-black uppercase tracking-[0.2em] text-white transition-all hover:border-whn-purple/40 hover:bg-white/[0.06] lg:self-auto">Employee CRM</a>
+        </div>
+
+        <form method="GET" class="sticky top-24 z-20 mb-10 rounded-[2rem] border border-white/10 bg-[#111111] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.45)]" data-aos="fade-up">
+            <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
+                <label class="flex flex-col gap-2">
+                    <span class="text-[10px] font-black uppercase tracking-[0.25em] text-whn-tertiary">Employee</span>
+                    <select name="employee" class="rounded-2xl border border-whn-purple/40 bg-[#1b1b1f] px-4 py-3 text-sm font-bold text-white outline-none transition-all focus:border-whn-purple">
+                        <option value="all" {% if selected_employee_id == 'all' %}selected{% endif %}>All Employees</option>
+                        {% for employee in employees %}
+                        <option value="{{ employee.id }}" {% if selected_employee and selected_employee.id == employee.id %}selected{% endif %}>{{ employee.name }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+
+                <label class="flex flex-col gap-2">
+                    <span class="text-[10px] font-black uppercase tracking-[0.25em] text-whn-tertiary">Result</span>
+                    <select name="result" class="rounded-2xl border border-whn-purple/40 bg-[#1b1b1f] px-4 py-3 text-sm font-bold text-white outline-none transition-all focus:border-whn-purple">
+                        <option value="all" {% if selected_result == 'all' %}selected{% endif %}>All</option>
+                        <option value="missed" {% if selected_result == 'missed' %}selected{% endif %}>Missed</option>
+                        <option value="due_today" {% if selected_result == 'due_today' %}selected{% endif %}>Due Today</option>
+                        <option value="completed" {% if selected_result == 'completed' %}selected{% endif %}>Completed</option>
+                        <option value="upcoming" {% if selected_result == 'upcoming' %}selected{% endif %}>Upcoming</option>
+                    </select>
+                </label>
+
+                <label class="flex flex-col gap-2">
+                    <span class="text-[10px] font-black uppercase tracking-[0.25em] text-whn-tertiary">From Date</span>
+                    <input type="date" name="from_date" value="{{ from_date }}" class="rounded-2xl border border-white/10 bg-[#1b1b1f] px-4 py-3 text-sm font-bold text-white outline-none transition-all focus:border-whn-purple">
+                </label>
+
+                <label class="flex flex-col gap-2">
+                    <span class="text-[10px] font-black uppercase tracking-[0.25em] text-whn-tertiary">To Date</span>
+                    <input type="date" name="to_date" value="{{ to_date }}" class="rounded-2xl border border-white/10 bg-[#1b1b1f] px-4 py-3 text-sm font-bold text-white outline-none transition-all focus:border-whn-purple">
+                </label>
+
+                <div class="flex items-end gap-3 xl:col-span-2">
+                    <button type="submit" class="flex-1 rounded-2xl bg-whn-purple px-5 py-3 text-[10px] font-black uppercase tracking-[0.2em] text-white shadow-[0_0_24px_rgba(124,58,237,0.3)] transition-all hover:scale-[1.02]">Apply</button>
+                    <a href="{% url 'follow_up_status' %}" class="rounded-2xl border border-white/10 bg-white/[0.04] px-5 py-3 text-[10px] font-black uppercase tracking-[0.2em] text-white transition-all hover:bg-white/[0.08]">Reset</a>
+                </div>
+            </div>
+        </form>
+
+        <div class="mb-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-5" data-aos="fade-up">
+            <div class="rounded-[2rem] border border-white/5 bg-white/[0.03] p-6">
+                <p class="text-[10px] font-black uppercase tracking-[0.25em] text-whn-tertiary">Total Follow-ups</p>
+                <p class="mt-4 text-4xl font-black text-white">{{ summary.total }}</p>
+            </div>
+            <div class="rounded-[2rem] border border-yellow-400/10 bg-yellow-400/[0.04] p-6">
+                <p class="text-[10px] font-black uppercase tracking-[0.25em] text-yellow-200">Due Today</p>
+                <p class="mt-4 text-4xl font-black text-white">{{ summary.due_today }}</p>
+            </div>
+            <div class="rounded-[2rem] border border-red-500/10 bg-red-500/[0.05] p-6">
+                <p class="text-[10px] font-black uppercase tracking-[0.25em] text-red-300">Missed Follow-ups</p>
+                <p class="mt-4 text-4xl font-black text-white">{{ summary.missed }}</p>
+            </div>
+            <div class="rounded-[2rem] border border-green-500/10 bg-green-500/[0.05] p-6">
+                <p class="text-[10px] font-black uppercase tracking-[0.25em] text-green-300">Completed Follow-ups</p>
+                <p class="mt-4 text-4xl font-black text-white">{{ summary.completed }}</p>
+            </div>
+            <div class="rounded-[2rem] border border-whn-purple/10 bg-whn-purple/[0.05] p-6">
+                <p class="text-[10px] font-black uppercase tracking-[0.25em] text-whn-purple">Upcoming Follow-ups</p>
+                <p class="mt-4 text-4xl font-black text-white">{{ summary.upcoming }}</p>
+            </div>
+        </div>
+
+        <div class="glass-card rounded-[2.5rem] border border-white/5 p-6 shadow-2xl md:p-8" data-aos="fade-up">
+            <div class="mb-6 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+                <div>
+                    <p class="text-[10px] font-black uppercase tracking-[0.35em] text-whn-purple">Follow-up Records</p>
+                    <h2 class="mt-2 text-2xl font-black text-white">Employee Follow-up Results</h2>
+                </div>
+                <p class="text-xs font-bold uppercase tracking-[0.2em] text-whn-tertiary">{{ follow_up_rows|length }} shown</p>
+            </div>
+
+            <div class="follow-up-table-scroll overflow-x-auto pb-3">
+                <table class="w-full min-w-[1680px] table-fixed border-separate border-spacing-x-0 text-left">
+                    <colgroup>
+                        <col class="w-[170px]">
+                        <col class="w-[210px]">
+                        <col class="w-[170px]">
+                        <col class="w-[260px]">
+                        <col class="w-[250px]">
+                        <col class="w-[180px]">
+                        <col class="w-[170px]">
+                        <col class="w-[200px]">
+                        <col class="w-[190px]">
+                        <col class="w-[180px]">
+                    </colgroup>
+                    <thead>
+                        <tr class="border-b border-white/5">
+                            <th class="px-4 pb-5 text-[10px] font-black uppercase tracking-widest text-whn-tertiary">Employee Name</th>
+                            <th class="px-4 pb-5 text-[10px] font-black uppercase tracking-widest text-whn-tertiary">Client / Promoter</th>
+                            <th class="px-4 pb-5 text-[10px] font-black uppercase tracking-widest text-whn-tertiary">Contact Number</th>
+                            <th class="px-4 pb-5 text-[10px] font-black uppercase tracking-widest text-whn-tertiary">Email</th>
+                            <th class="px-4 pb-5 text-[10px] font-black uppercase tracking-widest text-whn-tertiary">Venue</th>
+                            <th class="px-4 pb-5 text-[10px] font-black uppercase tracking-widest text-whn-tertiary">City</th>
+                            <th class="px-4 pb-5 text-[10px] font-black uppercase tracking-widest text-whn-tertiary">Follow-up Date</th>
+                            <th class="px-4 pb-5 text-[10px] font-black uppercase tracking-widest text-whn-tertiary">Last Updated</th>
+                            <th class="px-4 pb-5 text-[10px] font-black uppercase tracking-widest text-whn-tertiary">Status</th>
+                            <th class="px-4 pb-5 text-[10px] font-black uppercase tracking-widest text-whn-tertiary">Follow-up Result</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-white/5">
+                        {% for row in follow_up_rows %}
+                        <tr class="transition-colors hover:bg-white/[0.02]">
+                            <td class="px-4 py-7 align-top text-sm font-black text-white">
+                                <span class="block truncate" title="{{ row.lead.employee.name }}">{{ row.lead.employee.name }}</span>
+                            </td>
+                            <td class="px-4 py-7 align-top">
+                                <p class="truncate text-sm font-black text-white" title="{{ row.lead.promoter_name }}">{{ row.lead.promoter_name }}</p>
+                                <p class="mt-1 text-[10px] font-bold uppercase tracking-[0.2em] text-whn-tertiary">{{ row.lead.type }}</p>
+                            </td>
+                            <td class="px-4 py-7 align-top text-sm font-semibold text-white/80">
+                                <span class="block whitespace-nowrap" title="{{ row.lead.contact_number|default:'N/A' }}">{{ row.lead.contact_number|default:"N/A" }}</span>
+                            </td>
+                            <td class="px-4 py-7 align-top text-sm text-whn-tertiary">
+                                <span class="block truncate" title="{{ row.lead.email|default:'N/A' }}">{{ row.lead.email|default:"N/A" }}</span>
+                            </td>
+                            <td class="px-4 py-7 align-top text-sm text-whn-tertiary">
+                                <span class="block max-w-full truncate" title="{{ row.lead.venue|default:'N/A' }}">{{ row.lead.venue|default:"N/A" }}</span>
+                            </td>
+                            <td class="px-4 py-7 align-top text-sm text-whn-tertiary">
+                                <span class="block truncate" title="{{ row.lead.city|default:'N/A' }}">{{ row.lead.city|default:"N/A" }}</span>
+                            </td>
+                            <td class="px-4 py-7 align-top text-sm font-bold text-white whitespace-nowrap">{{ row.lead.follow_up_date|date:"M d, Y" }}</td>
+                            <td class="px-4 py-7 align-top text-sm text-whn-tertiary whitespace-nowrap">{{ row.last_updated|date:"M d, Y, g:i A" }}</td>
+                            <td class="px-4 py-7 align-top">
+                                <span class="inline-flex items-center rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-white whitespace-nowrap">{{ row.lead.status }}</span>
+                            </td>
+                            <td class="px-4 py-7 align-top">
+                                {% if row.result == 'missed' %}
+                                <span class="inline-flex items-center rounded-full border border-red-500/30 bg-red-500/15 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-red-200 whitespace-nowrap">Missed</span>
+                                {% elif row.result == 'due_today' %}
+                                <span class="inline-flex items-center rounded-full border border-yellow-400/30 bg-yellow-400/15 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-yellow-100 whitespace-nowrap">Due Today</span>
+                                {% elif row.result == 'completed' %}
+                                <span class="inline-flex items-center rounded-full border border-green-500/30 bg-green-500/15 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-green-200 whitespace-nowrap">Completed</span>
+                                {% else %}
+                                <span class="inline-flex items-center rounded-full border border-whn-purple/30 bg-whn-purple/15 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-purple-100 whitespace-nowrap">Upcoming</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="10" class="py-20 text-center text-sm italic text-whn-tertiary">No follow-up records match the selected filters.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

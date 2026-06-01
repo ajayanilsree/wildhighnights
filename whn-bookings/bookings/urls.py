@@ -26,7 +26,21 @@ urlpatterns = [
     path('dashboard/artists/<int:artist_id>/delete/', views.delete_artist_view, name='delete_artist'),
     path('dashboard/settings/', views.dashboard_settings_view, name='dashboard_settings'),
     path('dashboard/calendar/', views.admin_calendar_view, name='admin_calendar'),
+    path('dashboard/accounts/', views.admin_accounts_view, name='admin_accounts'),
+    path('dashboard/employees/', views.manage_employees_view, name='manage_employees'),
+    path('dashboard/employees/follow-ups/', views.follow_up_status_view, name='follow_up_status'),
+    path('dashboard/employees/add/', views.add_employee_view, name='add_employee'),
+    path('dashboard/employees/<int:employee_id>/edit/', views.edit_employee_view, name='edit_employee'),
+    path('dashboard/employees/<int:employee_id>/delete/', views.delete_employee_view, name='delete_employee'),
+    path('dashboard/crm/', views.admin_crm_view, name='admin_crm'),
+    path('dashboard/crm/conversions/', views.admin_crm_conversion_view, name='admin_crm_conversion'),
     
+    # Employee Portal Routes
+    path('employee/dashboard/', views.employee_dashboard_view, name='employee_dashboard'),
+    path('employee/notifications/seen/', views.employee_notifications_seen_view, name='employee_notifications_seen'),
+    path('employee/calendar/', views.employee_calendar_view, name='employee_calendar'),
+    path('employee/bookings/', views.employee_bookings_view, name='employee_bookings'),
+    path('employee/crm/', views.employee_crm_view, name='employee_crm'),
     # Artist Portal Routes
     path('artist/dashboard/', views.artist_dashboard_view, name='artist_dashboard'),
     path('artist/calendar/', views.artist_calendar_view, name='artist_calendar'),

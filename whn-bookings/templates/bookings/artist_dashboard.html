@@ -102,12 +102,9 @@
                 <span class="text-whn-purple font-bold tracking-[0.3em] uppercase text-[10px] mb-4 block">Artist Portal</span>
                 <h1 class="text-6xl md:text-7xl font-black text-white tracking-tighter">Welcome, {{ artist.name }}</h1>
             </div>
-            <div class="flex items-center gap-4">
-                <div class="text-right hidden md:block">
-                    <p class="text-white font-bold text-sm">{{ artist.name }}</p>
-                    <p class="text-whn-tertiary text-[10px] uppercase tracking-widest">{{ artist.genre|default:"Artist Partner" }}</p>
-                </div>
-                <a href="{% url 'logout' %}" class="px-6 py-2.5 rounded-full glass border border-white/10 text-[10px] font-bold hover:bg-red-500 hover:text-white hover:border-red-500 transition-all uppercase tracking-[0.2em]">Logout</a>
+            <div class="text-right hidden md:block">
+                <p class="text-white font-bold text-sm">{{ artist.name }}</p>
+                <p class="text-whn-tertiary text-[10px] uppercase tracking-widest">{{ artist.genre|default:"Artist Partner" }}</p>
             </div>
         </div>
 
@@ -148,20 +145,20 @@
         <h2 class="text-2xl font-black text-white uppercase tracking-wider mb-8 text-center" data-aos="fade-right">Select Service</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
             <!-- 1. Calendar -->
-            <a href="{% url 'artist_calendar' %}" class="luxury-card card-purple p-10 rounded-[3rem] aspect-square flex flex-col justify-between group" data-aos="zoom-in" data-aos-delay="100">
+            <a href="{% url 'artist_calendar' %}" class="luxury-card card-purple p-6 sm:p-10 rounded-[3rem] aspect-[16/10] sm:aspect-square flex flex-col justify-between group" data-aos="zoom-in" data-aos-delay="100">
                 <div class="light-spot"></div>
-                <div class="w-20 h-20 rounded-[1.8rem] bg-white/[0.02] icon-container flex items-center justify-center text-4xl group-hover:scale-110">📅</div>
+                <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-[1.5rem] sm:rounded-[1.8rem] bg-white/[0.02] icon-container flex items-center justify-center text-3xl sm:text-4xl group-hover:scale-110">📅</div>
                 <div class="mt-auto">
-                    <h3 class="text-3xl font-black text-white group-hover:text-whn-purple transition-colors leading-none tracking-tight">Calendar</h3>
+                    <h3 class="text-2xl sm:text-3xl font-black text-white group-hover:text-whn-purple transition-colors leading-none tracking-tight">Calendar</h3>
                 </div>
             </a>
 
             <!-- 2. Accounts -->
-            <a href="{% url 'artist_earnings' %}" class="luxury-card card-pink-gold p-10 rounded-[3rem] aspect-square flex flex-col justify-between group" data-aos="zoom-in" data-aos-delay="300">
+            <a href="{% url 'artist_earnings' %}" class="luxury-card card-pink-gold p-6 sm:p-10 rounded-[3rem] aspect-[16/10] sm:aspect-square flex flex-col justify-between group" data-aos="zoom-in" data-aos-delay="300">
                 <div class="light-spot"></div>
-                <div class="w-20 h-20 rounded-[1.8rem] bg-white/[0.02] icon-container flex items-center justify-center text-4xl group-hover:scale-110">📊</div>
+                <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-[1.5rem] sm:rounded-[1.8rem] bg-white/[0.02] icon-container flex items-center justify-center text-3xl sm:text-4xl group-hover:scale-110">📊</div>
                 <div class="mt-auto">
-                    <h3 class="text-3xl font-black text-white group-hover:text-pink-500 transition-colors leading-none tracking-tight">Accounts</h3>
+                    <h3 class="text-2xl sm:text-3xl font-black text-white group-hover:text-pink-500 transition-colors leading-none tracking-tight">Accounts</h3>
                 </div>
             </a>
         </div>

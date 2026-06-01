@@ -2,53 +2,6 @@
 {% load static %}
 
 {% block content %}
-<style>
-    .recent-activity-card {
-        min-height: 620px;
-        height: 620px;
-        overflow: hidden;
-    }
-    .recent-activity-list {
-        max-height: 520px;
-        overflow-y: auto;
-        padding-right: 15px;
-    }
-    .recent-activity-list::-webkit-scrollbar {
-        width: 4px;
-    }
-    .recent-activity-list::-webkit-scrollbar-track {
-        background: rgba(255, 255, 255, 0.02);
-        border-radius: 10px;
-    }
-    .recent-activity-list::-webkit-scrollbar-thumb {
-        background: linear-gradient(to bottom, #7C3AED, #007AFF);
-        border-radius: 10px;
-    }
-    @media (min-width: 1024px) {
-        .recent-activity-card {
-            display: flex;
-            flex-direction: column;
-            min-height: 620px;
-            height: 620px;
-        }
-        .quick-actions-card {
-            min-height: 620px;
-            height: auto;
-            padding-bottom: 32px;
-            overflow: visible;
-        }
-        .recent-activity-list {
-            flex: 1;
-            max-height: 520px;
-            overflow-y: auto;
-        }
-    }
-    .quick-actions-list {
-        display: flex;
-        flex-direction: column;
-        gap: 18px;
-    }
-</style>
 <div class="min-h-screen bg-whn-dark pt-32 pb-20 px-6">
     <div class="container mx-auto">
         <!-- Dashboard Header -->
@@ -56,134 +9,129 @@
             <div>
                 <h1 class="text-3xl sm:text-5xl md:text-6xl font-black text-white tracking-tighter">Dashboard</h1>
             </div>
-            <div class="flex items-center gap-4">
-                <div class="text-right hidden md:block">
-                    <p class="text-white font-bold text-sm">{{ user.username }}</p>
-                    <p class="text-whn-tertiary text-[10px] uppercase tracking-widest">Administrator</p>
-                </div>
-                <a href="{% url 'logout' %}" class="px-6 py-2.5 rounded-full glass border border-white/10 text-[10px] font-bold hover:bg-red-500 hover:text-white hover:border-red-500 transition-all uppercase tracking-[0.2em]">Logout</a>
+            <div class="text-right hidden md:block">
+                <p class="text-white font-bold text-sm">{{ user.username }}</p>
+                <p class="text-whn-tertiary text-[10px] uppercase tracking-widest">Administrator</p>
             </div>
         </div>
 
-        <!-- Stats Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
-            <!-- Total Artists -->
-            <div class="glass-card p-8 rounded-[2.5rem] border border-white/5 hover:border-whn-purple/30 transition-all duration-500 group" data-aos="fade-up" data-aos-delay="100">
-                <div class="flex items-center justify-between mb-6">
-                    <div class="w-12 h-12 rounded-2xl bg-whn-purple/10 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">🎧</div>
-                    <span class="text-[10px] font-bold text-whn-purple uppercase tracking-widest">Artists</span>
-                </div>
-                <div class="text-4xl font-black text-white mb-2">{{ total_artists }}</div>
-                <p class="text-whn-tertiary text-xs">Verified Performers</p>
-            </div>
 
-            <!-- Total Bookings -->
-            <div class="glass-card p-8 rounded-[2.5rem] border border-white/5 hover:border-whn-blue/30 transition-all duration-500 group" data-aos="fade-up" data-aos-delay="200">
-                <div class="flex items-center justify-between mb-6">
-                    <div class="w-12 h-12 rounded-2xl bg-whn-blue/10 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">📅</div>
-                    <span class="text-[10px] font-bold text-whn-blue uppercase tracking-widest">Total Events</span>
-                </div>
-                <div class="text-4xl font-black text-white mb-2">{{ total_bookings }}</div>
-                <p class="text-whn-tertiary text-xs">Lifetime Bookings</p>
-            </div>
+        <!-- Dashboard Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-6" data-aos="fade-up">
+            <a href="{% url 'manage_artists' %}" class="group flex min-h-[180px] flex-col items-center justify-center gap-5 rounded-[2.25rem] border border-white/5 bg-white/[0.03] p-7 text-center transition-all hover:border-whn-purple/30 hover:bg-white/[0.05]">
+                <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-whn-purple/10 text-2xl transition-transform group-hover:scale-110 font-['Segoe_UI_Emoji','Apple_Color_Emoji','Noto_Color_Emoji',sans-serif]">&#128101;</div>
+                <h3 class="text-xl font-black text-white tracking-tight">Manage Artists</h3>
+            </a>
 
-            <!-- Confirmed Events -->
-            <div class="glass-card p-8 rounded-[2.5rem] border border-white/5 hover:border-green-500/30 transition-all duration-500 group" data-aos="fade-up" data-aos-delay="300">
-                <div class="flex items-center justify-between mb-6">
-                    <div class="w-12 h-12 rounded-2xl bg-green-500/10 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">✅</div>
-                    <span class="text-[10px] font-bold text-green-500 uppercase tracking-widest">Confirmed</span>
-                </div>
-                <div class="text-4xl font-black text-white mb-2">{{ confirmed_events }}</div>
-                <p class="text-whn-tertiary text-xs">Ready to Rock</p>
-            </div>
+            <a href="{% url 'manage_events' %}" class="group flex min-h-[180px] flex-col items-center justify-center gap-5 rounded-[2.25rem] border border-white/5 bg-white/[0.03] p-7 text-center transition-all hover:border-whn-blue/30 hover:bg-white/[0.05]">
+                <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-whn-blue/10 text-2xl transition-transform group-hover:scale-110 font-['Segoe_UI_Emoji','Apple_Color_Emoji','Noto_Color_Emoji',sans-serif]">&#128197;</div>
+                <h3 class="text-xl font-black text-white tracking-tight">Manage Events</h3>
+            </a>
 
-            <!-- Pending Requests -->
-            <div class="glass-card p-8 rounded-[2.5rem] border border-white/5 hover:border-yellow-500/30 transition-all duration-500 group" data-aos="fade-up" data-aos-delay="400">
-                <div class="flex items-center justify-between mb-6">
-                    <div class="w-12 h-12 rounded-2xl bg-yellow-500/10 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">⏳</div>
-                    <span class="text-[10px] font-bold text-yellow-500 uppercase tracking-widest">Pending</span>
-                </div>
-                <div class="text-4xl font-black text-white mb-2">{{ pending_requests }}</div>
-                <p class="text-whn-tertiary text-xs">Awaiting Approval</p>
-            </div>
+            <a href="{% url 'manage_gallery' %}" class="group flex min-h-[180px] flex-col items-center justify-center gap-5 rounded-[2.25rem] border border-white/5 bg-white/[0.03] p-7 text-center transition-all hover:border-whn-purple/30 hover:bg-white/[0.05]">
+                <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-whn-purple/10 text-2xl transition-transform group-hover:scale-110 font-['Segoe_UI_Emoji','Apple_Color_Emoji','Noto_Color_Emoji',sans-serif]">&#128444;&#65039;</div>
+                <h3 class="text-xl font-black text-white tracking-tight">Manage Gallery</h3>
+            </a>
+
+            <a href="{% url 'manage_bookings' %}" class="group flex min-h-[180px] flex-col items-center justify-center gap-5 rounded-[2.25rem] border border-white/5 bg-white/[0.03] p-7 text-center transition-all hover:border-whn-blue/30 hover:bg-white/[0.05]">
+                <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-whn-blue/10 text-2xl transition-transform group-hover:scale-110 font-['Segoe_UI_Emoji','Apple_Color_Emoji','Noto_Color_Emoji',sans-serif]">&#127903;&#65039;</div>
+                <h3 class="text-xl font-black text-white tracking-tight">Manage Bookings</h3>
+            </a>
+
+            <a href="{% url 'admin_calendar' %}" class="group flex min-h-[180px] flex-col items-center justify-center gap-5 rounded-[2.25rem] border border-white/5 bg-white/[0.03] p-7 text-center transition-all hover:border-whn-purple/30 hover:bg-white/[0.05]">
+                <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-whn-purple/10 text-2xl transition-transform group-hover:scale-110 font-['Segoe_UI_Emoji','Apple_Color_Emoji','Noto_Color_Emoji',sans-serif]">&#128467;&#65039;</div>
+                <h3 class="text-xl font-black text-white tracking-tight">Manage Calendar</h3>
+            </a>
+
+            <a href="{% url 'admin_accounts' %}" class="group flex min-h-[180px] flex-col items-center justify-center gap-5 rounded-[2.25rem] border border-white/5 bg-white/[0.03] p-7 text-center transition-all hover:border-whn-blue/30 hover:bg-white/[0.05]">
+                <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-whn-blue/10 text-2xl transition-transform group-hover:scale-110 font-['Segoe_UI_Emoji','Apple_Color_Emoji','Noto_Color_Emoji',sans-serif]">&#128176;</div>
+                <h3 class="text-xl font-black text-white tracking-tight">Accounts</h3>
+            </a>
+
+            <a href="{% url 'manage_employees' %}" class="group flex min-h-[180px] flex-col items-center justify-center gap-5 rounded-[2.25rem] border border-white/5 bg-white/[0.03] p-7 text-center transition-all hover:border-whn-purple/30 hover:bg-white/[0.05]">
+                <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-whn-purple/10 text-2xl transition-transform group-hover:scale-110 font-['Segoe_UI_Emoji','Apple_Color_Emoji','Noto_Color_Emoji',sans-serif]">&#128084;</div>
+                <h3 class="text-xl font-black text-white tracking-tight">Manage Employees</h3>
+            </a>
+
+            <button type="button" onclick="openRecentActivity()" class="group flex min-h-[180px] flex-col items-center justify-center gap-5 rounded-[2.25rem] border border-white/5 bg-white/[0.03] p-7 text-center transition-all hover:border-whn-blue/30 hover:bg-white/[0.05]">
+                <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-whn-blue/10 text-2xl transition-transform group-hover:scale-110 font-['Segoe_UI_Emoji','Apple_Color_Emoji','Noto_Color_Emoji',sans-serif]">&#128338;</div>
+                <h3 class="text-xl font-black text-white tracking-tight">Recent Activity</h3>
+            </button>
         </div>
+    </div>
+</div>
 
-        <!-- Recent Activity & Management -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <!-- Activity Log Table -->
-            <div class="lg:col-span-2 glass-card rounded-[2.5rem] p-10 border border-white/5 recent-activity-card" data-aos="fade-right">
-                <div class="flex items-center justify-between mb-10">
-                    <h3 class="text-2xl font-black text-white tracking-tight">Recent Activity</h3>
-                </div>
-                <div class="recent-activity-list overflow-x-hidden">
-                    <table class="w-full text-left">
-                        <thead>
-                            <tr class="border-b border-white/5">
-                                <th class="pb-4 text-[10px] font-black text-whn-tertiary uppercase tracking-widest">Action</th>
-                                <th class="pb-4 text-[10px] font-black text-whn-tertiary uppercase tracking-widest text-right">Time</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-white/5">
-                            {% for log in activity_logs %}
-                            <tr class="group">
-                                <td class="py-6">
-                                    <span class="text-white font-bold text-sm">{{ log.action }}</span>
-                                </td>
-                                <td class="py-6 text-sm text-whn-tertiary text-right">{{ log.created_at|timesince }} ago</td>
-                            </tr>
-                            {% empty %}
-                            <tr>
-                                <td colspan="2" class="py-10 text-center text-whn-tertiary text-sm italic">No recent activity recorded.</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
+<!-- Recent Activity Modal -->
+<div id="recentActivityModal" class="fixed inset-0 z-[100] hidden items-center justify-center px-4 sm:px-6">
+    <div class="absolute inset-0 bg-black/80" onclick="closeRecentActivity()"></div>
+    <div class="relative z-10 w-full max-w-4xl rounded-[2.5rem] border border-white/10 bg-[#111111] shadow-[0_20px_60px_rgba(0,0,0,0.65)] overflow-hidden">
+        <div class="flex items-center justify-between border-b border-white/5 px-6 sm:px-8 py-5">
+            <div>
+                <h3 class="text-2xl font-black text-white tracking-tight">Recent Activity</h3>
+                <p class="mt-1 text-xs uppercase tracking-[0.25em] text-whn-tertiary">Latest actions</p>
             </div>
-
-            <!-- Quick Actions -->
-            <div class="glass-card rounded-[2.5rem] p-10 border border-white/5 quick-actions-card" data-aos="fade-left">
-                <h3 class="text-2xl font-black text-white tracking-tight mb-10">Quick Actions</h3>
-                <div class="quick-actions-list">
-                    <a href="{% url 'manage_artists' %}" class="flex items-center justify-between p-6 rounded-2xl bg-white/[0.03] border border-white/5 hover:border-whn-purple/30 transition-all group">
-                        <div class="flex items-center gap-4">
-                            <div class="w-10 h-10 rounded-xl bg-whn-purple/10 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">👥</div>
-                            <span class="text-sm font-bold text-white">Manage Artists</span>
-                        </div>
-                        <span class="text-whn-tertiary group-hover:text-white transition-colors">→</span>
-                    </a>
-                    <a href="{% url 'manage_events' %}" class="flex items-center justify-between p-6 rounded-2xl bg-white/[0.03] border border-white/5 hover:border-whn-blue/30 transition-all group">
-                        <div class="flex items-center gap-4">
-                            <div class="w-10 h-10 rounded-xl bg-whn-blue/10 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">📅</div>
-                            <span class="text-sm font-bold text-white">Manage Events</span>
-                        </div>
-                        <span class="text-whn-tertiary group-hover:text-white transition-colors">→</span>
-                    </a>
-                    <a href="{% url 'manage_gallery' %}" class="flex items-center justify-between p-6 rounded-2xl bg-white/[0.03] border border-white/5 hover:border-whn-purple/30 transition-all group">
-                        <div class="flex items-center gap-4">
-                            <div class="w-10 h-10 rounded-xl bg-whn-purple/10 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">🖼️</div>
-                            <span class="text-sm font-bold text-white">Manage Gallery</span>
-                        </div>
-                        <span class="text-whn-tertiary group-hover:text-white transition-colors">→</span>
-                    </a>
-
-                    <a href="{% url 'manage_bookings' %}" class="flex items-center justify-between p-6 rounded-2xl bg-white/[0.03] border border-white/5 hover:border-whn-blue/30 transition-all group">
-                        <div class="flex items-center gap-4">
-                            <div class="w-10 h-10 rounded-xl bg-whn-blue/10 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">🎟️</div>
-                            <span class="text-sm font-bold text-white">Manage Bookings</span>
-                        </div>
-                        <span class="text-whn-tertiary group-hover:text-white transition-colors">→</span>
-                    </a>
-                    <a href="{% url 'admin_calendar' %}" class="flex items-center justify-between p-6 rounded-2xl bg-white/[0.03] border border-white/5 hover:border-whn-purple/30 transition-all group">
-                        <div class="flex items-center gap-4">
-                            <div class="w-10 h-10 rounded-xl bg-whn-purple/10 flex items-center justify-center text-xl group-hover:scale-110 transition-transform">📅</div>
-                            <span class="text-sm font-bold text-white">Manage Calendar</span>
-                        </div>
-                        <span class="text-whn-tertiary group-hover:text-white transition-colors">→</span>
-                    </a>
-                </div>
+            <button type="button" onclick="closeRecentActivity()" class="text-white hover:text-whn-purple transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+        <div class="max-h-[70vh] overflow-y-auto px-6 sm:px-8 py-6">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead>
+                        <tr class="border-b border-white/5">
+                            <th class="pb-4 text-[10px] font-black text-whn-tertiary uppercase tracking-widest">Action</th>
+                            <th class="pb-4 text-[10px] font-black text-whn-tertiary uppercase tracking-widest">User / Employee</th>
+                            <th class="pb-4 text-[10px] font-black text-whn-tertiary uppercase tracking-widest text-right">Time</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-white/5">
+                        {% for log in activity_logs %}
+                        <tr>
+                            <td class="py-5">
+                                <span class="text-white font-bold text-sm">{{ log.action }}</span>
+                            </td>
+                            <td class="py-5 text-sm text-whn-tertiary">
+                                {% if log.role == 'employee' and log.employee_name %}
+                                    Employee
+                                {% elif log.user %}
+                                    {{ log.user.username }}
+                                {% else %}
+                                    Administrator
+                                {% endif %}
+                            </td>
+                            <td class="py-5 text-sm text-whn-tertiary text-right">{{ log.created_at|timesince }} ago</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3" class="py-10 text-center text-whn-tertiary text-sm italic">No recent activity recorded.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+    const recentActivityModal = document.getElementById('recentActivityModal');
+
+    function openRecentActivity() {
+        recentActivityModal.classList.remove('hidden');
+        recentActivityModal.classList.add('flex');
+    }
+
+    function closeRecentActivity() {
+        recentActivityModal.classList.add('hidden');
+        recentActivityModal.classList.remove('flex');
+    }
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && recentActivityModal.classList.contains('flex')) {
+            closeRecentActivity();
+        }
+    });
+</script>
 {% endblock %}

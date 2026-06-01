@@ -1,50 +1,176 @@
 {% load static %}
 <nav id="navbar" class="fixed top-0 left-0 right-0 z-[100] transition-all duration-300 px-6 py-4">
     <div class="max-w-7xl mx-auto flex items-center justify-between">
-        <!-- Logo -->
         <a href="/" class="flex items-center gap-2 group navbar-logo">
             <img src="{% static 'images/whn-logo.png' %}" alt="WHN Logo" class="h-[42px] w-auto object-contain">
         </a>
 
-        <!-- Desktop Links -->
-        <div class="hidden md:flex items-center gap-8">
+        <div class="relative flex items-center gap-3">
             {% if user.is_authenticated %}
                 {% if user.is_superuser or user.is_staff %}
-                    <!-- Admin Navigation -->
-                    <a href="{% url 'dashboard' %}" class="px-6 py-2 rounded-full bg-whn-purple text-white text-sm font-bold shadow-[0_0_20px_rgba(124,58,237,0.3)] transition-all duration-300 scale-100 hover:scale-105 active:scale-95">
-                        Dashboard
-                    </a>
-                    <a href="{% url 'logout' %}" class="text-sm font-semibold text-white/70 hover:text-white transition-colors">Logout</a>
+                    <div class="hidden md:flex items-center gap-8">
+                        <a href="{% url 'dashboard' %}" class="px-6 py-2 rounded-full bg-whn-purple text-white text-sm font-bold shadow-[0_0_20px_rgba(124,58,237,0.3)] transition-all duration-300 scale-100 hover:scale-105 active:scale-95">
+                            Dashboard
+                        </a>
+                        <a href="{% url 'logout' %}" class="text-sm font-semibold text-white/70 hover:text-white transition-colors">Logout</a>
+                    </div>
+
+                    <button id="menuToggle" class="md:hidden text-white p-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+                        </svg>
+                    </button>
+                {% elif is_employee_portal_user %}
+                    <div class="hidden md:flex items-center gap-4">
+                        <a href="{% url 'employee_dashboard' %}" class="px-6 py-2 rounded-full bg-whn-purple text-white text-sm font-bold shadow-[0_0_20px_rgba(124,58,237,0.3)] transition-all duration-300 scale-100 hover:scale-105 active:scale-95">
+                            Dashboard
+                        </a>
+
+                        <div class="relative">
+                            <button
+                                type="button"
+                                class="notification-toggle relative flex items-center gap-2 px-5 py-2.5 rounded-full bg-[#111111] text-white text-[10px] font-bold uppercase tracking-[0.2em] border border-violet-500/40 shadow-[0_20px_60px_rgba(0,0,0,0.65),0_0_30px_rgba(124,58,237,0.16)]"
+                                aria-expanded="false"
+                                aria-controls="notificationPanel"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-whn-purple" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 1 0-12 0v3.2a2 2 0 0 1-.6 1.4L4 17h5m6 0v1a3 3 0 1 1-6 0v-1m6 0H9" />
+                                </svg>
+                                <span class="hidden xl:inline">Notification</span>
+                                {% if notification_count %}
+                                <span id="notificationBadge" class="ml-1 inline-flex min-w-5 h-5 px-1.5 items-center justify-center rounded-full bg-emerald-500 text-[10px] font-black text-white leading-none">{{ notification_count }}</span>
+                                {% endif %}
+                            </button>
+                        </div>
+
+                        <a href="{% url 'logout' %}" class="text-sm font-semibold text-white/70 hover:text-white transition-colors">Logout</a>
+                    </div>
+
+                    <div class="md:hidden flex items-center gap-2">
+                        <button
+                            type="button"
+                            class="notification-toggle relative flex items-center justify-center w-10 h-10 rounded-full bg-[#111111] text-white border border-violet-500/40 shadow-[0_20px_60px_rgba(0,0,0,0.65),0_0_30px_rgba(124,58,237,0.16)]"
+                            aria-expanded="false"
+                            aria-controls="notificationPanel"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-whn-purple" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 1 0-12 0v3.2a2 2 0 0 1-.6 1.4L4 17h5m6 0v1a3 3 0 1 1-6 0v-1m6 0H9" />
+                            </svg>
+                            {% if notification_count %}
+                            <span id="notificationBadgeMobile" class="absolute -top-1 -right-1 inline-flex min-w-4 h-4 px-1 items-center justify-center rounded-full bg-emerald-500 text-[9px] font-black text-white leading-none">{{ notification_count }}</span>
+                            {% endif %}
+                        </button>
+                        <button id="menuToggle" class="text-white p-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+                            </svg>
+                        </button>
+                    </div>
                 {% else %}
-                    <!-- Artist Navigation -->
-                    <a href="{% url 'artist_dashboard' %}" class="px-6 py-2 rounded-full bg-whn-purple text-white text-sm font-bold shadow-[0_0_20px_rgba(124,58,237,0.3)] transition-all duration-300 scale-100 hover:scale-105 active:scale-95">
-                        Dashboard
-                    </a>
-                    <a href="{% url 'logout' %}" class="text-sm font-semibold text-white/70 hover:text-white transition-colors">Logout</a>
+                    <div class="hidden md:flex items-center gap-8">
+                        <a href="{% url 'artist_dashboard' %}" class="px-6 py-2 rounded-full bg-whn-purple text-white text-sm font-bold shadow-[0_0_20px_rgba(124,58,237,0.3)] transition-all duration-300 scale-100 hover:scale-105 active:scale-95">
+                            Dashboard
+                        </a>
+                        <a href="{% url 'logout' %}" class="text-sm font-semibold text-white/70 hover:text-white transition-colors">Logout</a>
+                    </div>
+
+                    <button id="menuToggle" class="md:hidden text-white p-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+                        </svg>
+                    </button>
                 {% endif %}
             {% else %}
-                <!-- Public Navigation -->
-                <a href="/#events" class="text-sm font-semibold text-white/70 hover:text-white transition-colors">Events</a>
-                <a href="/#artists" class="text-sm font-semibold text-white/70 hover:text-white transition-colors">Artists</a>
-                <a href="/#about" class="text-sm font-semibold text-white/70 hover:text-white transition-colors">About</a>
-                <a href="{% url 'login' %}" class="px-6 py-2 rounded-full glass border border-whn-purple/30 text-sm font-bold hover:bg-whn-purple hover:text-white hover:shadow-[0_0_20px_rgba(124,58,237,0.5)] transition-all duration-300 scale-100 hover:scale-105 active:scale-95">
-                    Login
-                </a>
+                <div class="hidden md:flex items-center gap-8">
+                    <a href="/#events" class="text-sm font-semibold text-white/70 hover:text-white transition-colors">Events</a>
+                    <a href="/#artists" class="text-sm font-semibold text-white/70 hover:text-white transition-colors">Artists</a>
+                    <a href="/#about" class="text-sm font-semibold text-white/70 hover:text-white transition-colors">About</a>
+                    <a href="{% url 'login' %}" class="px-6 py-2 rounded-full glass border border-whn-purple/30 text-sm font-bold hover:bg-whn-purple hover:text-white hover:shadow-[0_0_20px_rgba(124,58,237,0.5)] transition-all duration-300 scale-100 hover:scale-105 active:scale-95">
+                        Login
+                    </a>
+                </div>
+
+                <button id="menuToggle" class="md:hidden text-white p-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+                    </svg>
+                </button>
+            {% endif %}
+
+            {% if user.is_authenticated and is_employee_portal_user %}
+            <div id="notificationPanel" class="notification-dropdown notification-panel hidden fixed z-[99999] w-[min(92vw,24rem)] md:w-[24rem] rounded-[18px] border border-violet-500/40 bg-[#111111] opacity-100 shadow-[0_20px_60px_rgba(0,0,0,0.65),0_0_30px_rgba(124,58,237,0.16)] overflow-hidden">
+                <div class="notification-dropdown-body flex items-center justify-between px-5 py-4 border-b border-white/10 bg-[#111111]">
+                    <div>
+                        <div class="text-white font-black text-sm">Follow-up Reminders</div>
+                        <div class="text-[10px] uppercase tracking-[0.2em] text-whn-tertiary">Today and tomorrow</div>
+                    </div>
+                    <span class="text-[10px] font-bold uppercase tracking-[0.2em] text-whn-purple">{{ notification_due_count }} due</span>
+                </div>
+
+                <div class="notification-dropdown-body max-h-[26rem] overflow-y-auto px-4 py-4 bg-[#111111]">
+                    {% if follow_up_notifications %}
+                        <div class="space-y-3">
+                            {% for lead in follow_up_notifications %}
+                            <div class="rounded-[18px] border border-white/10 bg-[#18181b] p-4 transition-colors hover:bg-[#1d1d22]">
+                                <div class="flex items-start justify-between gap-3 mb-3">
+                                    <div class="min-w-0">
+                                        <div class="text-white font-bold text-sm truncate">{{ lead.promoter_name }}</div>
+                                        <div class="text-xs text-whn-tertiary truncate">{{ lead.venue }}</div>
+                                    </div>
+                                    {% if lead.follow_up_date == notification_today %}
+                                    <span class="shrink-0 px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-400 text-[9px] font-black uppercase tracking-widest">Due Today</span>
+                                    {% else %}
+                                    <span class="shrink-0 px-2.5 py-1 rounded-full bg-whn-purple/20 text-whn-purple text-[9px] font-black uppercase tracking-widest">Due Tomorrow</span>
+                                    {% endif %}
+                                </div>
+                                <div class="grid grid-cols-2 gap-3 text-xs">
+                                    <div>
+                                        <div class="text-[10px] uppercase tracking-[0.2em] text-whn-tertiary mb-1">Follow-up Date</div>
+                                        <div class="text-white font-semibold">{{ lead.follow_up_date|date:"M d, Y" }}</div>
+                                    </div>
+                                    <div>
+                                        <div class="text-[10px] uppercase tracking-[0.2em] text-whn-tertiary mb-1">Status</div>
+                                        <div class="text-white font-semibold">{{ lead.status }}</div>
+                                    </div>
+                                    <div class="col-span-2">
+                                        <div class="text-[10px] uppercase tracking-[0.2em] text-whn-tertiary mb-1">Contact Number</div>
+                                        <div class="text-white font-semibold">{{ lead.contact_number|default:"No Phone" }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="py-10 px-2 text-center">
+                            <div class="text-white font-bold text-sm">No follow-ups due today</div>
+                            <div class="text-[10px] uppercase tracking-[0.2em] text-whn-tertiary mt-2">Check back tomorrow for new reminders</div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
             {% endif %}
         </div>
-
-        <!-- Mobile Menu Toggle -->
-        <button id="menuToggle" class="md:hidden text-white p-2">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
-            </svg>
-        </button>
     </div>
 
 </nav>
 
-<!-- Custom Styles for Mobile Menu Overlay & Body Lock -->
 <style>
+    .notification-dropdown,
+    .notification-panel,
+    .notification-dropdown-body {
+        background-color: #111111 !important;
+        opacity: 1 !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        mix-blend-mode: normal !important;
+        isolation: isolate;
+        z-index: 99999;
+    }
+
+    .notification-dropdown * {
+        opacity: 1;
+    }
+
     #mobileMenu {
         position: fixed;
         inset: 0;
@@ -52,12 +178,13 @@
         height: 100dvh;
         z-index: 99999;
         background: #050505;
-        display: none; /* Hidden by default */
+        display: none;
         flex-direction: column;
         align-items: center;
         justify-content: center;
         gap: 2rem;
     }
+
     body.menu-open {
         overflow: hidden;
         position: fixed;
@@ -65,28 +192,29 @@
     }
 </style>
 
-<!-- Mobile Menu Overlay -->
 <div id="mobileMenu">
-    <!-- Single Top-Right Close Button -->
     <button id="closeMenu" class="absolute top-6 right-6 text-white p-2 focus:outline-none hover:text-whn-purple transition-colors">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
         </svg>
     </button>
-    
-    <!-- Centered Menu Links with Premium Dark Luxury Styling -->
+
     <div class="flex flex-col items-center justify-center gap-8 w-full">
         <a href="/#events" class="text-3xl font-extrabold text-white/90 hover:text-whn-purple transition-colors tracking-tight mobile-link">Events</a>
         <a href="/#artists" class="text-3xl font-extrabold text-white/90 hover:text-whn-purple transition-colors tracking-tight mobile-link">Artists</a>
         <a href="/#about" class="text-3xl font-extrabold text-white/90 hover:text-whn-purple transition-colors tracking-tight mobile-link">About</a>
-        
+
         {% if user.is_authenticated %}
             {% if user.is_superuser or user.is_staff %}
                 <a href="{% url 'dashboard' %}" class="text-3xl font-extrabold text-white/90 hover:text-whn-purple transition-colors tracking-tight mobile-link">Dashboard</a>
+                <a href="{% url 'logout' %}" class="mt-4 px-10 py-3.5 rounded-full glass border border-red-500/30 text-xl font-bold hover:bg-red-500 hover:text-white transition-all duration-300 shadow-[0_0_20px_rgba(239,68,68,0.15)] mobile-link uppercase tracking-wider">Logout</a>
+            {% elif is_employee_portal_user %}
+                <a href="{% url 'employee_dashboard' %}" class="text-3xl font-extrabold text-white/90 hover:text-whn-purple transition-colors tracking-tight mobile-link">Dashboard</a>
+                <a href="{% url 'logout' %}" class="mt-4 px-10 py-3.5 rounded-full glass border border-red-500/30 text-xl font-bold hover:bg-red-500 hover:text-white transition-all duration-300 shadow-[0_0_20px_rgba(239,68,68,0.15)] mobile-link uppercase tracking-wider">Logout</a>
             {% else %}
                 <a href="{% url 'artist_dashboard' %}" class="text-3xl font-extrabold text-white/90 hover:text-whn-purple transition-colors tracking-tight mobile-link">Dashboard</a>
+                <a href="{% url 'logout' %}" class="mt-4 px-10 py-3.5 rounded-full glass border border-red-500/30 text-xl font-bold hover:bg-red-500 hover:text-white transition-all duration-300 shadow-[0_0_20px_rgba(239,68,68,0.15)] mobile-link uppercase tracking-wider">Logout</a>
             {% endif %}
-            <a href="{% url 'logout' %}" class="mt-4 px-10 py-3.5 rounded-full glass border border-red-500/30 text-xl font-bold hover:bg-red-500 hover:text-white transition-all duration-300 shadow-[0_0_20px_rgba(239,68,68,0.15)] mobile-link uppercase tracking-wider">Logout</a>
         {% else %}
             <a href="{% url 'login' %}" class="mt-4 px-10 py-3.5 rounded-full glass border border-whn-purple/50 text-xl font-bold hover:bg-whn-purple hover:text-white transition-all duration-300 shadow-[0_0_20px_rgba(124,58,237,0.25)] mobile-link uppercase tracking-wider">Login</a>
         {% endif %}
@@ -96,9 +224,8 @@
 <script>
     const navbar = document.getElementById('navbar');
     window.addEventListener('scroll', () => {
-        // Prevent navbar transition class modifications when mobile menu is open
         if (document.body.classList.contains('menu-open')) return;
-        
+
         if (window.scrollY > 50) {
             navbar.classList.add('glass', 'py-3');
             navbar.classList.remove('py-4');
@@ -112,61 +239,147 @@
     const closeMenu = document.getElementById('closeMenu');
     const mobileMenu = document.getElementById('mobileMenu');
     const mobileLinks = document.querySelectorAll('.mobile-link');
-
+    const notificationButtons = document.querySelectorAll('.notification-toggle');
+    const notificationPanel = document.getElementById('notificationPanel');
+    const dashboardActions = document.getElementById('dashboardActions');
+    const notificationBadge = document.getElementById('notificationBadge');
+    const notificationBadgeMobile = document.getElementById('notificationBadgeMobile');
+    let activeNotificationButton = null;
     let scrollPosition = 0;
 
     const openMenu = () => {
-        // Store current scroll position to restore later
         scrollPosition = window.pageYOffset || document.documentElement.scrollTop;
-        
-        // Lock body scroll and position
         document.body.classList.add('menu-open');
         document.body.style.top = `-${scrollPosition}px`;
-        
-        // Display the menu
         mobileMenu.style.display = 'flex';
     };
 
     const closeMenuFunc = () => {
-        // Unlock body scroll
         document.body.classList.remove('menu-open');
         document.body.style.top = '';
-        
-        // Restore scroll position
         window.scrollTo(0, scrollPosition);
-        
-        // Hide the menu
         mobileMenu.style.display = 'none';
     };
 
-    menuToggle.addEventListener('click', openMenu);
-    closeMenu.addEventListener('click', closeMenuFunc);
+    const getCookie = (name) => {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
+        return '';
+    };
 
-    mobileLinks.forEach(link => {
+    if (menuToggle && closeMenu && mobileMenu) {
+        menuToggle.addEventListener('click', openMenu);
+        closeMenu.addEventListener('click', closeMenuFunc);
+    }
+
+    mobileLinks.forEach((link) => {
         link.addEventListener('click', (e) => {
             const href = link.getAttribute('href');
             const isHomepage = window.location.pathname === '/' || window.location.pathname === '';
-            
+
             if (isHomepage && (href.startsWith('/#') || href.startsWith('#'))) {
                 e.preventDefault();
                 const targetId = href.split('#')[1];
                 const targetElement = document.getElementById(targetId);
-                
-                // Close menu first (restores body scroll and position)
                 closeMenuFunc();
-                
-                // Scroll to target element smoothly
                 if (targetElement) {
                     setTimeout(() => {
                         targetElement.scrollIntoView({ behavior: 'smooth' });
-                        // Update URL hash without causing visual jumps
                         history.pushState(null, null, `#${targetId}`);
                     }, 50);
                 }
             } else {
-                // For regular page navigation, dashboard, login, or logout
                 closeMenuFunc();
             }
         });
     });
+
+    if (notificationPanel && notificationButtons.length) {
+        const hideNotificationBadges = () => {
+            if (notificationBadge) notificationBadge.remove();
+            if (notificationBadgeMobile) notificationBadgeMobile.remove();
+        };
+
+        const closeNotificationPanel = () => {
+            notificationPanel.classList.add('hidden');
+            notificationButtons.forEach((btn) => btn.setAttribute('aria-expanded', 'false'));
+            if (dashboardActions) {
+                dashboardActions.classList.remove('mt-24', 'md:mt-32');
+            }
+        };
+
+        const positionNotificationPanel = (button) => {
+            const referenceButton = button || activeNotificationButton || notificationButtons[0];
+            if (!referenceButton) return;
+
+            const rect = referenceButton.getBoundingClientRect();
+            const panelWidth = window.innerWidth < 768 ? Math.min(window.innerWidth - 24, 448) : 384;
+            const panelHeight = notificationPanel.offsetHeight || 320;
+            const margin = 12;
+
+            notificationPanel.style.position = 'fixed';
+            notificationPanel.style.width = `${panelWidth}px`;
+            notificationPanel.style.left = 'auto';
+            notificationPanel.style.right = 'auto';
+            notificationPanel.style.transform = 'none';
+
+            if (window.innerWidth < 768) {
+                const left = Math.max(12, (window.innerWidth - panelWidth) / 2);
+                notificationPanel.style.left = `${left}px`;
+            } else {
+                const desiredLeft = rect.right - panelWidth;
+                const maxLeft = window.innerWidth - panelWidth - margin;
+                const left = Math.max(margin, Math.min(desiredLeft, maxLeft));
+                notificationPanel.style.left = `${left}px`;
+            }
+
+            const spaceBelow = window.innerHeight - rect.bottom - margin;
+            const top = spaceBelow >= panelHeight ? rect.bottom + 12 : Math.max(margin, rect.top - panelHeight - 12);
+            notificationPanel.style.top = `${top}px`;
+        };
+
+        notificationButtons.forEach((button) => {
+            button.addEventListener('click', (event) => {
+                event.stopPropagation();
+                activeNotificationButton = button;
+                hideNotificationBadges();
+                fetch('{% url "employee_notifications_seen" %}', {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken'),
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({ seen: true }),
+                }).catch(() => {
+                    // Intentionally ignore failures so the dropdown still opens.
+                });
+                positionNotificationPanel(button);
+                const isHidden = notificationPanel.classList.contains('hidden');
+                if (isHidden) {
+                    notificationPanel.classList.remove('hidden');
+                    notificationButtons.forEach((btn) => btn.setAttribute('aria-expanded', 'true'));
+                } else {
+                    closeNotificationPanel();
+                }
+            });
+        });
+
+        notificationPanel.addEventListener('click', (event) => {
+            event.stopPropagation();
+        });
+
+        document.addEventListener('click', closeNotificationPanel);
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') closeNotificationPanel();
+        });
+
+        window.addEventListener('resize', () => {
+            if (!notificationPanel.classList.contains('hidden')) {
+                positionNotificationPanel(activeNotificationButton);
+            }
+        });
+    }
 </script>

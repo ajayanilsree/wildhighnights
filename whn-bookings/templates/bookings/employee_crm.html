@@ -1,0 +1,644 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="min-h-screen bg-whn-dark pt-32 pb-20 px-6">
+    <div class="container mx-auto">
+        <!-- Header -->
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-16" data-aos="fade-down">
+            <div>
+                <a href="{% url 'employee_dashboard' %}" class="text-whn-purple font-bold tracking-[0.3em] uppercase text-[10px] mb-4 flex items-center gap-2 hover:translate-x-[-4px] transition-transform">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                    </svg>
+                    Back to Dashboard
+                </a>
+                <h1 class="text-3xl sm:text-5xl md:text-6xl font-black text-white tracking-tighter">Sales & Leads</h1>
+                <p class="text-whn-tertiary mt-2">Track your clients, leads, and closed sales.</p>
+            </div>
+            
+            <div class="flex flex-col sm:flex-row gap-3">
+                <button type="button" id="conversionTrackingBtn" class="px-8 py-3 border border-whn-purple/40 bg-whn-purple/10 text-white text-[10px] font-bold rounded-full shadow-[0_0_20px_rgba(124,58,237,0.2)] hover:bg-whn-purple hover:border-whn-purple hover:scale-105 active:scale-95 transition-all uppercase tracking-[0.2em]">Conversion Tracking</button>
+                <button type="button" onclick="openLeadModal()" class="px-8 py-3 bg-emerald-500 text-white text-[10px] font-bold rounded-full shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:scale-105 active:scale-95 transition-all uppercase tracking-[0.2em]">Add New Lead/Sale</button>
+            </div>
+        </div>
+
+        <!-- Daily Summary -->
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4 mb-8" data-aos="fade-up">
+            <div class="glass-card rounded-[2rem] p-5 border border-white/5">
+                <div class="text-[10px] uppercase tracking-[0.3em] text-whn-tertiary font-bold mb-3">Today Leads</div>
+                <div class="text-3xl font-black text-white">{{ summary.today_leads|default:0 }}</div>
+            </div>
+            <div class="glass-card rounded-[2rem] p-5 border border-white/5">
+                <div class="text-[10px] uppercase tracking-[0.3em] text-whn-tertiary font-bold mb-3">Today Sales</div>
+                <div class="text-3xl font-black text-white">{{ summary.today_sales|default:0 }}</div>
+            </div>
+            <div class="glass-card rounded-[2rem] p-5 border border-white/5">
+                <div class="text-[10px] uppercase tracking-[0.3em] text-whn-tertiary font-bold mb-3">This Week Leads</div>
+                <div class="text-3xl font-black text-white">{{ summary.week_leads|default:0 }}</div>
+            </div>
+            <div class="glass-card rounded-[2rem] p-5 border border-white/5">
+                <div class="text-[10px] uppercase tracking-[0.3em] text-whn-tertiary font-bold mb-3">This Week Sales</div>
+                <div class="text-3xl font-black text-white">{{ summary.week_sales|default:0 }}</div>
+            </div>
+            <div class="glass-card rounded-[2rem] p-5 border border-white/5">
+                <div class="text-[10px] uppercase tracking-[0.3em] text-whn-tertiary font-bold mb-3">This Month Leads</div>
+                <div class="text-3xl font-black text-white">{{ summary.month_leads|default:0 }}</div>
+            </div>
+        </div>
+
+        <div id="conversionTrackingSection" class="hidden glass-card rounded-[2rem] p-6 border border-whn-purple/20 mb-8 shadow-[0_20px_60px_rgba(124,58,237,0.12)]" data-aos="fade-up">
+            <div class="flex flex-col gap-6">
+                <div>
+                    <p class="text-[10px] uppercase tracking-[0.3em] text-whn-purple font-black">Conversion Tracking</p>
+                    <h2 class="mt-2 text-2xl font-black text-white">Your Converted Pipeline</h2>
+                </div>
+                <div class="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
+                    <div class="flex flex-wrap gap-2">
+                        <button type="button" class="conversion-filter-btn px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border border-white/10 bg-white/[0.03] text-white" data-filter="today">Today</button>
+                        <button type="button" class="conversion-filter-btn px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border border-white/10 bg-white/[0.03] text-white" data-filter="yesterday">Yesterday</button>
+                        <button type="button" class="conversion-filter-btn px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border border-white/10 bg-white/[0.03] text-white" data-filter="week">This Week</button>
+                        <button type="button" class="conversion-filter-btn px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border border-white/10 bg-white/[0.03] text-white" data-filter="month">This Month</button>
+                        <button type="button" class="conversion-filter-btn px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border border-white/10 bg-white/[0.03] text-white" data-filter="year">This Year</button>
+                        <button type="button" class="conversion-filter-btn px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border border-white/10 bg-white/[0.03] text-white" data-filter="custom">Custom Date Range</button>
+                    </div>
+                    <div id="conversionCustomDateRange" class="hidden flex flex-col md:flex-row gap-3">
+                        <div class="flex items-center gap-2">
+                            <span class="text-[10px] font-bold uppercase tracking-widest text-whn-tertiary">From</span>
+                            <input type="date" id="conversionFromDate" class="bg-white/[0.03] border border-white/10 rounded-2xl px-4 py-2.5 text-white focus:outline-none focus:border-whn-purple/50 [color-scheme:dark]">
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-[10px] font-bold uppercase tracking-widest text-whn-tertiary">To</span>
+                            <input type="date" id="conversionToDate" class="bg-white/[0.03] border border-white/10 rounded-2xl px-4 py-2.5 text-white focus:outline-none focus:border-whn-purple/50 [color-scheme:dark]">
+                        </div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
+                    <div class="rounded-2xl border border-white/5 bg-white/[0.03] p-4">
+                        <p class="text-[10px] uppercase tracking-widest text-whn-tertiary">Lead Count</p>
+                        <p id="conversionLeadCount" class="text-xl font-black text-white">0</p>
+                    </div>
+                    <div class="rounded-2xl border border-white/5 bg-white/[0.03] p-4">
+                        <p class="text-[10px] uppercase tracking-widest text-whn-tertiary">Sale Count</p>
+                        <p id="conversionSaleCount" class="text-xl font-black text-white">0</p>
+                    </div>
+                    <div class="rounded-2xl border border-white/5 bg-white/[0.03] p-4">
+                        <p class="text-[10px] uppercase tracking-widest text-whn-tertiary">Lead Value</p>
+                        <p id="conversionLeadValue" class="text-xl font-black text-white">Rs 0</p>
+                    </div>
+                    <div class="rounded-2xl border border-white/5 bg-white/[0.03] p-4">
+                        <p class="text-[10px] uppercase tracking-widest text-whn-tertiary">Sale Value</p>
+                        <p id="conversionSaleValue" class="text-xl font-black text-white">Rs 0</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Date Filters -->
+        <div class="sticky top-24 z-20 mb-8" data-aos="fade-up">
+            <div class="glass-card rounded-[2rem] p-4 md:p-5 border border-white/5 shadow-2xl">
+                <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                    <div class="flex flex-wrap gap-2">
+                        <button type="button" class="crm-filter-btn px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border border-white/10 bg-white/[0.03] text-white" data-filter="today">Today</button>
+                        <button type="button" class="crm-filter-btn px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border border-white/10 bg-white/[0.03] text-white" data-filter="yesterday">Yesterday</button>
+                        <button type="button" class="crm-filter-btn px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border border-white/10 bg-white/[0.03] text-white" data-filter="week">This Week</button>
+                        <button type="button" class="crm-filter-btn px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border border-white/10 bg-white/[0.03] text-white" data-filter="month">This Month</button>
+                        <button type="button" class="crm-filter-btn px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border border-white/10 bg-white/[0.03] text-white" data-filter="custom">Custom Date Range</button>
+                    </div>
+
+                    <div id="customDateRange" class="hidden flex flex-col md:flex-row gap-3">
+                        <div class="flex items-center gap-2">
+                            <span class="text-[10px] font-bold uppercase tracking-widest text-whn-tertiary">From</span>
+                            <input type="date" id="fromDate" class="bg-white/[0.03] border border-white/10 rounded-2xl px-4 py-2.5 text-white focus:outline-none focus:border-whn-purple/50 [color-scheme:dark]">
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-[10px] font-bold uppercase tracking-widest text-whn-tertiary">To</span>
+                            <input type="date" id="toDate" class="bg-white/[0.03] border border-white/10 rounded-2xl px-4 py-2.5 text-white focus:outline-none focus:border-whn-purple/50 [color-scheme:dark]">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CRM Table -->
+        <div class="glass-card rounded-[2.5rem] p-10 md:p-12 border border-white/5 shadow-2xl" data-aos="fade-up">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead>
+                        <tr class="border-b border-white/5">
+                            <th class="pb-6 text-[10px] font-black text-whn-tertiary uppercase tracking-widest">Date</th>
+                            <th class="pb-6 text-[10px] font-black text-whn-tertiary uppercase tracking-widest">Client Details</th>
+                            <th class="pb-6 text-[10px] font-black text-whn-tertiary uppercase tracking-widest">Event Info</th>
+                            <th class="pb-6 text-[10px] font-black text-whn-tertiary uppercase tracking-widest">Type & Status</th>
+                            <th class="pb-6 text-[10px] font-black text-whn-tertiary uppercase tracking-widest text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="crmTableBody" class="divide-y divide-white/5">
+                        {% for lead in leads %}
+                        <tr class="group hover:bg-white/[0.02] transition-colors crm-row" data-created-date="{{ lead.crm_created_at|date:'Y-m-d' }}">
+                            <td class="py-6">
+                                {% with created_ts=lead.crm_created_at updated_ts=lead.crm_updated_at %}
+                                {% if lead.crm_was_edited %}
+                                <div class="flex flex-col gap-1">
+                                    <span class="text-sm font-bold text-white">Updated: {{ updated_ts|date:"M d, Y, g:i A" }}</span>
+                                    <span class="text-[10px] uppercase tracking-[0.2em] text-whn-tertiary">Originally created on {{ created_ts|date:"M d, Y" }}</span>
+                                </div>
+                                {% else %}
+                                <div class="flex flex-col gap-1">
+                                    <span class="text-sm font-bold text-white">Created: {{ created_ts|date:"M d, Y" }}</span>
+                                </div>
+                                {% endif %}
+                                {% endwith %}
+                            </td>
+                            <td class="py-6">
+                                <div class="flex flex-col gap-1">
+                                    <span class="text-sm font-bold text-white">{{ lead.promoter_name }}</span>
+                                    <span class="text-xs text-whn-tertiary">{{ lead.email|default:"No Email" }}</span>
+                                    <span class="text-xs text-whn-tertiary">{{ lead.contact_number|default:"No Phone" }}</span>
+                                </div>
+                            </td>
+                            <td class="py-6">
+                                <div class="flex flex-col gap-1 max-w-xs">
+                                    <span class="text-sm text-white">{{ lead.venue }}{% if lead.city %}, {{ lead.city }}{% endif %}</span>
+                                    <span class="text-xs text-whn-tertiary truncate" title="{{ lead.notes|default:'' }}">{{ lead.notes|default:"No notes" }}</span>
+                                </div>
+                            </td>
+                            <td class="py-6">
+                                <div class="flex flex-col gap-2 items-start">
+                                    {% if lead.type == 'sale' %}
+                                    <span class="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 text-[10px] font-bold tracking-wider uppercase">Sale</span>
+                                    {% else %}
+                                    <span class="px-3 py-1 rounded-full bg-whn-blue/20 text-whn-blue text-[10px] font-bold tracking-wider uppercase">Lead</span>
+                                    {% endif %}
+                                    
+                                    <span class="text-[10px] font-bold uppercase tracking-widest text-white/50">{{ lead.status }}</span>
+                                </div>
+                            </td>
+                            <td class="py-6 text-right">
+                                <div class="flex items-center justify-end gap-3">
+                                    <button
+                                        type="button"
+                                        class="edit-lead-btn px-6 py-2 rounded-full border border-whn-purple/30 text-whn-purple text-[10px] font-bold hover:bg-whn-purple hover:text-white hover:border-whn-purple transition-all uppercase tracking-widest"
+                                        data-lead-id="{{ lead.id }}"
+                                        data-type="{{ lead.type }}"
+                                        data-promoter-name="{{ lead.promoter_name|escapejs }}"
+                                        data-email="{{ lead.email|default_if_none:''|escapejs }}"
+                                        data-contact-number="{{ lead.contact_number|default_if_none:''|escapejs }}"
+                                        data-city="{{ lead.city|default_if_none:''|escapejs }}"
+                                        data-venue="{{ lead.venue|default_if_none:''|escapejs }}"
+                                        data-follow-up-date="{{ lead.follow_up_date|date:'Y-m-d' }}"
+                                        data-conversion-event-date="{{ lead.conversion_event_date|date:'Y-m-d' }}"
+                                        data-conversion-deal-amount="{{ lead.conversion_deal_amount|default_if_none:'' }}"
+                                        data-conversion-artist="{{ lead.conversion_artist_id|default_if_none:'' }}"
+                                        data-notes="{{ lead.notes|default_if_none:''|escapejs }}"
+                                        data-status="{{ lead.status|escapejs }}"
+                                    >
+                                        Edit
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="py-20 text-center text-whn-tertiary text-sm italic">You haven't added any leads or sales yet.</td>
+                        </tr>
+                        {% endfor %}
+                        <tr id="crmNoResultsRow" class="hidden">
+                            <td colspan="5" class="py-20 text-center text-whn-tertiary text-sm italic">No entries match the selected date filter.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Add Lead Modal -->
+<div id="addLeadModal" class="fixed inset-0 z-[100] flex items-center justify-center px-6 hidden">
+    <div class="absolute inset-0 bg-whn-dark/90 backdrop-blur-sm" onclick="closeLeadModal()"></div>
+    <div class="glass-card rounded-[2.5rem] p-10 md:p-12 border border-white/10 shadow-2xl relative z-10 max-w-2xl w-full max-h-[90vh] overflow-y-auto" data-aos="zoom-in">
+        <div class="flex justify-between items-center mb-8">
+            <h3 id="leadModalTitle" class="text-3xl font-black text-white tracking-tight">Add New Entry</h3>
+            <button type="button" onclick="closeLeadModal()" class="text-white hover:text-whn-purple transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+        
+        <form method="POST" class="space-y-6" id="leadForm">
+            {% csrf_token %}
+            <input type="hidden" name="lead_id" id="leadIdInput" value="">
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Type -->
+                <div class="relative group">
+                    <label class="text-[10px] font-bold text-whn-tertiary uppercase tracking-[0.2em] ml-1 mb-3 block group-focus-within:text-whn-purple transition-colors">Type</label>
+                    <select name="type" id="leadType" required class="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-whn-purple/50 focus:ring-4 focus:ring-whn-purple/10 transition-all appearance-none cursor-pointer">
+                        <option value="lead" class="bg-whn-dark">Lead</option>
+                        <option value="sale" class="bg-whn-dark">Sale</option>
+                    </select>
+                </div>
+                
+                <!-- Status -->
+                <div class="relative group">
+                    <label class="text-[10px] font-bold text-whn-tertiary uppercase tracking-[0.2em] ml-1 mb-3 block group-focus-within:text-whn-purple transition-colors">Status</label>
+                    <select name="status" id="leadStatus" required class="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-whn-purple/50 focus:ring-4 focus:ring-whn-purple/10 transition-all appearance-none cursor-pointer">
+                        <option value="Follow-up Needed" class="bg-whn-dark">Follow-up Needed</option>
+                        <option value="Converted" class="bg-whn-dark">Converted</option>
+                        <option value="Not Interested" class="bg-whn-dark">Not Interested</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Client Name -->
+            <div class="relative group">
+                <label class="text-[10px] font-bold text-whn-tertiary uppercase tracking-[0.2em] ml-1 mb-3 block group-focus-within:text-whn-purple transition-colors">Promoter Name</label>
+                <input type="text" name="promoter_name" id="leadPromoterName" required placeholder="e.g. Acme Corp / Jane Doe" class="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-whn-purple/50 focus:ring-4 focus:ring-whn-purple/10 transition-all placeholder:text-white/10">
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Email -->
+                <div class="relative group">
+                    <label class="text-[10px] font-bold text-whn-tertiary uppercase tracking-[0.2em] ml-1 mb-3 block group-focus-within:text-whn-purple transition-colors">Email</label>
+                    <input type="email" name="email" id="leadEmail" placeholder="jane@example.com" class="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-whn-purple/50 focus:ring-4 focus:ring-whn-purple/10 transition-all placeholder:text-white/10">
+                </div>
+                
+                <!-- Phone -->
+                <div class="relative group">
+                    <label class="text-[10px] font-bold text-whn-tertiary uppercase tracking-[0.2em] ml-1 mb-3 block group-focus-within:text-whn-purple transition-colors">Contact Number</label>
+                    <input type="text" name="contact_number" id="leadContactNumber" required placeholder="+91 9526969287" class="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-whn-purple/50 focus:ring-4 focus:ring-whn-purple/10 transition-all placeholder:text-white/10">
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="relative group">
+                    <label class="text-[10px] font-bold text-whn-tertiary uppercase tracking-[0.2em] ml-1 mb-3 block group-focus-within:text-whn-purple transition-colors">City</label>
+                    <input type="text" name="city" id="leadCity" required placeholder="Mumbai" class="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-whn-purple/50 focus:ring-4 focus:ring-whn-purple/10 transition-all placeholder:text-white/10">
+                </div>
+
+                <div class="relative group">
+                    <label class="text-[10px] font-bold text-whn-tertiary uppercase tracking-[0.2em] ml-1 mb-3 block group-focus-within:text-whn-purple transition-colors">Venue</label>
+                    <input type="text" name="venue" id="leadVenue" required placeholder="e.g. Club XYZ, Bangalore" class="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-whn-purple/50 focus:ring-4 focus:ring-whn-purple/10 transition-all placeholder:text-white/10">
+                </div>
+            </div>
+
+            <div class="relative group" id="followUpDateGroup">
+                <label class="text-[10px] font-bold text-whn-tertiary uppercase tracking-[0.2em] ml-1 mb-3 block group-focus-within:text-whn-purple transition-colors">Follow-up Date</label>
+                <input type="date" name="follow_up_date" id="leadFollowUpDate" class="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-whn-purple/50 focus:ring-4 focus:ring-whn-purple/10 transition-all [color-scheme:dark]">
+            </div>
+
+            <div id="conversionFields" class="hidden rounded-[2rem] border border-green-500/15 bg-green-500/[0.04] p-5 space-y-5">
+                <div>
+                    <p class="text-[10px] font-black uppercase tracking-[0.3em] text-green-300">Converted Booking Details</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="relative group">
+                        <label class="text-[10px] font-bold text-whn-tertiary uppercase tracking-[0.2em] ml-1 mb-3 block group-focus-within:text-whn-purple transition-colors">Event Date</label>
+                        <input type="date" name="conversion_event_date" id="conversionEventDate" class="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-whn-purple/50 focus:ring-4 focus:ring-whn-purple/10 transition-all [color-scheme:dark]">
+                    </div>
+                    <div class="relative group">
+                        <label class="text-[10px] font-bold text-whn-tertiary uppercase tracking-[0.2em] ml-1 mb-3 block group-focus-within:text-whn-purple transition-colors">Deal Size / Deal Amount</label>
+                        <input type="number" step="0.01" min="0" name="conversion_deal_amount" id="conversionDealAmount" placeholder="e.g. 200000" class="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-whn-purple/50 focus:ring-4 focus:ring-whn-purple/10 transition-all placeholder:text-white/10">
+                    </div>
+                    <div class="relative group md:col-span-2">
+                        <label class="text-[10px] font-bold text-whn-tertiary uppercase tracking-[0.2em] ml-1 mb-3 block group-focus-within:text-whn-purple transition-colors">Select Artist</label>
+                        <select name="conversion_artist" id="conversionArtist" class="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-whn-purple/50 focus:ring-4 focus:ring-whn-purple/10 transition-all appearance-none cursor-pointer">
+                            <option value="" class="bg-whn-dark">Select Artist</option>
+                            {% for artist in artists %}
+                            <option value="{{ artist.id }}" class="bg-whn-dark">{{ artist.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notes -->
+            <div class="relative group">
+                <label class="text-[10px] font-bold text-whn-tertiary uppercase tracking-[0.2em] ml-1 mb-3 block group-focus-within:text-whn-purple transition-colors">Notes</label>
+                <textarea name="notes" id="leadNotes" rows="3" placeholder="Additional details..." class="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-whn-purple/50 focus:ring-4 focus:ring-whn-purple/10 transition-all placeholder:text-white/10 resize-none"></textarea>
+            </div>
+
+            <!-- Submit -->
+            <div class="pt-4 flex gap-4">
+                <button type="button" onclick="closeLeadModal()" class="flex-1 py-4 rounded-2xl bg-white/5 text-white text-xs font-bold uppercase tracking-widest hover:bg-white/10 transition-all">Cancel</button>
+                <button type="submit" id="leadSubmitBtn" class="flex-1 py-4 bg-gradient-to-r from-emerald-500 to-emerald-400 text-white text-xs font-black tracking-widest uppercase rounded-2xl hover:scale-[1.02] active:scale-[0.98] transition-all shadow-[0_0_30px_rgba(16,185,129,0.3)]">
+                    Save Entry
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{{ conversion_payload|json_script:"conversion-tracking-data" }}
+
+<script>
+    const leadModal = document.getElementById('addLeadModal');
+    const leadForm = document.getElementById('leadForm');
+    const leadModalTitle = document.getElementById('leadModalTitle');
+    const leadSubmitBtn = document.getElementById('leadSubmitBtn');
+    const leadIdInput = document.getElementById('leadIdInput');
+    const leadType = document.getElementById('leadType');
+    const leadStatus = document.getElementById('leadStatus');
+    const leadPromoterName = document.getElementById('leadPromoterName');
+    const leadEmail = document.getElementById('leadEmail');
+    const leadContactNumber = document.getElementById('leadContactNumber');
+    const leadCity = document.getElementById('leadCity');
+    const leadVenue = document.getElementById('leadVenue');
+    const leadFollowUpDate = document.getElementById('leadFollowUpDate');
+    const followUpDateGroup = document.getElementById('followUpDateGroup');
+    const conversionFields = document.getElementById('conversionFields');
+    const conversionEventDate = document.getElementById('conversionEventDate');
+    const conversionDealAmount = document.getElementById('conversionDealAmount');
+    const conversionArtist = document.getElementById('conversionArtist');
+    const leadNotes = document.getElementById('leadNotes');
+    const filterButtons = Array.from(document.querySelectorAll('.crm-filter-btn'));
+    const customDateRange = document.getElementById('customDateRange');
+    const fromDateInput = document.getElementById('fromDate');
+    const toDateInput = document.getElementById('toDate');
+    const crmRows = Array.from(document.querySelectorAll('.crm-row'));
+    const crmNoResultsRow = document.getElementById('crmNoResultsRow');
+    const conversionTrackingBtn = document.getElementById('conversionTrackingBtn');
+    const conversionTrackingSection = document.getElementById('conversionTrackingSection');
+    const conversionFilterButtons = Array.from(document.querySelectorAll('.conversion-filter-btn'));
+    const conversionCustomDateRange = document.getElementById('conversionCustomDateRange');
+    const conversionFromDate = document.getElementById('conversionFromDate');
+    const conversionToDate = document.getElementById('conversionToDate');
+    const conversionLeadCount = document.getElementById('conversionLeadCount');
+    const conversionSaleCount = document.getElementById('conversionSaleCount');
+    const conversionLeadValue = document.getElementById('conversionLeadValue');
+    const conversionSaleValue = document.getElementById('conversionSaleValue');
+    const conversionData = JSON.parse(document.getElementById('conversion-tracking-data').textContent || '[]');
+    let activeFilter = 'all';
+    let activeConversionFilter = 'today';
+
+    function pad(n) {
+        return String(n).padStart(2, '0');
+    }
+
+    function localDateStr(date) {
+        return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+    }
+
+    function startOfWeek(date) {
+        const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+        const offset = (d.getDay() + 6) % 7;
+        d.setDate(d.getDate() - offset);
+        return d;
+    }
+
+    function startOfMonth(date) {
+        return new Date(date.getFullYear(), date.getMonth(), 1);
+    }
+
+    function startOfYear(date) {
+        return new Date(date.getFullYear(), 0, 1);
+    }
+
+    function setActiveFilter(filter) {
+        activeFilter = filter;
+        filterButtons.forEach((btn) => {
+            const isActive = btn.dataset.filter === filter;
+            btn.classList.toggle('bg-whn-purple', isActive);
+            btn.classList.toggle('border-whn-purple', isActive);
+            btn.classList.toggle('text-white', isActive);
+            btn.classList.toggle('bg-white/[0.03]', !isActive);
+            btn.classList.toggle('text-whn-tertiary', !isActive);
+        });
+        customDateRange.classList.toggle('hidden', filter !== 'custom');
+        applyFilter();
+    }
+
+    function currentRange() {
+        const today = new Date();
+        const todayStr = localDateStr(today);
+        const yesterday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
+        if (activeFilter === 'today') {
+            return { from: todayStr, to: todayStr };
+        }
+        if (activeFilter === 'yesterday') {
+            const ys = localDateStr(yesterday);
+            return { from: ys, to: ys };
+        }
+        if (activeFilter === 'week') {
+            return { from: localDateStr(startOfWeek(today)), to: todayStr };
+        }
+        if (activeFilter === 'month') {
+            return { from: localDateStr(startOfMonth(today)), to: todayStr };
+        }
+        if (activeFilter === 'custom') {
+            return { from: fromDateInput.value || '', to: toDateInput.value || '' };
+        }
+        return { from: '', to: '' };
+    }
+
+    function applyFilter() {
+        const { from, to } = currentRange();
+        let visibleCount = 0;
+
+        crmRows.forEach((row) => {
+            const rowDate = row.dataset.createdDate || '';
+            const matches = !from && !to
+                ? true
+                : rowDate >= from && rowDate <= to;
+            row.classList.toggle('hidden', !matches);
+            if (matches) visibleCount += 1;
+        });
+
+        if (crmNoResultsRow) {
+            crmNoResultsRow.classList.toggle('hidden', crmRows.length === 0 || visibleCount !== 0);
+        }
+    }
+
+    filterButtons.forEach((btn) => {
+        btn.addEventListener('click', () => {
+            setActiveFilter(btn.dataset.filter || 'all');
+        });
+    });
+
+    fromDateInput.addEventListener('change', () => {
+        if (activeFilter !== 'custom') setActiveFilter('custom');
+        applyFilter();
+    });
+
+    toDateInput.addEventListener('change', () => {
+        if (activeFilter !== 'custom') setActiveFilter('custom');
+        applyFilter();
+    });
+
+    setActiveFilter('all');
+
+    function formatCurrency(value) {
+        const rounded = Math.round((Number(value) || 0) * 100) / 100;
+        return `Rs ${rounded.toLocaleString('en-IN', { maximumFractionDigits: 2 })}`;
+    }
+
+    function conversionRange() {
+        const today = new Date();
+        const todayStr = localDateStr(today);
+        const yesterday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
+        if (activeConversionFilter === 'today') {
+            return { from: todayStr, to: todayStr };
+        }
+        if (activeConversionFilter === 'yesterday') {
+            const ys = localDateStr(yesterday);
+            return { from: ys, to: ys };
+        }
+        if (activeConversionFilter === 'week') {
+            return { from: localDateStr(startOfWeek(today)), to: todayStr };
+        }
+        if (activeConversionFilter === 'month') {
+            return { from: localDateStr(startOfMonth(today)), to: todayStr };
+        }
+        if (activeConversionFilter === 'year') {
+            return { from: localDateStr(startOfYear(today)), to: todayStr };
+        }
+        if (activeConversionFilter === 'custom') {
+            return { from: conversionFromDate.value || '', to: conversionToDate.value || '' };
+        }
+        return { from: '', to: '' };
+    }
+
+    function updateConversionTracking() {
+        const { from, to } = conversionRange();
+        const totals = conversionData.reduce((acc, item) => {
+            const itemDate = item.date || '';
+            const inRange = !from && !to
+                ? true
+                : (!from || itemDate >= from) && (!to || itemDate <= to);
+            if (!inRange) return acc;
+
+            if (item.type === 'lead') {
+                acc.leadCount += 1;
+                acc.leadValue += Number(item.amount) || 0;
+            }
+            if (item.type === 'sale') {
+                acc.saleCount += 1;
+                acc.saleValue += Number(item.amount) || 0;
+            }
+            return acc;
+        }, { leadCount: 0, saleCount: 0, leadValue: 0, saleValue: 0 });
+
+        conversionLeadCount.textContent = totals.leadCount;
+        conversionSaleCount.textContent = totals.saleCount;
+        conversionLeadValue.textContent = formatCurrency(totals.leadValue);
+        conversionSaleValue.textContent = formatCurrency(totals.saleValue);
+    }
+
+    function setActiveConversionFilter(filter) {
+        activeConversionFilter = filter;
+        conversionFilterButtons.forEach((btn) => {
+            const isActive = btn.dataset.filter === filter;
+            btn.classList.toggle('bg-whn-purple', isActive);
+            btn.classList.toggle('border-whn-purple', isActive);
+            btn.classList.toggle('text-white', isActive);
+            btn.classList.toggle('bg-white/[0.03]', !isActive);
+            btn.classList.toggle('text-whn-tertiary', !isActive);
+        });
+        conversionCustomDateRange.classList.toggle('hidden', filter !== 'custom');
+        updateConversionTracking();
+    }
+
+    conversionTrackingBtn.addEventListener('click', () => {
+        conversionTrackingSection.classList.toggle('hidden');
+        if (!conversionTrackingSection.classList.contains('hidden')) {
+            updateConversionTracking();
+            conversionTrackingSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    });
+
+    conversionFilterButtons.forEach((btn) => {
+        btn.addEventListener('click', () => {
+            setActiveConversionFilter(btn.dataset.filter || 'today');
+        });
+    });
+
+    conversionFromDate.addEventListener('change', () => {
+        if (activeConversionFilter !== 'custom') setActiveConversionFilter('custom');
+        updateConversionTracking();
+    });
+
+    conversionToDate.addEventListener('change', () => {
+        if (activeConversionFilter !== 'custom') setActiveConversionFilter('custom');
+        updateConversionTracking();
+    });
+
+    setActiveConversionFilter('today');
+
+    function updateConversionFields() {
+        const isConverted = leadStatus.value === 'Converted';
+        const needsFollowUp = leadStatus.value === 'Follow-up Needed';
+
+        conversionFields.classList.toggle('hidden', !isConverted);
+        followUpDateGroup.classList.toggle('hidden', !needsFollowUp);
+
+        leadFollowUpDate.required = needsFollowUp;
+        conversionEventDate.required = isConverted;
+        conversionDealAmount.required = isConverted;
+        conversionArtist.required = isConverted;
+
+        if (isConverted) {
+            leadFollowUpDate.value = '';
+        } else {
+            conversionEventDate.value = '';
+            conversionDealAmount.value = '';
+            conversionArtist.value = '';
+        }
+    }
+
+    leadStatus.addEventListener('change', updateConversionFields);
+
+    function openLeadModal(lead = null) {
+        leadForm.reset();
+        leadIdInput.value = '';
+        leadModalTitle.textContent = 'Add New Entry';
+        leadSubmitBtn.textContent = 'Save Entry';
+
+        if (lead) {
+            leadIdInput.value = lead.id || '';
+            leadType.value = lead.type || 'lead';
+            leadStatus.value = (lead.status || '').startsWith('Converted') ? 'Converted' : (lead.status || 'Follow-up Needed');
+            leadPromoterName.value = lead.promoter_name || '';
+            leadEmail.value = lead.email || '';
+            leadContactNumber.value = lead.contact_number || '';
+            leadCity.value = lead.city || '';
+            leadVenue.value = lead.venue || '';
+            leadFollowUpDate.value = lead.follow_up_date || '';
+            conversionEventDate.value = lead.conversion_event_date || '';
+            conversionDealAmount.value = lead.conversion_deal_amount || '';
+            conversionArtist.value = lead.conversion_artist || '';
+            leadNotes.value = lead.notes || '';
+            leadModalTitle.textContent = 'Edit Entry';
+            leadSubmitBtn.textContent = 'Update Entry';
+        }
+
+        updateConversionFields();
+        leadModal.classList.remove('hidden');
+    }
+
+    function closeLeadModal() {
+        leadModal.classList.add('hidden');
+    }
+
+    document.querySelectorAll('.edit-lead-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+            openLeadModal({
+                id: btn.dataset.leadId,
+                type: btn.dataset.type,
+                promoter_name: btn.dataset.promoterName,
+                email: btn.dataset.email,
+                contact_number: btn.dataset.contactNumber,
+                city: btn.dataset.city,
+                venue: btn.dataset.venue,
+                follow_up_date: btn.dataset.followUpDate,
+                conversion_event_date: btn.dataset.conversionEventDate,
+                conversion_deal_amount: btn.dataset.conversionDealAmount,
+                conversion_artist: btn.dataset.conversionArtist,
+                notes: btn.dataset.notes,
+                status: btn.dataset.status,
+            });
+        });
+    });
+</script>
+{% endblock %}

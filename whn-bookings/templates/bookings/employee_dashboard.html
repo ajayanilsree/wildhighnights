@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="min-h-screen bg-whn-dark pt-32 pb-20 px-6">
+    <div class="container mx-auto">
+        <!-- Dashboard Header -->
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-10 md:mb-12" data-aos="fade-down">
+            <div>
+                <span class="text-whn-purple font-bold tracking-[0.3em] uppercase text-[10px] mb-4 block">Employee Portal</span>
+                <h1 class="text-4xl md:text-6xl font-black text-white tracking-tighter mb-4">
+                    Welcome back,
+                </h1>
+            </div>
+        </div>
+
+        <!-- Dashboard Actions -->
+        <div id="dashboardActions" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 items-stretch transition-all duration-300" data-aos="fade-up" data-aos-delay="100">
+            <a href="{% url 'employee_bookings' %}" class="flex h-full min-h-[200px] sm:min-h-[240px] flex-col p-8 rounded-[2.5rem] bg-white/[0.03] border border-white/5 hover:border-whn-blue/30 hover:-translate-y-2 transition-all group relative overflow-hidden">
+                <div class="absolute inset-0 bg-gradient-to-br from-whn-blue/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <div class="w-16 h-16 rounded-2xl bg-whn-blue/10 flex items-center justify-center text-3xl mb-8 group-hover:scale-110 transition-transform">🎟️</div>
+                <h3 class="text-xl font-black text-white mb-2">Manage Bookings</h3>
+                <p class="text-sm text-whn-tertiary">View and manage event bookings.</p>
+            </a>
+
+            <a href="{% url 'employee_calendar' %}" class="flex h-full min-h-[200px] sm:min-h-[240px] flex-col p-8 rounded-[2.5rem] bg-white/[0.03] border border-white/5 hover:border-whn-purple/30 hover:-translate-y-2 transition-all group relative overflow-hidden">
+                <div class="absolute inset-0 bg-gradient-to-br from-whn-purple/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <div class="w-16 h-16 rounded-2xl bg-whn-purple/10 flex items-center justify-center text-3xl mb-8 group-hover:scale-110 transition-transform">📅</div>
+                <h3 class="text-xl font-black text-white mb-2">Artist Calendar</h3>
+                <p class="text-sm text-whn-tertiary">Check availability for artists.</p>
+            </a>
+
+            <a href="{% url 'employee_crm' %}" class="flex h-full min-h-[200px] sm:min-h-[240px] flex-col p-8 rounded-[2.5rem] bg-white/[0.03] border border-white/5 hover:border-emerald-500/30 hover:-translate-y-2 transition-all group relative overflow-hidden md:col-span-2 xl:col-span-1">
+                <div class="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <div class="w-16 h-16 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-3xl mb-8 group-hover:scale-110 transition-transform">📈</div>
+                <h3 class="text-xl font-black text-white mb-2">Sales & Leads</h3>
+                <p class="text-sm text-whn-tertiary">Track your client leads and sales.</p>
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

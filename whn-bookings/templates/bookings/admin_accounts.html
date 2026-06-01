@@ -1,0 +1,313 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="min-h-screen bg-whn-dark pt-32 pb-20 px-6">
+    <div class="container mx-auto max-w-6xl">
+        <!-- Back navigation -->
+        <div class="mb-12" data-aos="fade-down">
+            <a href="{% url 'dashboard' %}" class="text-whn-purple font-bold tracking-[0.3em] uppercase text-[10px] mb-4 flex items-center gap-2 hover:translate-x-[-4px] transition-transform w-fit">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg>
+                Back to Dashboard
+            </a>
+            <span class="text-whn-purple font-bold tracking-[0.3em] uppercase text-[10px] mb-4 block">Financial Overview</span>
+            <h1 class="text-5xl md:text-6xl font-black text-white tracking-tighter">Artist Accounts</h1>
+        </div>
+
+        <!-- Custom scrollbar styles -->
+        <style>
+            .custom-scrollbar::-webkit-scrollbar {
+                width: 6px;
+            }
+            .custom-scrollbar::-webkit-scrollbar-track {
+                background: rgba(255, 255, 255, 0.02);
+                border-radius: 10px;
+            }
+            .custom-scrollbar::-webkit-scrollbar-thumb {
+                background: #7C3AED;
+                border-radius: 10px;
+            }
+        </style>
+
+        <!-- Artist Selector & Filter Controls -->
+        <div class="glass-card p-6 md:p-8 rounded-3xl border border-white/5 mb-12 relative z-50" data-aos="fade-up" data-aos-delay="50">
+            <form id="filter-form" method="GET" class="flex flex-col md:flex-row md:items-end gap-6">
+                <!-- Artist Dropdown -->
+                <div class="flex-1">
+                    <label for="artist_id" class="text-[9px] font-bold text-whn-tertiary uppercase tracking-widest block mb-2">Select Artist</label>
+                    <select id="artist_id" name="artist_id" class="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-5 py-3.5 text-white text-sm focus:outline-none focus:border-whn-purple/50 focus:ring-4 focus:ring-whn-purple/10 transition-all cursor-pointer font-bold" onchange="this.form.submit()">
+                        {% for art in artists %}
+                        <option value="{{ art.id }}" {% if art.id|stringformat:"s" == selected_artist_id %}selected{% endif %} class="bg-whn-dark text-white font-bold">{{ art.name }}</option>
+                        {% empty %}
+                        <option value="" class="bg-whn-dark text-white">No active artists found</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Month Dropdown -->
+                <div class="flex-1">
+                    <label class="text-[9px] font-bold text-whn-tertiary uppercase tracking-widest block mb-2">Filter by Month</label>
+                    <div class="relative custom-dropdown">
+                        <button type="button" class="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-5 py-3.5 text-white text-sm flex items-center justify-between focus:outline-none focus:border-whn-purple/50 focus:ring-4 focus:ring-whn-purple/10 transition-all dropdown-trigger">
+                            <span class="selected-label">All Months</span>
+                            <svg class="h-4 w-4 text-white/40 transition-transform dropdown-arrow" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+                        <input type="hidden" name="month" value="{{ selected_month }}">
+                        <ul class="absolute z-[9999] left-0 right-0 mt-2 bg-[#14141d] border border-white/10 rounded-2xl py-2 shadow-2xl hidden opacity-0 scale-95 origin-top transition-all duration-200 dropdown-menu max-h-60 overflow-y-auto custom-scrollbar">
+                            <li class="px-5 py-3 text-sm text-white/60 hover:text-white hover:bg-whn-purple/30 cursor-pointer transition-colors" data-value="">All Months</li>
+                            {% for m in months %}
+                            <li class="px-5 py-3 text-sm text-white/60 hover:text-white hover:bg-whn-purple/30 cursor-pointer transition-colors" data-value="{{ m.value }}">{{ m.name }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Year Dropdown -->
+                <div class="flex-1">
+                    <label class="text-[9px] font-bold text-whn-tertiary uppercase tracking-widest block mb-2">Filter by Year</label>
+                    <div class="relative custom-dropdown">
+                        <button type="button" class="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-5 py-3.5 text-white text-sm flex items-center justify-between focus:outline-none focus:border-whn-purple/50 focus:ring-4 focus:ring-whn-purple/10 transition-all dropdown-trigger">
+                            <span class="selected-label">All Years</span>
+                            <svg class="h-4 w-4 text-white/40 transition-transform dropdown-arrow" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+                        <input type="hidden" name="year" value="{{ selected_year }}">
+                        <ul class="absolute z-[9999] left-0 right-0 mt-2 bg-[#14141d] border border-white/10 rounded-2xl py-2 shadow-2xl hidden opacity-0 scale-95 origin-top transition-all duration-200 dropdown-menu max-h-60 overflow-y-auto custom-scrollbar">
+                            <li class="px-5 py-3 text-sm text-white/60 hover:text-white hover:bg-whn-purple/30 cursor-pointer transition-colors" data-value="">All Years</li>
+                            {% for y in years %}
+                            <li class="px-5 py-3 text-sm text-white/60 hover:text-white hover:bg-whn-purple/30 cursor-pointer transition-colors" data-value="{{ y }}">{{ y }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex items-center gap-4">
+                    <button type="submit" class="px-8 py-3.5 rounded-2xl bg-whn-purple hover:bg-whn-purple/90 text-white text-xs font-black shadow-[0_0_20px_rgba(124,58,237,0.3)] transition-all hover:scale-105">Apply Filter</button>
+                    <a href="{% url 'admin_accounts' %}{% if selected_artist_id %}?artist_id={{ selected_artist_id }}{% endif %}" class="px-6 py-3.5 rounded-2xl bg-white/5 border border-white/10 text-white text-xs font-bold hover:bg-white/10 transition-all text-center">Reset</a>
+                </div>
+            </form>
+        </div>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                const dropdowns = document.querySelectorAll('.custom-dropdown');
+                
+                dropdowns.forEach(dropdown => {
+                    const trigger = dropdown.querySelector('.dropdown-trigger');
+                    const arrow = dropdown.querySelector('.dropdown-arrow');
+                    const menu = dropdown.querySelector('.dropdown-menu');
+                    const input = dropdown.querySelector('input[type="hidden"]');
+                    const label = dropdown.querySelector('.selected-label');
+                    const items = dropdown.querySelectorAll('li');
+                    
+                    // Initialize selected item on page load
+                    const initialVal = input.value;
+                    let found = false;
+                    items.forEach(item => {
+                        if (item.getAttribute('data-value') === initialVal) {
+                            label.innerText = item.innerText;
+                            item.classList.add('bg-whn-purple/40', 'text-white', 'font-bold');
+                            item.classList.remove('text-white/60');
+                            found = true;
+                        } else {
+                            item.classList.remove('bg-whn-purple/40', 'text-white', 'font-bold');
+                            item.classList.add('text-white/60');
+                        }
+                    });
+                    if (!found && items.length > 0) {
+                        label.innerText = items[0].innerText;
+                        items[0].classList.add('bg-whn-purple/40', 'text-white', 'font-bold');
+                        items[0].classList.remove('text-white/60');
+                    }
+                    
+                    // Toggle menu
+                    trigger.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        
+                        // Close other dropdowns
+                        document.querySelectorAll('.dropdown-menu').forEach(m => {
+                            if (m !== menu) {
+                                m.classList.add('hidden', 'opacity-0', 'scale-95');
+                                const otherArrow = m.closest('.custom-dropdown').querySelector('.dropdown-arrow');
+                                if (otherArrow) otherArrow.classList.remove('rotate-180');
+                            }
+                        });
+                        
+                        const isHidden = menu.classList.contains('hidden');
+                        if (isHidden) {
+                            menu.classList.remove('hidden');
+                            setTimeout(() => {
+                                menu.classList.remove('opacity-0', 'scale-95');
+                            }, 10);
+                            arrow.classList.add('rotate-180');
+                        } else {
+                            menu.classList.add('opacity-0', 'scale-95');
+                            arrow.classList.remove('rotate-180');
+                            setTimeout(() => {
+                                menu.classList.add('hidden');
+                            }, 200);
+                        }
+                    });
+                    
+                    // Select item
+                    items.forEach(item => {
+                        item.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            
+                            const val = item.getAttribute('data-value');
+                            input.value = val;
+                            label.innerText = item.innerText;
+                            
+                            // Highlight item
+                            items.forEach(i => {
+                                i.classList.remove('bg-whn-purple/40', 'text-white', 'font-bold');
+                                i.classList.add('text-white/60');
+                            });
+                            item.classList.add('bg-whn-purple/40', 'text-white', 'font-bold');
+                            item.classList.remove('text-white/60');
+                            
+                            // Close menu
+                            menu.classList.add('opacity-0', 'scale-95');
+                            arrow.classList.remove('rotate-180');
+                            setTimeout(() => {
+                                menu.classList.add('hidden');
+                            }, 200);
+                        });
+                    });
+                });
+                
+                // Close dropdowns on outside click
+                document.addEventListener('click', () => {
+                    document.querySelectorAll('.dropdown-menu').forEach(menu => {
+                        menu.classList.add('opacity-0', 'scale-95');
+                        const arrow = menu.closest('.custom-dropdown').querySelector('.dropdown-arrow');
+                        if (arrow) arrow.classList.remove('rotate-180');
+                        setTimeout(() => {
+                            menu.classList.add('hidden');
+                        }, 200);
+                    });
+                });
+            });
+        </script>
+
+        {% if selected_artist %}
+        <!-- Aggregate Summary Piles -->
+        <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6 mb-16">
+            <!-- Total Earnings -->
+            <div class="glass-card p-6 rounded-3xl border border-white/5 hover:border-whn-purple/20 transition-all duration-300" data-aos="fade-up" data-aos-delay="100">
+                <span class="text-[9px] font-bold text-whn-tertiary uppercase tracking-widest block mb-2">Total Earnings</span>
+                <div class="text-2xl font-black text-white mb-1">₹{{ total_earnings|floatformat:2 }}</div>
+                <p class="text-whn-purple text-[10px] font-bold">Gross Partner Payouts</p>
+            </div>
+
+            <!-- Total Expenses -->
+            <div class="glass-card p-6 rounded-3xl border border-white/5 hover:border-red-500/20 transition-all duration-300" data-aos="fade-up" data-aos-delay="200">
+                <span class="text-[9px] font-bold text-whn-tertiary uppercase tracking-widest block mb-2">Total Expenses</span>
+                <div class="text-2xl font-black text-white mb-1">₹{{ total_expenses|floatformat:2 }}</div>
+                <p class="text-red-400 text-[10px] font-bold">Cost Deductions</p>
+            </div>
+
+            <!-- Net Profit -->
+            <div class="glass-card p-6 rounded-3xl border border-white/5 hover:border-green-500/20 transition-all duration-300" data-aos="fade-up" data-aos-delay="300">
+                <span class="text-[9px] font-bold text-whn-tertiary uppercase tracking-widest block mb-2">Net Earnings</span>
+                <div class="text-2xl font-black text-green-400 mb-1">₹{{ net_earnings|floatformat:2 }}</div>
+                <p class="text-green-400 text-[10px] font-bold">Take-Home Profit</p>
+            </div>
+
+            <!-- Monthly earnings -->
+            <div class="glass-card p-6 rounded-3xl border border-white/5 hover:border-whn-blue/20 transition-all duration-300" data-aos="fade-up" data-aos-delay="400">
+                <span class="text-[9px] font-bold text-whn-tertiary uppercase tracking-widest block mb-2">This Month</span>
+                <div class="text-2xl font-black text-white mb-1">₹{{ monthly_earnings|floatformat:2 }}</div>
+                <p class="text-whn-blue text-[10px] font-bold">Selected Month Gross</p>
+            </div>
+
+            <!-- Yearly earnings -->
+            <div class="glass-card p-6 rounded-3xl border border-white/5 hover:border-yellow-500/20 transition-all duration-300" data-aos="fade-up" data-aos-delay="500">
+                <span class="text-[9px] font-bold text-whn-tertiary uppercase tracking-widest block mb-2">This Year</span>
+                <div class="text-2xl font-black text-white mb-1">₹{{ yearly_earnings|floatformat:2 }}</div>
+                <p class="text-yellow-400 text-[10px] font-bold">Selected Year Gross</p>
+            </div>
+        </div>
+
+        <!-- Ledger Table Card -->
+        <div class="glass-card rounded-[2.5rem] border border-white/5 p-8 md:p-10 shadow-2xl relative overflow-hidden" data-aos="fade-up">
+            <h2 class="text-xl font-black text-white uppercase tracking-wider mb-8">Performance Ledger ({{ selected_artist.name }})</h2>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="border-b border-white/10">
+                            <th class="py-4 px-6 text-[10px] font-bold text-whn-tertiary uppercase tracking-widest">Event & Venue</th>
+                            <th class="py-4 px-6 text-[10px] font-bold text-whn-tertiary uppercase tracking-widest">Booking Type</th>
+                            <th class="py-4 px-6 text-[10px] font-bold text-whn-tertiary uppercase tracking-widest text-right">Deal Amount</th>
+                            <th class="py-4 px-6 text-[10px] font-bold text-whn-tertiary uppercase tracking-widest text-center">Split %</th>
+                            <th class="py-4 px-6 text-[10px] font-bold text-whn-tertiary uppercase tracking-widest text-right">Artist Share</th>
+                            <th class="py-4 px-6 text-[10px] font-bold text-whn-tertiary uppercase tracking-widest text-right">Expenses</th>
+                            <th class="py-4 px-6 text-[10px] font-bold text-whn-tertiary uppercase tracking-widest text-right">Net Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-white/5">
+                        {% for ledger in events_ledger %}
+                        <tr class="hover:bg-white/[0.02] transition-colors duration-200">
+                            <!-- Event -->
+                            <td class="py-5 px-6">
+                                <span class="text-white font-bold text-sm block">{{ ledger.booking.venue }}</span>
+                                <span class="text-[10px] text-whn-tertiary tracking-wide uppercase">{{ ledger.booking.date|date:"d M Y" }} · {{ ledger.booking.location }}</span>
+                            </td>
+                            <!-- Booking Type -->
+                            <td class="py-5 px-6">
+                                <span class="px-3 py-1 rounded-full text-[9px] font-bold bg-white/5 border border-white/10 text-white uppercase">{{ ledger.booking.booking_type }}</span>
+                            </td>
+                            <!-- Deal Amount -->
+                            <td class="py-5 px-6 text-right">
+                                <span class="text-white font-semibold text-sm">₹{{ ledger.booking.deal_amount }}</span>
+                            </td>
+                            <!-- Split % -->
+                            <td class="py-5 px-6 text-center">
+                                <span class="text-whn-purple font-bold text-sm">
+                                    {% if ledger.booking.booking_type == 'Custom' %}
+                                        {{ ledger.booking.custom_artist_percentage|floatformat:"-2" }}%
+                                    {% else %}
+                                        {{ ledger.pct_str }}
+                                    {% endif %}
+                                </span>
+                            </td>
+                            <!-- Share -->
+                            <td class="py-5 px-6 text-right">
+                                <span class="text-white font-semibold text-sm">₹{{ ledger.earning|floatformat:2 }}</span>
+                            </td>
+                            <!-- Expenses -->
+                            <td class="py-5 px-6 text-right">
+                                <span class="text-red-400 font-semibold text-sm">₹{{ ledger.expenses|floatformat:2 }}</span>
+                            </td>
+                            <!-- Net Amount -->
+                            <td class="py-5 px-6 text-right">
+                                <span class="text-green-400 font-bold text-sm">₹{{ ledger.net|floatformat:2 }}</span>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="py-16 text-center text-whn-tertiary italic text-sm">
+                                No payout records or transactions logged so far for {{ selected_artist.name }}.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% else %}
+        <div class="glass-card rounded-[2.5rem] border border-white/5 p-16 text-center shadow-2xl relative overflow-hidden" data-aos="fade-up">
+            <p class="text-whn-tertiary italic text-sm">No active artists found in the system. Create an artist from the dashboard to start viewing accounts.</p>
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+{% endblock %}

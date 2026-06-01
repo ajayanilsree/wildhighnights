@@ -99,3 +99,102 @@
     background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
     background-size: 40px 40px;
 }
+
+/* Responsive shell safeguards */
+html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    scroll-behavior: smooth;
+}
+
+body {
+    overflow-x: hidden;
+}
+
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+img, video, canvas, svg, iframe {
+    max-width: 100%;
+}
+
+#app, nav, footer {
+    min-width: 0;
+}
+
+#app .grid > *,
+#app .flex > * {
+    min-width: 0;
+}
+
+#app .overflow-x-auto,
+#app .table-responsive,
+#app .follow-up-table-scroll {
+    -webkit-overflow-scrolling: touch;
+    overflow-y: hidden;
+}
+
+#app .overflow-x-auto table,
+#app .table-responsive table,
+#app .follow-up-table-scroll table {
+    min-width: 720px;
+}
+
+#app .truncate,
+#app .text-xs,
+#app .text-sm,
+#app .text-base,
+#app .text-lg {
+    overflow-wrap: anywhere;
+}
+
+#app input,
+#app select,
+#app textarea,
+#app button {
+    max-width: 100%;
+}
+
+.notification-panel {
+    max-height: calc(100dvh - 6rem);
+}
+
+@media (max-width: 767px) {
+    #backToTop {
+        right: 1rem;
+        bottom: 1rem;
+    }
+
+    .glass-card,
+    .modal-content {
+        border-radius: 1.5rem !important;
+    }
+
+    .fixed.inset-0 .glass-card,
+    .fixed.inset-0 .modal-content {
+        width: calc(100vw - 1rem);
+        max-width: calc(100vw - 1rem);
+        max-height: calc(100dvh - 1rem);
+        overflow-y: auto;
+    }
+
+    #app .overflow-x-auto table,
+    #app .table-responsive table,
+    #app .follow-up-table-scroll table {
+        min-width: 640px;
+    }
+
+    #mobileMenu a {
+        max-width: calc(100vw - 2rem);
+        text-align: center;
+        word-break: break-word;
+    }
+
+    .notification-panel {
+        width: calc(100vw - 1rem) !important;
+        max-width: calc(100vw - 1rem) !important;
+        left: 0.5rem !important;
+        right: 0.5rem !important;
+    }
+}
