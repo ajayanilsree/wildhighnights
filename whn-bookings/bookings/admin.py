@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Artist, Booking, ArtistAvailability
+from .models import Artist, Booking, ArtistAvailability, BookingExpense
 
 @admin.register(ArtistAvailability)
 class ArtistAvailabilityAdmin(admin.ModelAdmin):
@@ -17,3 +17,9 @@ class BookingAdmin(admin.ModelAdmin):
     list_display = ('artist', 'venue', 'date', 'status', 'event_type')
     list_filter = ('artist', 'status', 'event_type', 'date')
     search_fields = ('venue', 'location', 'notes', 'accommodation_details', 'transport_details')
+
+@admin.register(BookingExpense)
+class BookingExpenseAdmin(admin.ModelAdmin):
+    list_display = ('booking', 'name', 'amount', 'borne_by')
+    list_filter = ('borne_by',)
+    search_fields = ('booking__venue', 'name')

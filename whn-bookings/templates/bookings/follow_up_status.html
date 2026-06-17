@@ -110,7 +110,6 @@
                         <col class="w-[170px]">
                         <col class="w-[210px]">
                         <col class="w-[170px]">
-                        <col class="w-[260px]">
                         <col class="w-[250px]">
                         <col class="w-[180px]">
                         <col class="w-[170px]">
@@ -123,7 +122,6 @@
                             <th class="px-4 pb-5 text-[10px] font-black uppercase tracking-widest text-whn-tertiary">Employee Name</th>
                             <th class="px-4 pb-5 text-[10px] font-black uppercase tracking-widest text-whn-tertiary">Client / Promoter</th>
                             <th class="px-4 pb-5 text-[10px] font-black uppercase tracking-widest text-whn-tertiary">Contact Number</th>
-                            <th class="px-4 pb-5 text-[10px] font-black uppercase tracking-widest text-whn-tertiary">Email</th>
                             <th class="px-4 pb-5 text-[10px] font-black uppercase tracking-widest text-whn-tertiary">Venue</th>
                             <th class="px-4 pb-5 text-[10px] font-black uppercase tracking-widest text-whn-tertiary">City</th>
                             <th class="px-4 pb-5 text-[10px] font-black uppercase tracking-widest text-whn-tertiary">Follow-up Date</th>
@@ -144,9 +142,6 @@
                             </td>
                             <td class="px-4 py-7 align-top text-sm font-semibold text-white/80">
                                 <span class="block whitespace-nowrap" title="{{ row.lead.contact_number|default:'N/A' }}">{{ row.lead.contact_number|default:"N/A" }}</span>
-                            </td>
-                            <td class="px-4 py-7 align-top text-sm text-whn-tertiary">
-                                <span class="block truncate" title="{{ row.lead.email|default:'N/A' }}">{{ row.lead.email|default:"N/A" }}</span>
                             </td>
                             <td class="px-4 py-7 align-top text-sm text-whn-tertiary">
                                 <span class="block max-w-full truncate" title="{{ row.lead.venue|default:'N/A' }}">{{ row.lead.venue|default:"N/A" }}</span>

@@ -46,12 +46,14 @@ class AdminAccountsTest(TestCase):
         self.expense1 = BookingExpense.objects.create(
             booking=self.booking,
             name="Catering",
-            amount=Decimal('100.00')
+            amount=Decimal('100.00'),
+            borne_by='Artist'
         )
         self.expense2 = BookingExpense.objects.create(
             booking=self.booking,
             name="Travel Gas",
-            amount=Decimal('50.00')
+            amount=Decimal('50.00'),
+            borne_by='WHN'
         )
         
     def test_anonymous_user_redirected(self):
@@ -74,9 +76,16 @@ class AdminAccountsTest(TestCase):
         self.assertRedirects(response, reverse('login'), target_status_code=302)
         
     def test_admin_user_success(self):
-        """Superuser/staff user should access the page successfully"""
+        """Superuser/staff user should access the account selection page successfully"""
         self.client.login(username='admin', password='adminpassword')
         response = self.client.get(reverse('admin_accounts'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'bookings/admin_accounts_selection.html')
+
+    def test_admin_artist_accounts_success(self):
+        """Superuser/staff user should access the artist accounts page successfully"""
+        self.client.login(username='admin', password='adminpassword')
+        response = self.client.get(reverse('admin_artist_accounts'))
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'bookings/admin_accounts.html')
         
@@ -85,23 +94,40 @@ class AdminAccountsTest(TestCase):
         self.client.login(username='admin', password='adminpassword')
         
         # Select our artist via artist_id parameter
-        response = self.client.get(reverse('admin_accounts'), {'artist_id': self.artist.id})
+        response = self.client.get(reverse('admin_artist_accounts'), {'artist_id': self.artist.id})
         self.assertEqual(response.status_code, 200)
         
         # Split is Sale (85%)
         # deal_amount = 1000.00
         # total_earnings = 1000 * 0.85 = 850.00
-        # total_expenses = 100.00 + 50.00 = 150.00
-        # net_earnings = 850.00 - 150.00 = 700.00
+        # artist expenses = 100.00
+        # WHN expenses = 50.00
+        # net_earnings = 850.00 - 100.00 = 750.00
+        # owner_profit = 150.00 WHN share - 50.00 WHN expense = 100.00
         
         self.assertEqual(response.context['total_earnings'], Decimal('850.00'))
-        self.assertEqual(response.context['total_expenses'], Decimal('150.00'))
-        self.assertEqual(response.context['net_earnings'], Decimal('700.00'))
+        self.assertEqual(response.context['total_expenses'], Decimal('100.00'))
+        self.assertEqual(response.context['net_earnings'], Decimal('750.00'))
         
         # Ledger checks
         events_ledger = response.context['events_ledger']
         self.assertEqual(len(events_ledger), 1)
         self.assertEqual(events_ledger[0]['earning'], Decimal('850.00'))
-        self.assertEqual(events_ledger[0]['expenses'], Decimal('150.00'))
-        self.assertEqual(events_ledger[0]['net'], Decimal('700.00'))
+        self.assertEqual(events_ledger[0]['expenses'], Decimal('100.00'))
+        self.assertEqual(events_ledger[0]['whn_expenses'], Decimal('50.00'))
+        self.assertEqual(events_ledger[0]['owner_profit'], Decimal('100.00'))
+        self.assertEqual(events_ledger[0]['net'], Decimal('750.00'))
         self.assertEqual(events_ledger[0]['pct_str'], '85%')
+
+    def test_whn_accounts_calculations(self):
+        """WHN accounts deduct only WHN-borne expenses from WHN share"""
+        self.client.login(username='admin', password='adminpassword')
+        response = self.client.get(reverse('admin_whn_accounts'), {'artist_id': self.artist.id})
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'bookings/admin_whn_accounts.html')
+        self.assertEqual(response.context['total_whn_earnings'], Decimal('150.00'))
+        self.assertEqual(response.context['total_whn_expenses'], Decimal('50.00'))
+        self.assertEqual(response.context['net_whn_profit'], Decimal('100.00'))
+        self.assertEqual(response.context['whn_ledger'][0]['artist_share'], Decimal('750.00'))
+        self.assertEqual(response.context['whn_ledger'][0]['whn_share'], Decimal('150.00'))
+        self.assertEqual(response.context['whn_ledger'][0]['owner_profit'], Decimal('100.00'))

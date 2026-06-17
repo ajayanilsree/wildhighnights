@@ -67,7 +67,6 @@ class ClientLead(models.Model):
     city = models.CharField(max_length=100)
     venue = models.CharField(max_length=200)
     contact_number = models.CharField(max_length=20)
-    email = models.EmailField(blank=True, null=True)
     notes = models.TextField(blank=True, null=True)
     status = models.CharField(max_length=30, choices=STATUS_CHOICES, default='Follow-up Needed')
     follow_up_date = models.DateField(blank=True, null=True)
@@ -178,12 +177,17 @@ class Booking(models.Model):
         return f"{self.artist.name} - {self.venue} ({self.date})"
 
 class BookingExpense(models.Model):
+    BORNE_BY_CHOICES = [
+        ('Artist', 'Artist'),
+        ('WHN', 'WHN'),
+    ]
     booking = models.ForeignKey(Booking, on_delete=models.CASCADE, related_name="expenses")
     name = models.CharField(max_length=150)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
+    borne_by = models.CharField(max_length=10, choices=BORNE_BY_CHOICES, default='WHN')
 
     def __str__(self):
-        return f"{self.name}: {self.amount} for {self.booking}"
+        return f"{self.name}: {self.amount} ({self.borne_by}) for {self.booking}"
 
 class SiteSettings(models.Model):
     title = models.CharField(max_length=200, default='Wild High Nights')

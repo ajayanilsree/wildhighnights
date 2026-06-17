@@ -115,7 +115,7 @@
                             </div>
                             <div>
                                 <span class="text-[10px] text-whn-tertiary uppercase tracking-wider block">My Share</span>
-                                <span class="text-white font-bold text-sm">₹{{ item.earning|floatformat:2 }}</span>
+                                <span class="text-white font-bold text-sm">₹{{ item.net|floatformat:2 }}</span>
                             </div>
                             <div>
                                 <span class="text-[10px] text-whn-tertiary uppercase tracking-wider block">Net Amount</span>
@@ -214,7 +214,7 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                         {% for exp in item.booking.expenses.all %}
                         <div class="p-5 rounded-2xl bg-white/[0.02] border border-white/5 flex items-center justify-between text-sm hover:border-whn-purple/20 transition-all duration-300">
-                            <span class="text-whn-tertiary">{{ exp.name }}</span>
+                            <span class="text-whn-tertiary">{{ exp.name }} <span class="text-white/40">({{ exp.borne_by|default:"WHN" }})</span></span>
                             <span class="text-white font-black">₹{{ exp.amount }}</span>
                         </div>
                         {% endfor %}

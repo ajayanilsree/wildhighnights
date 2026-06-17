@@ -483,7 +483,7 @@
         const expensesHtml = booking.expenses && booking.expenses.length
             ? booking.expenses.map(expense => `
                 <div class="flex items-center justify-between gap-4 border-b border-white/5 pb-2 last:border-0 last:pb-0">
-                    <span class="text-white/80 font-medium">${expense.name}</span>
+                    <span class="text-white/80 font-medium">${expense.name} <span class="text-white/40">(${expense.borne_by || 'WHN'})</span></span>
                     <span class="text-white font-bold">${money(expense.amount)}</span>
                 </div>
             `).join('')

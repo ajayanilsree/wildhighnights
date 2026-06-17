@@ -153,7 +153,6 @@
                             <td class="py-6">
                                 <div class="flex flex-col gap-1">
                                     <span class="text-sm font-bold text-white">{{ lead.promoter_name }}</span>
-                                    <span class="text-xs text-whn-tertiary">{{ lead.email|default:"No Email" }}</span>
                                     <span class="text-xs text-whn-tertiary">{{ lead.contact_number|default:"No Phone" }}</span>
                                 </div>
                             </td>
@@ -182,7 +181,6 @@
                                         data-lead-id="{{ lead.id }}"
                                         data-type="{{ lead.type }}"
                                         data-promoter-name="{{ lead.promoter_name|escapejs }}"
-                                        data-email="{{ lead.email|default_if_none:''|escapejs }}"
                                         data-contact-number="{{ lead.contact_number|default_if_none:''|escapejs }}"
                                         data-city="{{ lead.city|default_if_none:''|escapejs }}"
                                         data-venue="{{ lead.venue|default_if_none:''|escapejs }}"
@@ -258,18 +256,10 @@
                 <input type="text" name="promoter_name" id="leadPromoterName" required placeholder="e.g. Acme Corp / Jane Doe" class="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-whn-purple/50 focus:ring-4 focus:ring-whn-purple/10 transition-all placeholder:text-white/10">
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Email -->
-                <div class="relative group">
-                    <label class="text-[10px] font-bold text-whn-tertiary uppercase tracking-[0.2em] ml-1 mb-3 block group-focus-within:text-whn-purple transition-colors">Email</label>
-                    <input type="email" name="email" id="leadEmail" placeholder="jane@example.com" class="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-whn-purple/50 focus:ring-4 focus:ring-whn-purple/10 transition-all placeholder:text-white/10">
-                </div>
-                
+            <div class="relative group">
                 <!-- Phone -->
-                <div class="relative group">
-                    <label class="text-[10px] font-bold text-whn-tertiary uppercase tracking-[0.2em] ml-1 mb-3 block group-focus-within:text-whn-purple transition-colors">Contact Number</label>
-                    <input type="text" name="contact_number" id="leadContactNumber" required placeholder="+91 9526969287" class="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-whn-purple/50 focus:ring-4 focus:ring-whn-purple/10 transition-all placeholder:text-white/10">
-                </div>
+                <label class="text-[10px] font-bold text-whn-tertiary uppercase tracking-[0.2em] ml-1 mb-3 block group-focus-within:text-whn-purple transition-colors">Contact Number</label>
+                <input type="text" name="contact_number" id="leadContactNumber" required placeholder="+91 9526969287" class="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-whn-purple/50 focus:ring-4 focus:ring-whn-purple/10 transition-all placeholder:text-white/10">
             </div>
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -342,7 +332,6 @@
     const leadType = document.getElementById('leadType');
     const leadStatus = document.getElementById('leadStatus');
     const leadPromoterName = document.getElementById('leadPromoterName');
-    const leadEmail = document.getElementById('leadEmail');
     const leadContactNumber = document.getElementById('leadContactNumber');
     const leadCity = document.getElementById('leadCity');
     const leadVenue = document.getElementById('leadVenue');
@@ -600,7 +589,6 @@
             leadType.value = lead.type || 'lead';
             leadStatus.value = (lead.status || '').startsWith('Converted') ? 'Converted' : (lead.status || 'Follow-up Needed');
             leadPromoterName.value = lead.promoter_name || '';
-            leadEmail.value = lead.email || '';
             leadContactNumber.value = lead.contact_number || '';
             leadCity.value = lead.city || '';
             leadVenue.value = lead.venue || '';
@@ -627,7 +615,6 @@
                 id: btn.dataset.leadId,
                 type: btn.dataset.type,
                 promoter_name: btn.dataset.promoterName,
-                email: btn.dataset.email,
                 contact_number: btn.dataset.contactNumber,
                 city: btn.dataset.city,
                 venue: btn.dataset.venue,

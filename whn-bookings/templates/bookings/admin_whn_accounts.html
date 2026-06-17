@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="min-h-screen bg-whn-dark pt-32 pb-20 px-6">
+    <div class="container mx-auto max-w-7xl">
+        <div class="mb-12" data-aos="fade-down">
+            <a href="{% url 'admin_accounts' %}" class="text-whn-purple font-bold tracking-[0.3em] uppercase text-[10px] mb-4 flex items-center gap-2 hover:translate-x-[-4px] transition-transform w-fit">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg>
+                Back to Accounts
+            </a>
+            <span class="text-whn-purple font-bold tracking-[0.3em] uppercase text-[10px] mb-4 block">Financial Overview</span>
+            <h1 class="text-5xl md:text-6xl font-black text-white tracking-tighter">WHN Accounts</h1>
+        </div>
+
+        <div class="glass-card p-6 md:p-8 rounded-3xl border border-white/5 mb-12" data-aos="fade-up" data-aos-delay="50">
+            <form method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-6 md:items-end">
+                <div>
+                    <label for="artist_id" class="text-[9px] font-bold text-whn-tertiary uppercase tracking-widest block mb-2">Filter by Artist</label>
+                    <select id="artist_id" name="artist_id" class="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-5 py-3.5 text-white text-sm focus:outline-none focus:border-whn-purple/50 focus:ring-4 focus:ring-whn-purple/10 transition-all cursor-pointer font-bold">
+                        <option value="" class="bg-whn-dark text-white">All Artists</option>
+                        {% for artist in artists %}
+                        <option value="{{ artist.id }}" {% if artist.id|stringformat:"s" == selected_artist_id %}selected{% endif %} class="bg-whn-dark text-white">{{ artist.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label for="month" class="text-[9px] font-bold text-whn-tertiary uppercase tracking-widest block mb-2">Filter by Month</label>
+                    <select id="month" name="month" class="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-5 py-3.5 text-white text-sm focus:outline-none focus:border-whn-purple/50 focus:ring-4 focus:ring-whn-purple/10 transition-all cursor-pointer font-bold">
+                        <option value="" class="bg-whn-dark text-white">All Months</option>
+                        {% for month in months %}
+                        <option value="{{ month.value }}" {% if selected_month == month.value|stringformat:"s" %}selected{% endif %} class="bg-whn-dark text-white">{{ month.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label for="year" class="text-[9px] font-bold text-whn-tertiary uppercase tracking-widest block mb-2">Filter by Year</label>
+                    <select id="year" name="year" class="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-5 py-3.5 text-white text-sm focus:outline-none focus:border-whn-purple/50 focus:ring-4 focus:ring-whn-purple/10 transition-all cursor-pointer font-bold">
+                        <option value="" class="bg-whn-dark text-white">All Years</option>
+                        {% for year in years %}
+                        <option value="{{ year }}" {% if selected_year == year|stringformat:"s" %}selected{% endif %} class="bg-whn-dark text-white">{{ year }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="flex gap-3">
+                    <button type="submit" class="flex-1 px-6 py-3.5 rounded-2xl bg-whn-purple hover:bg-whn-purple/90 text-white text-xs font-black shadow-[0_0_20px_rgba(124,58,237,0.3)] transition-all hover:scale-105">Apply</button>
+                    <a href="{% url 'admin_whn_accounts' %}" class="px-6 py-3.5 rounded-2xl bg-white/5 border border-white/10 text-white text-xs font-bold hover:bg-white/10 transition-all text-center">Reset</a>
+                </div>
+            </form>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16 max-w-5xl mx-auto">
+            <div class="glass-card p-6 rounded-3xl border border-white/5 hover:border-whn-purple/20 transition-all duration-300" data-aos="fade-up" data-aos-delay="100">
+                <span class="text-[9px] font-bold text-whn-tertiary uppercase tracking-widest block mb-2">Total WHN Earnings</span>
+                <div class="text-2xl font-black text-white mb-1">₹{{ total_whn_earnings|floatformat:2 }}</div>
+            </div>
+            <div class="glass-card p-6 rounded-3xl border border-white/5 hover:border-red-500/20 transition-all duration-300" data-aos="fade-up" data-aos-delay="200">
+                <span class="text-[9px] font-bold text-whn-tertiary uppercase tracking-widest block mb-2">Total WHN Expenses</span>
+                <div class="text-2xl font-black text-white mb-1">₹{{ total_whn_expenses|floatformat:2 }}</div>
+            </div>
+            <div class="glass-card p-6 rounded-3xl border border-white/5 hover:border-green-500/20 transition-all duration-300" data-aos="fade-up" data-aos-delay="300">
+                <span class="text-[9px] font-bold text-whn-tertiary uppercase tracking-widest block mb-2">Net WHN Profit</span>
+                <div class="text-2xl font-black text-green-400 mb-1">₹{{ net_whn_profit|floatformat:2 }}</div>
+            </div>
+        </div>
+
+        <div class="glass-card rounded-[2.5rem] border border-white/5 p-8 md:p-10 shadow-2xl relative overflow-hidden" data-aos="fade-up">
+            <h2 class="text-xl font-black text-white uppercase tracking-wider mb-8">WHN Booking Ledger</h2>
+            <div class="overflow-x-auto">
+                <table class="w-full min-w-[1100px] text-left border-collapse">
+                    <thead>
+                        <tr class="border-b border-white/10">
+                            <th class="py-4 px-5 text-[10px] font-bold text-whn-tertiary uppercase tracking-widest">Event & Venue</th>
+                            <th class="py-4 px-5 text-[10px] font-bold text-whn-tertiary uppercase tracking-widest">Artist</th>
+                            <th class="py-4 px-5 text-[10px] font-bold text-whn-tertiary uppercase tracking-widest">Booking Type</th>
+                            <th class="py-4 px-5 text-[10px] font-bold text-whn-tertiary uppercase tracking-widest text-right">Deal Amount</th>
+                            <th class="py-4 px-5 text-[10px] font-bold text-whn-tertiary uppercase tracking-widest text-right">Artist Share</th>
+                            <th class="py-4 px-5 text-[10px] font-bold text-whn-tertiary uppercase tracking-widest text-right">WHN Share</th>
+                            <th class="py-4 px-5 text-[10px] font-bold text-whn-tertiary uppercase tracking-widest text-right">WHN Expenses</th>
+                            <th class="py-4 px-5 text-[10px] font-bold text-whn-tertiary uppercase tracking-widest text-right">WHN Net Profit</th>
+                            <th class="py-4 px-5 text-[10px] font-bold text-whn-tertiary uppercase tracking-widest text-right">Date</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-white/5">
+                        {% for ledger in whn_ledger %}
+                        <tr class="hover:bg-white/[0.02] transition-colors duration-200">
+                            <td class="py-5 px-5">
+                                <span class="text-white font-bold text-sm block">{{ ledger.booking.venue }}</span>
+                                <span class="text-[10px] text-whn-tertiary tracking-wide uppercase">{{ ledger.booking.location }}</span>
+                            </td>
+                            <td class="py-5 px-5 text-sm font-bold text-white">{{ ledger.booking.artist.name }}</td>
+                            <td class="py-5 px-5">
+                                <span class="px-3 py-1 rounded-full text-[9px] font-bold bg-white/5 border border-white/10 text-white uppercase">{{ ledger.booking.booking_type }}</span>
+                            </td>
+                            <td class="py-5 px-5 text-right text-sm font-semibold text-white">₹{{ ledger.booking.deal_amount|floatformat:2 }}</td>
+                            <td class="py-5 px-5 text-right text-sm font-semibold text-white">₹{{ ledger.artist_share|floatformat:2 }}</td>
+                            <td class="py-5 px-5 text-right text-sm font-semibold text-white">₹{{ ledger.whn_share|floatformat:2 }}</td>
+                            <td class="py-5 px-5 text-right">
+                                <span class="text-red-400 font-semibold text-sm">₹{{ ledger.whn_expenses|floatformat:2 }}</span>
+                            </td>
+                            <td class="py-5 px-5 text-right text-sm font-black text-green-400">₹{{ ledger.owner_profit|floatformat:2 }}</td>
+                            <td class="py-5 px-5 text-right text-[10px] text-whn-tertiary uppercase tracking-widest">{{ ledger.booking.date|date:"d M Y" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="9" class="py-16 text-center text-whn-tertiary italic text-sm">No WHN account records found for the selected filters.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

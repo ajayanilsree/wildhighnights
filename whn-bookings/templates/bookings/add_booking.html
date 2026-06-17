@@ -61,7 +61,7 @@
                         </div>
                         <span class="w-fit rounded-full border border-whn-purple/40 px-4 py-2 text-[10px] font-black uppercase tracking-[0.2em] text-whn-purple">{{ crm_lead.status }}</span>
                     </div>
-                    <div class="mt-6 grid grid-cols-1 gap-4 md:grid-cols-3">
+                    <div class="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
                         <div class="rounded-2xl border border-white/5 bg-white/[0.03] p-4">
                             <p class="text-[9px] font-bold uppercase tracking-[0.2em] text-whn-tertiary">Employee</p>
                             <p class="mt-1 text-sm font-bold text-white">{{ crm_lead.employee.name }}</p>
@@ -69,10 +69,6 @@
                         <div class="rounded-2xl border border-white/5 bg-white/[0.03] p-4">
                             <p class="text-[9px] font-bold uppercase tracking-[0.2em] text-whn-tertiary">Contact</p>
                             <p class="mt-1 text-sm font-bold text-white">{{ crm_lead.contact_number }}</p>
-                        </div>
-                        <div class="rounded-2xl border border-white/5 bg-white/[0.03] p-4">
-                            <p class="text-[9px] font-bold uppercase tracking-[0.2em] text-whn-tertiary">Email</p>
-                            <p class="mt-1 break-words text-sm font-bold text-white">{{ crm_lead.email|default:"Not provided" }}</p>
                         </div>
                     </div>
                 </div>
@@ -426,6 +422,14 @@
                 <div class="w-1/3">
                     <input type="number" step="0.01" name="expense_amount[]" placeholder="Amount (₹)" required 
                         class="w-full bg-transparent border-b border-white/10 py-2 text-white focus:outline-none focus:border-whn-purple transition-all text-sm placeholder:text-white/10">
+                </div>
+                <div class="w-1/4">
+                    <label class="text-[9px] font-bold text-whn-tertiary uppercase tracking-widest block mb-1">Expense Borne By</label>
+                    <select name="expense_borne_by[]" required aria-label="Expense Borne By"
+                        class="w-full bg-transparent border-b border-white/10 py-1 text-white focus:outline-none focus:border-whn-purple transition-all text-sm">
+                        <option value="Artist" class="bg-whn-dark">Artist</option>
+                        <option value="WHN" selected class="bg-whn-dark">WHN</option>
+                    </select>
                 </div>
                 <button type="button" class="remove-expense-btn text-white/40 hover:text-red-500 hover:scale-120 transition-all text-2xl px-2">×</button>
             `;

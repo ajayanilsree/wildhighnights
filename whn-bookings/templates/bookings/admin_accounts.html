@@ -6,11 +6,11 @@
     <div class="container mx-auto max-w-6xl">
         <!-- Back navigation -->
         <div class="mb-12" data-aos="fade-down">
-            <a href="{% url 'dashboard' %}" class="text-whn-purple font-bold tracking-[0.3em] uppercase text-[10px] mb-4 flex items-center gap-2 hover:translate-x-[-4px] transition-transform w-fit">
+            <a href="{% url 'admin_accounts' %}" class="text-whn-purple font-bold tracking-[0.3em] uppercase text-[10px] mb-4 flex items-center gap-2 hover:translate-x-[-4px] transition-transform w-fit">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                 </svg>
-                Back to Dashboard
+                Back to Accounts
             </a>
             <span class="text-whn-purple font-bold tracking-[0.3em] uppercase text-[10px] mb-4 block">Financial Overview</span>
             <h1 class="text-5xl md:text-6xl font-black text-white tracking-tighter">Artist Accounts</h1>
@@ -89,7 +89,7 @@
                 <!-- Action Buttons -->
                 <div class="flex items-center gap-4">
                     <button type="submit" class="px-8 py-3.5 rounded-2xl bg-whn-purple hover:bg-whn-purple/90 text-white text-xs font-black shadow-[0_0_20px_rgba(124,58,237,0.3)] transition-all hover:scale-105">Apply Filter</button>
-                    <a href="{% url 'admin_accounts' %}{% if selected_artist_id %}?artist_id={{ selected_artist_id }}{% endif %}" class="px-6 py-3.5 rounded-2xl bg-white/5 border border-white/10 text-white text-xs font-bold hover:bg-white/10 transition-all text-center">Reset</a>
+                    <a href="{% url 'admin_artist_accounts' %}{% if selected_artist_id %}?artist_id={{ selected_artist_id }}{% endif %}" class="px-6 py-3.5 rounded-2xl bg-white/5 border border-white/10 text-white text-xs font-bold hover:bg-white/10 transition-all text-center">Reset</a>
                 </div>
             </form>
         </div>
@@ -280,7 +280,7 @@
                             </td>
                             <!-- Share -->
                             <td class="py-5 px-6 text-right">
-                                <span class="text-white font-semibold text-sm">₹{{ ledger.earning|floatformat:2 }}</span>
+                                <span class="text-white font-semibold text-sm">₹{{ ledger.net|floatformat:2 }}</span>
                             </td>
                             <!-- Expenses -->
                             <td class="py-5 px-6 text-right">

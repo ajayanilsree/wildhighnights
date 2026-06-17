@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="min-h-screen bg-whn-dark pt-32 pb-20 px-6">
+    <div class="container mx-auto max-w-6xl">
+        <div class="mb-12" data-aos="fade-down">
+            <a href="{% url 'dashboard' %}" class="text-whn-purple font-bold tracking-[0.3em] uppercase text-[10px] mb-4 flex items-center gap-2 hover:translate-x-[-4px] transition-transform w-fit">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg>
+                Back to Dashboard
+            </a>
+            <span class="text-whn-purple font-bold tracking-[0.3em] uppercase text-[10px] mb-4 block">Financial Overview</span>
+            <h1 class="text-5xl md:text-6xl font-black text-white tracking-tighter">Accounts</h1>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6" data-aos="fade-up">
+            <a href="{% url 'admin_artist_accounts' %}" class="group min-h-[260px] rounded-[2.25rem] border border-white/5 bg-white/[0.03] p-8 md:p-10 flex flex-col justify-between transition-all hover:border-whn-purple/30 hover:bg-white/[0.05] hover:-translate-y-1">
+                <div class="flex h-16 w-16 items-center justify-center rounded-2xl bg-whn-purple/10 text-3xl transition-transform group-hover:scale-110 font-['Segoe_UI_Emoji','Apple_Color_Emoji','Noto_Color_Emoji',sans-serif]">&#127908;</div>
+                <div>
+                    <h2 class="text-3xl font-black text-white tracking-tight mb-3">Artist Account</h2>
+                    <p class="text-whn-tertiary text-sm leading-relaxed">View artist earnings, expenses, payouts, and performance ledger</p>
+                </div>
+            </a>
+
+            <a href="{% url 'admin_whn_accounts' %}" class="group min-h-[260px] rounded-[2.25rem] border border-white/5 bg-white/[0.03] p-8 md:p-10 flex flex-col justify-between transition-all hover:border-whn-blue/30 hover:bg-white/[0.05] hover:-translate-y-1">
+                <div class="flex h-16 w-16 items-center justify-center rounded-2xl bg-whn-blue/10 text-3xl transition-transform group-hover:scale-110 font-['Segoe_UI_Emoji','Apple_Color_Emoji','Noto_Color_Emoji',sans-serif]">&#128176;</div>
+                <div>
+                    <h2 class="text-3xl font-black text-white tracking-tight mb-3">WHN Account</h2>
+                    <p class="text-whn-tertiary text-sm leading-relaxed">View WHN/owner earnings, expenses, profit, and booking-wise ledger</p>
+                </div>
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
