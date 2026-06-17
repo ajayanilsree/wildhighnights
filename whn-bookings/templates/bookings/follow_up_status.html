@@ -134,7 +134,7 @@
                         {% for row in follow_up_rows %}
                         <tr class="transition-colors hover:bg-white/[0.02]">
                             <td class="px-4 py-7 align-top text-sm font-black text-white">
-                                <span class="block truncate" title="{{ row.lead.employee.name }}">{{ row.lead.employee.name }}</span>
+                                <span class="block truncate" title="{{ row.lead.creator_label }}">{{ row.lead.creator_label }}</span>
                             </td>
                             <td class="px-4 py-7 align-top">
                                 <p class="truncate text-sm font-black text-white" title="{{ row.lead.promoter_name }}">{{ row.lead.promoter_name }}</p>

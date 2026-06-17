@@ -230,9 +230,13 @@ def crm_booking_type(lead):
     return 'Sale' if lead.type == 'sale' else 'Lead'
 
 
+def crm_creator_label(lead):
+    return lead.creator_label if hasattr(lead, 'creator_label') else (lead.employee.name if lead.employee else 'Admin')
+
+
 def build_crm_booking_notes(lead):
     notes_parts = [
-        f"CRM conversion from {lead.employee.name}",
+        f"CRM conversion from {crm_creator_label(lead)}",
         f"CRM status: {lead.status}",
         f"Promoter: {lead.promoter_name}",
         f"Contact: {lead.contact_number}",
@@ -545,10 +549,10 @@ def add_booking_view(request):
                 'last_updated',
             ])
             log_activity(
-                f"{crm_lead.employee.name} completed booking for converted {crm_lead.get_type_display()}: {crm_lead.promoter_name}",
+                f"{crm_creator_label(crm_lead)} completed booking for converted {crm_lead.get_type_display()}: {crm_lead.promoter_name}",
                 request=request,
                 role='employee' if hasattr(request.user, 'employee') else 'admin',
-                employee_name=crm_lead.employee.name,
+                employee_name=crm_lead.employee.name if crm_lead.employee else None,
                 related_record=crm_lead.promoter_name,
             )
 
@@ -588,7 +592,11 @@ def add_booking_view(request):
 
     if crm_lead:
         selected_artist_id = str(crm_lead.conversion_artist_id or selected_artist_id or '')
-        selected_date = crm_lead.conversion_event_date.isoformat() if crm_lead.conversion_event_date else selected_date
+        selected_date = (
+            crm_lead.conversion_event_date.isoformat()
+            if crm_lead.conversion_event_date
+            else (crm_lead.event_date.isoformat() if crm_lead.event_date else selected_date)
+        )
         selected_booking_type = crm_booking_type(crm_lead)
         selected_venue = crm_lead.venue or ''
         selected_location = crm_lead.city or ''
@@ -1812,112 +1820,123 @@ def admin_crm_view(request):
     if not (request.user.is_staff or request.user.is_superuser):
         return redirect('dashboard')
 
-    employees = Employee.objects.select_related('user').order_by('name')
     artists = Artist.objects.all().order_by('name')
-    selected_employee_id = request.GET.get('employee') or request.POST.get('employee') or 'all'
-    selected_period = request.GET.get('period') or request.POST.get('period') or ''
-    from_date_raw = request.GET.get('from_date') or request.POST.get('from_date') or ''
-    to_date_raw = request.GET.get('to_date') or request.POST.get('to_date') or ''
-
-    selected_employee = None
-    if selected_employee_id not in ('', 'all'):
-        selected_employee = get_object_or_404(Employee.objects.select_related('user'), id=selected_employee_id)
-
-    from_date = None
-    to_date = None
-    if from_date_raw:
-        try:
-            from_date = datetime.strptime(from_date_raw, '%Y-%m-%d').date()
-        except ValueError:
-            from_date = None
-    if to_date_raw:
-        try:
-            to_date = datetime.strptime(to_date_raw, '%Y-%m-%d').date()
-        except ValueError:
-            to_date = None
-
-    leads_qs = crm_queryset(ClientLead.objects.all())
-    if selected_employee:
-        leads_qs = leads_qs.filter(employee=selected_employee)
-    leads_qs = crm_apply_date_filter(leads_qs, selected_period, from_date, to_date)
-    leads = leads_qs.order_by('-crm_created_at_value', '-id')
-    summary = crm_build_summary(leads_qs)
-
-    query_params = {
-        'employee': selected_employee_id,
-        'period': selected_period,
-        'from_date': from_date_raw,
-        'to_date': to_date_raw,
-    }
-    query_params = {key: value for key, value in query_params.items() if value}
+    leads = crm_queryset(ClientLead.objects.all()).order_by('-crm_created_at_value', '-id')
 
     if request.method == 'POST':
         lead_id = request.POST.get('lead_id')
-        if lead_id:
-            lead = get_object_or_404(ClientLead, id=lead_id)
-            lead.promoter_name = request.POST.get('promoter_name')
-            lead.contact_number = request.POST.get('contact_number')
-            lead.type = (request.POST.get('type') or 'lead').strip().lower()
-            if lead.type not in ('lead', 'sale'):
-                lead.type = 'lead'
-            lead.city = request.POST.get('city')
-            lead.venue = request.POST.get('venue')
-            follow_up_date_raw = request.POST.get('follow_up_date') or None
-            lead.follow_up_date = None
-            if follow_up_date_raw:
-                try:
-                    lead.follow_up_date = datetime.strptime(follow_up_date_raw, '%Y-%m-%d').date()
-                except ValueError:
-                    lead.follow_up_date = None
-            lead.conversion_event_date = parse_date_field(request.POST.get('conversion_event_date'))
-            lead.conversion_deal_amount = parse_decimal_field(request.POST.get('conversion_deal_amount'))
-            conversion_artist_id = request.POST.get('conversion_artist') or None
-            lead.conversion_artist = Artist.objects.filter(id=conversion_artist_id).first() if conversion_artist_id else None
-            lead.notes = request.POST.get('notes')
-            submitted_status = request.POST.get('status', 'Follow-up Needed')
-            lead.status = submitted_status
+        promoter_name = request.POST.get('promoter_name')
+        contact_number = request.POST.get('contact_number')
+        lead_type = (request.POST.get('type') or 'lead').strip().lower()
+        if lead_type not in ('lead', 'sale'):
+            lead_type = 'lead'
+        city = request.POST.get('city')
+        venue = request.POST.get('venue')
+        event_date = parse_date_field(request.POST.get('event_date'))
+        follow_up_date = parse_date_field(request.POST.get('follow_up_date'))
+        conversion_event_date = None
+        conversion_deal_amount = parse_decimal_field(request.POST.get('conversion_deal_amount'))
+        conversion_artist_id = request.POST.get('conversion_artist') or None
+        conversion_artist = Artist.objects.filter(id=conversion_artist_id).first() if conversion_artist_id else None
+        notes = request.POST.get('notes')
+        submitted_status = request.POST.get('status', 'Follow-up Needed')
+        is_converted_submission = submitted_status == CONVERTED_INPUT_STATUS
+        status = submitted_status
 
-            if lead.status == 'Follow-up Needed' and not lead.follow_up_date:
-                messages.error(request, 'Follow-up date is required when status is Follow-up Needed.')
-                return redirect(reverse('admin_crm'))
+        if status == 'Follow-up Needed' and not follow_up_date:
+            messages.error(request, 'Follow-up date is required when status is Follow-up Needed.')
+            return redirect('admin_crm')
 
-            if submitted_status == CONVERTED_INPUT_STATUS:
-                if not lead.conversion_event_date or lead.conversion_deal_amount is None or lead.conversion_deal_amount < 0 or not lead.conversion_artist:
-                    messages.error(request, 'Event date, deal amount, and artist are required when status is Converted.')
-                    return redirect(reverse('admin_crm'))
-                lead.follow_up_date = None
-                lead.status = CONVERTED_BOOKED_STATUS if lead.conversion_booking_id else CONVERTED_PENDING_STATUS
+        if is_converted_submission:
+            if conversion_deal_amount is None or conversion_deal_amount < 0 or not conversion_artist:
+                messages.error(request, 'Deal amount and artist are required when status is Converted.')
+                return redirect('admin_crm')
+            follow_up_date = None
+            status = CONVERTED_PENDING_STATUS
+        else:
+            conversion_event_date = None
+            conversion_deal_amount = None
+            conversion_artist = None
+
+        try:
+            should_redirect_to_booking = False
+            old_lead = None
+            if lead_id:
+                lead = get_object_or_404(ClientLead, id=lead_id)
+                old_lead = ClientLead.objects.get(id=lead.id)
+                if is_converted_submission and lead.conversion_booking_id:
+                    status = CONVERTED_BOOKED_STATUS
+                    conversion_event_date = lead.conversion_event_date
             else:
-                lead.conversion_event_date = None
-                lead.conversion_deal_amount = None
-                lead.conversion_artist = None
-
+                lead = ClientLead(created_by_admin=True, created_by=request.user)
+            lead.promoter_name = promoter_name
+            lead.contact_number = contact_number
+            lead.type = lead_type
+            lead.city = city
+            lead.venue = venue
+            lead.event_date = event_date
+            lead.follow_up_date = follow_up_date
+            lead.conversion_event_date = conversion_event_date
+            lead.conversion_deal_amount = conversion_deal_amount
+            lead.conversion_artist = conversion_artist
+            lead.notes = notes
+            lead.status = status
             lead.save()
-            messages.success(request, 'Lead/Sale updated successfully.')
+            should_redirect_to_booking = is_converted_submission and not lead.conversion_booking_id
+            messages.success(
+                request,
+                'Lead/Sale saved. Complete the booking details to finish the conversion.'
+                if should_redirect_to_booking else
+                ('Lead/Sale updated successfully.' if lead_id else 'Lead/Sale added successfully.')
+            )
+            if old_lead:
+                for action in lead_activity_changes(old_lead, lead, 'Admin'):
+                    log_activity(action, request=request, role='admin', related_record=lead.promoter_name)
             log_activity(
-                f"Admin updated Lead/Sale: {lead.promoter_name}",
+                f"Admin {'updated' if lead_id else 'added'} {'Sale' if lead_type == 'sale' else 'Lead'}: {lead.promoter_name}",
                 request=request,
                 role='admin',
                 related_record=lead.promoter_name,
             )
-        else:
-            messages.error(request, 'Please use the edit action to update a record.')
+            if should_redirect_to_booking:
+                redirect_url = reverse('add_booking')
+                query_params = {
+                    'crm_lead': lead.id,
+                    'source': 'admin_crm',
+                }
+                return redirect(f"{redirect_url}?{urlencode(query_params)}")
+            return redirect('admin_crm')
+        except Exception as e:
+            messages.error(request, f'Error saving lead: {str(e)}')
 
-        redirect_url = reverse('admin_crm')
-        if query_params:
-            redirect_url = f"{redirect_url}?{urlencode(query_params)}"
-        return redirect(redirect_url)
+    today = timezone.localdate()
+    week_start = today - timedelta(days=today.weekday())
+    month_start = today.replace(day=1)
+
+    base_qs = ClientLead.objects.all()
+    summary = base_qs.aggregate(
+        today_leads=Count('id', filter=Q(created_at__date=today, type='lead')),
+        today_sales=Count('id', filter=Q(created_at__date=today, type='sale')),
+        week_leads=Count('id', filter=Q(created_at__date__gte=week_start, type='lead')),
+        week_sales=Count('id', filter=Q(created_at__date__gte=week_start, type='sale')),
+        month_leads=Count('id', filter=Q(created_at__date__gte=month_start, type='lead')),
+    )
+
+    conversion_payload = [
+        {
+            'type': lead.type,
+            'date': lead.crm_updated_at.strftime('%Y-%m-%d') if lead.crm_updated_at else '',
+            'amount': float(lead.conversion_deal_amount or 0),
+        }
+        for lead in leads
+        if lead.status == CONVERTED_BOOKED_STATUS
+    ]
 
     return render(request, 'bookings/admin_crm.html', {
         'leads': leads,
         'summary': summary,
-        'employees': employees,
         'artists': artists,
-        'selected_employee_id': selected_employee_id,
-        'selected_employee': selected_employee,
-        'selected_period': selected_period,
-        'from_date': from_date_raw,
-        'to_date': to_date_raw,
+        'conversion_payload': conversion_payload,
     })
 
 
@@ -2048,8 +2067,9 @@ def employee_crm_view(request):
             lead_type = 'lead'
         city = request.POST.get('city')
         venue = request.POST.get('venue')
+        event_date = parse_date_field(request.POST.get('event_date'))
         follow_up_date = parse_date_field(request.POST.get('follow_up_date'))
-        conversion_event_date = parse_date_field(request.POST.get('conversion_event_date'))
+        conversion_event_date = None
         conversion_deal_amount = parse_decimal_field(request.POST.get('conversion_deal_amount'))
         conversion_artist_id = request.POST.get('conversion_artist') or None
         conversion_artist = None
@@ -2065,8 +2085,8 @@ def employee_crm_view(request):
             return redirect('employee_crm')
 
         if is_converted_submission:
-            if not conversion_event_date or conversion_deal_amount is None or conversion_deal_amount < 0 or not conversion_artist:
-                messages.error(request, 'Event date, deal amount, and artist are required when status is Converted.')
+            if conversion_deal_amount is None or conversion_deal_amount < 0 or not conversion_artist:
+                messages.error(request, 'Deal amount and artist are required when status is Converted.')
                 return redirect('employee_crm')
             follow_up_date = None
             status = CONVERTED_PENDING_STATUS
@@ -2082,11 +2102,13 @@ def employee_crm_view(request):
                 old_lead = ClientLead.objects.get(id=lead.id, employee=employee)
                 if is_converted_submission and lead.conversion_booking_id:
                     status = CONVERTED_BOOKED_STATUS
+                    conversion_event_date = lead.conversion_event_date
                 lead.promoter_name = promoter_name
                 lead.contact_number = contact_number
                 lead.type = lead_type
                 lead.city = city
                 lead.venue = venue
+                lead.event_date = event_date
                 lead.follow_up_date = follow_up_date
                 lead.conversion_event_date = conversion_event_date
                 lead.conversion_deal_amount = conversion_deal_amount
@@ -2112,11 +2134,13 @@ def employee_crm_view(request):
             else:
                 lead = ClientLead.objects.create(
                     employee=employee,
+                    created_by=request.user,
                     promoter_name=promoter_name,
                     contact_number=contact_number,
                     type=lead_type,
                     city=city,
                     venue=venue,
+                    event_date=event_date,
                     follow_up_date=follow_up_date,
                     conversion_event_date=conversion_event_date,
                     conversion_deal_amount=conversion_deal_amount,
@@ -2175,8 +2199,8 @@ def employee_crm_view(request):
             'contact_number': lead.contact_number or '',
             'city': lead.city or '',
             'venue': lead.venue or '',
+            'event_date': lead.event_date.isoformat() if lead.event_date else '',
             'follow_up_date': lead.follow_up_date.isoformat() if lead.follow_up_date else '',
-            'conversion_event_date': lead.conversion_event_date.isoformat() if lead.conversion_event_date else '',
             'conversion_deal_amount': str(lead.conversion_deal_amount) if lead.conversion_deal_amount is not None else '',
             'conversion_artist': lead.conversion_artist_id or '',
             'notes': lead.notes or '',

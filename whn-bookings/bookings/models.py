@@ -61,12 +61,15 @@ class ClientLead(models.Model):
         ('Converted - Booking Created', 'Converted - Booking Created'),
         ('Not Interested', 'Not Interested'),
     ]
-    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='leads')
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='leads', blank=True, null=True)
+    created_by_admin = models.BooleanField(default=False)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, blank=True, null=True, related_name='crm_entries_created')
     type = models.CharField(max_length=10, choices=TYPE_CHOICES, default='lead')
     promoter_name = models.CharField(max_length=150)
     city = models.CharField(max_length=100)
     venue = models.CharField(max_length=200)
     contact_number = models.CharField(max_length=20)
+    event_date = models.DateField(blank=True, null=True)
     notes = models.TextField(blank=True, null=True)
     status = models.CharField(max_length=30, choices=STATUS_CHOICES, default='Follow-up Needed')
     follow_up_date = models.DateField(blank=True, null=True)
@@ -106,6 +109,12 @@ class ClientLead(models.Model):
         created_at = self.crm_created_at
         updated_at = self.crm_updated_at
         return bool(created_at and updated_at and updated_at != created_at)
+
+    @property
+    def creator_label(self):
+        if self.employee:
+            return self.employee.name
+        return "Admin"
 
 
 class EmployeeLeadActivity(models.Model):
