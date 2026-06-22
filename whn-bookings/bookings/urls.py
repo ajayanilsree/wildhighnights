@@ -37,6 +37,7 @@ urlpatterns = [
     path('dashboard/crm/', views.admin_crm_view, name='admin_crm'),
     path('dashboard/crm/calendar/', views.admin_crm_calendar_view, name='admin_crm_calendar'),
     path('dashboard/crm/conversions/', views.admin_crm_conversion_view, name='admin_crm_conversion'),
+    path('dashboard/crm/<int:lead_id>/delete/', views.admin_crm_delete_view, name='admin_crm_delete'),
     
     # Employee Portal Routes
     path('employee/dashboard/', views.employee_dashboard_view, name='employee_dashboard'),

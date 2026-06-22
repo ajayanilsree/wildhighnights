@@ -171,10 +171,6 @@ def crm_calendar_queryset_for_user(user):
     return qs.none()
 
 
-def crm_calendar_event_time(lead):
-    return '7 PM' if lead.type == 'sale' else '1 PM'
-
-
 def crm_calendar_border_color(status):
     if status in CONVERTED_STATUSES:
         return '#22c55e'
@@ -207,7 +203,6 @@ def serialize_crm_calendar_event(lead, user):
             'eventDate': lead.event_date.isoformat(),
             'notes': lead.notes or '',
             'createdBy': creator,
-            'displayTime': crm_calendar_event_time(lead),
             'canEdit': can_edit,
         }
     }
@@ -2083,6 +2078,25 @@ def admin_crm_view(request):
         'artists': artists,
         'conversion_payload': conversion_payload,
     })
+
+
+@login_required(login_url='login')
+@require_POST
+def admin_crm_delete_view(request, lead_id):
+    if not is_admin_user(request.user):
+        messages.error(request, "Access Denied: Administrative privileges required.")
+        return redirect('login')
+    lead = get_object_or_404(ClientLead, id=lead_id)
+    record_name = lead.promoter_name
+    lead.delete()
+    messages.success(request, f'Lead/Sale deleted: {record_name}')
+    log_activity(
+        f"Admin deleted Lead/Sale: {record_name}",
+        request=request,
+        role='admin',
+        related_record=record_name,
+    )
+    return redirect('admin_crm')
 
 
 @login_required(login_url='login')

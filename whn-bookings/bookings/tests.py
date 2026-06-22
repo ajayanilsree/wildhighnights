@@ -2,7 +2,7 @@ from django.test import TestCase, Client
 from django.urls import reverse
 from django.contrib.auth.models import User
 from decimal import Decimal
-from datetime import date
+from datetime import date, timedelta
 from bookings.models import Artist, Booking, BookingExpense, ClientLead, Employee
 
 class AdminAccountsTest(TestCase):
@@ -187,6 +187,17 @@ class CrmSyncAndCalendarTest(TestCase):
             status='Follow-up Needed',
             follow_up_date=date(2026, 7, 2),
         )
+        past_lead = ClientLead.objects.create(
+            created_by_admin=True,
+            created_by=self.admin_user,
+            type='lead',
+            promoter_name='Past Event Lead',
+            city='Pune',
+            venue='Past Venue',
+            contact_number='5555555555',
+            event_date=date.today() - timedelta(days=120),
+            status='Converted - Pending Booking',
+        )
         employee_sale = ClientLead.objects.create(
             employee=self.employee,
             created_by=self.employee_user,
@@ -245,8 +256,34 @@ class CrmSyncAndCalendarTest(TestCase):
         employee_titles = [item['extendedProps']['promoterName'] for item in employee_payload]
 
         self.assertIn(admin_lead.promoter_name, admin_titles)
+        self.assertIn(past_lead.promoter_name, admin_titles)
         self.assertIn(employee_sale.promoter_name, admin_titles)
         self.assertIn(other_employee_lead.promoter_name, admin_titles)
         self.assertNotIn(booked_lead.promoter_name, admin_titles)
         self.assertEqual(employee_titles, [employee_sale.promoter_name])
         self.assertNotIn('crm_entries', artist_payload)
+        self.assertNotIn('displayTime', admin_payload[0]['extendedProps'])
+
+    def test_admin_can_delete_crm_entry_and_employee_cannot(self):
+        admin_lead = ClientLead.objects.create(
+            created_by_admin=True,
+            created_by=self.admin_user,
+            type='lead',
+            promoter_name='Delete Me',
+            city='Mumbai',
+            venue='Delete Venue',
+            contact_number='9999999999',
+            event_date=date(2026, 8, 1),
+            status='Follow-up Needed',
+        )
+
+        self.client.login(username='employee', password='employeepassword')
+        employee_response = self.client.post(reverse('admin_crm_delete', args=[admin_lead.id]))
+        self.assertEqual(employee_response.status_code, 302)
+        self.assertTrue(ClientLead.objects.filter(id=admin_lead.id).exists())
+        self.client.logout()
+
+        self.client.login(username='admin', password='adminpassword')
+        admin_response = self.client.post(reverse('admin_crm_delete', args=[admin_lead.id]))
+        self.assertEqual(admin_response.status_code, 302)
+        self.assertFalse(ClientLead.objects.filter(id=admin_lead.id).exists())

@@ -175,14 +175,12 @@
     }
     .crm-event-badge {
         display: flex;
-        flex-direction: column;
-        gap: 1px;
+        align-items: center;
         min-width: 0;
         padding: 3px 5px;
         line-height: 1.15;
     }
-    .crm-event-badge strong,
-    .crm-event-badge span {
+    .crm-event-badge strong {
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
@@ -192,11 +190,6 @@
         font-weight: 900;
         letter-spacing: 0.08em;
         text-transform: uppercase;
-    }
-    .crm-event-badge span {
-        font-size: 9px;
-        font-weight: 800;
-        color: rgba(255,255,255,0.82);
     }
     @media (max-width: 640px) {
         .crm-calendar-shell .fc-header-toolbar {
@@ -219,8 +212,7 @@
         .crm-event-badge {
             padding: 2px 4px;
         }
-        .crm-event-badge strong,
-        .crm-event-badge span {
+        .crm-event-badge strong {
             font-size: 8px;
         }
     }
@@ -461,7 +453,6 @@
                     html: `
                         <div class="crm-event-badge">
                             <strong>${escapeHtml(info.event.title)}</strong>
-                            <span>${escapeHtml(props.displayTime || '')}</span>
                         </div>
                     `
                 };

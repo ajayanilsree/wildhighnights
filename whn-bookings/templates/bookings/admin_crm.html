@@ -180,24 +180,32 @@
                                 <span class="text-xs font-bold text-white">{{ lead.creator_label }}</span>
                             </td>
                             <td class="py-6 text-right">
-                                <button
-                                    type="button"
-                                    class="edit-lead-btn px-6 py-2 rounded-full border border-whn-purple/30 text-whn-purple text-[10px] font-bold hover:bg-whn-purple hover:text-white hover:border-whn-purple transition-all uppercase tracking-widest"
-                                    data-lead-id="{{ lead.id }}"
-                                    data-type="{{ lead.type }}"
-                                    data-promoter-name="{{ lead.promoter_name|escapejs }}"
-                                    data-contact-number="{{ lead.contact_number|default_if_none:''|escapejs }}"
-                                    data-city="{{ lead.city|default_if_none:''|escapejs }}"
-                                    data-venue="{{ lead.venue|default_if_none:''|escapejs }}"
-                                    data-event-date="{{ lead.event_date|date:'Y-m-d' }}"
-                                    data-follow-up-date="{{ lead.follow_up_date|date:'Y-m-d' }}"
-                                    data-conversion-deal-amount="{{ lead.conversion_deal_amount|default_if_none:'' }}"
-                                    data-conversion-artist="{{ lead.conversion_artist_id|default_if_none:'' }}"
-                                    data-notes="{{ lead.notes|default_if_none:''|escapejs }}"
-                                    data-status="{{ lead.status|escapejs }}"
-                                >
-                                    Edit
-                                </button>
+                                <div class="flex items-center justify-end gap-3">
+                                    <button
+                                        type="button"
+                                        class="edit-lead-btn px-6 py-2 rounded-full border border-whn-purple/30 text-whn-purple text-[10px] font-bold hover:bg-whn-purple hover:text-white hover:border-whn-purple transition-all uppercase tracking-widest"
+                                        data-lead-id="{{ lead.id }}"
+                                        data-type="{{ lead.type }}"
+                                        data-promoter-name="{{ lead.promoter_name|escapejs }}"
+                                        data-contact-number="{{ lead.contact_number|default_if_none:''|escapejs }}"
+                                        data-city="{{ lead.city|default_if_none:''|escapejs }}"
+                                        data-venue="{{ lead.venue|default_if_none:''|escapejs }}"
+                                        data-event-date="{{ lead.event_date|date:'Y-m-d' }}"
+                                        data-follow-up-date="{{ lead.follow_up_date|date:'Y-m-d' }}"
+                                        data-conversion-deal-amount="{{ lead.conversion_deal_amount|default_if_none:'' }}"
+                                        data-conversion-artist="{{ lead.conversion_artist_id|default_if_none:'' }}"
+                                        data-notes="{{ lead.notes|default_if_none:''|escapejs }}"
+                                        data-status="{{ lead.status|escapejs }}"
+                                    >
+                                        Edit
+                                    </button>
+                                    <form method="POST" action="{% url 'admin_crm_delete' lead.id %}" onsubmit="return confirm('Delete this Lead/Sale entry? This cannot be undone.');">
+                                        {% csrf_token %}
+                                        <button type="submit" class="px-6 py-2 rounded-full border border-red-500/30 text-red-400 text-[10px] font-bold hover:bg-red-500 hover:text-white hover:border-red-500 transition-all uppercase tracking-widest">
+                                            Delete
+                                        </button>
+                                    </form>
+                                </div>
                             </td>
                         </tr>
                         {% empty %}
