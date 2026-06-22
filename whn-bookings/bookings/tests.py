@@ -3,7 +3,7 @@ from django.urls import reverse
 from django.contrib.auth.models import User
 from decimal import Decimal
 from datetime import date
-from bookings.models import Artist, Booking, BookingExpense
+from bookings.models import Artist, Booking, BookingExpense, ClientLead, Employee
 
 class AdminAccountsTest(TestCase):
     def setUp(self):
@@ -128,6 +128,85 @@ class AdminAccountsTest(TestCase):
         self.assertEqual(response.context['total_whn_earnings'], Decimal('150.00'))
         self.assertEqual(response.context['total_whn_expenses'], Decimal('50.00'))
         self.assertEqual(response.context['net_whn_profit'], Decimal('100.00'))
-        self.assertEqual(response.context['whn_ledger'][0]['artist_share'], Decimal('750.00'))
+        self.assertEqual(response.context['whn_ledger'][0]['artist_share'], Decimal('850.00'))
         self.assertEqual(response.context['whn_ledger'][0]['whn_share'], Decimal('150.00'))
         self.assertEqual(response.context['whn_ledger'][0]['owner_profit'], Decimal('100.00'))
+
+
+class CrmSyncAndCalendarTest(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.admin_user = User.objects.create_superuser(username='admin', password='adminpassword')
+        self.employee_user = User.objects.create_user(username='employee', password='employeepassword')
+        self.employee = Employee.objects.create(
+            user=self.employee_user,
+            name='Employee One',
+            email='employee@example.com',
+            is_active=True,
+        )
+        self.artist = Artist.objects.create(name='Calendar Artist')
+
+    def test_admin_created_leads_are_visible_in_employee_crm(self):
+        lead = ClientLead.objects.create(
+            created_by_admin=True,
+            created_by=self.admin_user,
+            type='lead',
+            promoter_name='Admin Lead',
+            city='Mumbai',
+            venue='Club Admin',
+            contact_number='1234567890',
+            event_date=date(2026, 7, 10),
+            status='Follow-up Needed',
+            follow_up_date=date(2026, 7, 1),
+        )
+
+        self.client.login(username='employee', password='employeepassword')
+        response = self.client.get(reverse('employee_crm'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(lead, list(response.context['leads']))
+
+    def test_calendar_payload_shows_open_crm_and_hides_booked_conversion(self):
+        open_lead = ClientLead.objects.create(
+            created_by_admin=True,
+            created_by=self.admin_user,
+            type='lead',
+            promoter_name='Open Lead',
+            city='Pune',
+            venue='Open Venue',
+            contact_number='1111111111',
+            event_date=date(2026, 7, 11),
+            conversion_artist=self.artist,
+            status='Follow-up Needed',
+            follow_up_date=date(2026, 7, 2),
+        )
+        booking = Booking.objects.create(
+            artist=self.artist,
+            venue='Booked Venue',
+            location='Goa',
+            date=date(2026, 7, 12),
+            booking_type='Lead',
+            deal_amount=Decimal('1000.00'),
+            status='Confirmed',
+        )
+        ClientLead.objects.create(
+            created_by_admin=True,
+            created_by=self.admin_user,
+            type='sale',
+            promoter_name='Booked Lead',
+            city='Goa',
+            venue='Booked Venue',
+            contact_number='2222222222',
+            event_date=date(2026, 7, 12),
+            conversion_artist=self.artist,
+            conversion_booking=booking,
+            status='Converted - Booking Created',
+        )
+
+        self.client.login(username='admin', password='adminpassword')
+        response = self.client.get(reverse('api_artist_calendar_events'), {'artist_id': self.artist.id})
+        payload = response.json()
+        crm_titles = [item['title'] for item in payload['crm_entries']]
+
+        self.assertIn(open_lead.promoter_name, crm_titles)
+        self.assertNotIn('Booked Lead', crm_titles)

@@ -105,6 +105,12 @@
                         <button type="button" class="crm-filter-btn px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border border-white/10 bg-white/[0.03] text-white" data-filter="month">This Month</button>
                         <button type="button" class="crm-filter-btn px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border border-white/10 bg-white/[0.03] text-white" data-filter="custom">Custom Date Range</button>
                     </div>
+                    <div class="flex flex-wrap gap-2">
+                        <button type="button" class="crm-status-filter-btn px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border border-white/10 bg-white/[0.03] text-white" data-status-filter="all">All</button>
+                        <button type="button" class="crm-status-filter-btn px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border border-white/10 bg-white/[0.03] text-white" data-status-filter="follow-up">Follow-up Needed</button>
+                        <button type="button" class="crm-status-filter-btn px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border border-white/10 bg-white/[0.03] text-white" data-status-filter="converted">Converted</button>
+                        <button type="button" class="crm-status-filter-btn px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border border-white/10 bg-white/[0.03] text-white" data-status-filter="not-interested">Not Interested</button>
+                    </div>
 
                     <div id="customDateRange" class="hidden flex flex-col md:flex-row gap-3">
                         <div class="flex items-center gap-2">
@@ -130,12 +136,13 @@
                             <th class="pb-6 text-[10px] font-black text-whn-tertiary uppercase tracking-widest">Client Details</th>
                             <th class="pb-6 text-[10px] font-black text-whn-tertiary uppercase tracking-widest">Event Info</th>
                             <th class="pb-6 text-[10px] font-black text-whn-tertiary uppercase tracking-widest">Type & Status</th>
+                            <th class="pb-6 text-[10px] font-black text-whn-tertiary uppercase tracking-widest">Created By</th>
                             <th class="pb-6 text-[10px] font-black text-whn-tertiary uppercase tracking-widest text-right">Actions</th>
                         </tr>
                     </thead>
                     <tbody id="crmTableBody" class="divide-y divide-white/5">
                         {% for lead in leads %}
-                        <tr class="group hover:bg-white/[0.02] transition-colors crm-row" data-created-date="{{ lead.crm_created_at|date:'Y-m-d' }}">
+                        <tr class="group hover:bg-white/[0.02] transition-colors crm-row" data-created-date="{{ lead.crm_created_at|date:'Y-m-d' }}" data-status="{{ lead.status }}">
                             <td class="py-6">
                                 {% with created_ts=lead.crm_created_at updated_ts=lead.crm_updated_at %}
                                 {% if lead.crm_was_edited %}
@@ -174,6 +181,9 @@
                                     <span class="text-[10px] font-bold uppercase tracking-widest text-white/50">{{ lead.status }}</span>
                                 </div>
                             </td>
+                            <td class="py-6">
+                                <span class="text-xs font-bold text-white">{{ lead.creator_label }}</span>
+                            </td>
                             <td class="py-6 text-right">
                                 <div class="flex items-center justify-end gap-3">
                                     <button
@@ -199,11 +209,11 @@
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="5" class="py-20 text-center text-whn-tertiary text-sm italic">You haven't added any leads or sales yet.</td>
+                            <td colspan="6" class="py-20 text-center text-whn-tertiary text-sm italic">No leads or sales have been added yet.</td>
                         </tr>
                         {% endfor %}
                         <tr id="crmNoResultsRow" class="hidden">
-                            <td colspan="5" class="py-20 text-center text-whn-tertiary text-sm italic">No entries match the selected date filter.</td>
+                            <td colspan="6" class="py-20 text-center text-whn-tertiary text-sm italic">No entries match the selected filters.</td>
                         </tr>
                     </tbody>
                 </table>
@@ -348,6 +358,7 @@
     const customDateRange = document.getElementById('customDateRange');
     const fromDateInput = document.getElementById('fromDate');
     const toDateInput = document.getElementById('toDate');
+    const statusFilterButtons = Array.from(document.querySelectorAll('.crm-status-filter-btn'));
     const crmRows = Array.from(document.querySelectorAll('.crm-row'));
     const crmNoResultsRow = document.getElementById('crmNoResultsRow');
     const conversionTrackingBtn = document.getElementById('conversionTrackingBtn');
@@ -362,6 +373,7 @@
     const conversionSaleValue = document.getElementById('conversionSaleValue');
     const conversionData = JSON.parse(document.getElementById('conversion-tracking-data').textContent || '[]');
     let activeFilter = 'all';
+    let activeStatusFilter = 'all';
     let activeConversionFilter = 'today';
 
     function pad(n) {
@@ -401,6 +413,19 @@
         applyFilter();
     }
 
+    function setActiveStatusFilter(filter) {
+        activeStatusFilter = filter;
+        statusFilterButtons.forEach((btn) => {
+            const isActive = btn.dataset.statusFilter === filter;
+            btn.classList.toggle('bg-whn-purple', isActive);
+            btn.classList.toggle('border-whn-purple', isActive);
+            btn.classList.toggle('text-white', isActive);
+            btn.classList.toggle('bg-white/[0.03]', !isActive);
+            btn.classList.toggle('text-whn-tertiary', !isActive);
+        });
+        applyFilter();
+    }
+
     function currentRange() {
         const today = new Date();
         const todayStr = localDateStr(today);
@@ -430,9 +455,16 @@
 
         crmRows.forEach((row) => {
             const rowDate = row.dataset.createdDate || '';
-            const matches = !from && !to
+            const rowStatus = row.dataset.status || '';
+            const matchesDate = !from && !to
                 ? true
                 : rowDate >= from && rowDate <= to;
+            const matchesStatus =
+                activeStatusFilter === 'all' ||
+                (activeStatusFilter === 'follow-up' && rowStatus === 'Follow-up Needed') ||
+                (activeStatusFilter === 'converted' && rowStatus.startsWith('Converted')) ||
+                (activeStatusFilter === 'not-interested' && rowStatus === 'Not Interested');
+            const matches = matchesDate && matchesStatus;
             row.classList.toggle('hidden', !matches);
             if (matches) visibleCount += 1;
         });
@@ -447,6 +479,11 @@
             setActiveFilter(btn.dataset.filter || 'all');
         });
     });
+    statusFilterButtons.forEach((btn) => {
+        btn.addEventListener('click', () => {
+            setActiveStatusFilter(btn.dataset.statusFilter || 'all');
+        });
+    });
 
     fromDateInput.addEventListener('change', () => {
         if (activeFilter !== 'custom') setActiveFilter('custom');
@@ -459,6 +496,7 @@
     });
 
     setActiveFilter('all');
+    setActiveStatusFilter('all');
 
     function formatCurrency(value) {
         const rounded = Math.round((Number(value) || 0) * 100) / 100;

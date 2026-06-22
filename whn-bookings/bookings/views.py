@@ -73,7 +73,7 @@ def build_artist_calendar_payload(artist):
             'total_amount': float(total_amount.quantize(Decimal('0.01'))),
             'split_percentage': financials['pct_str'],
             'artist_commission': float(financials['artist_commission'].quantize(Decimal('0.01'))),
-            'artist_share': float(financials['artist_net'].quantize(Decimal('0.01'))),
+            'artist_share': float(financials['artist_commission'].quantize(Decimal('0.01'))),
             'net_amount': float(financials['artist_net'].quantize(Decimal('0.01'))),
             'owner_profit': float(financials['owner_profit'].quantize(Decimal('0.01'))),
             'artist_expenses': float(financials['artist_expenses'].quantize(Decimal('0.01'))),
@@ -103,6 +103,7 @@ def build_artist_calendar_payload(artist):
     return {
         'bookings': bookings_data,
         'busy_dates': busy_data,
+        'crm_entries': build_calendar_crm_payload(artist),
     }
 
 
@@ -111,6 +112,42 @@ def crm_queryset(base_qs):
         crm_created_at_value=Coalesce('created_at', 'created_date', output_field=DateTimeField()),
         crm_updated_at_value=Coalesce('updated_at', 'last_updated', 'created_at', 'created_date', output_field=DateTimeField()),
     )
+
+
+def crm_apply_status_filter(qs, status_filter='all'):
+    if status_filter == 'follow-up':
+        return qs.filter(status='Follow-up Needed')
+    if status_filter == 'converted':
+        return qs.filter(status__in=CONVERTED_STATUSES)
+    if status_filter == 'not-interested':
+        return qs.filter(status='Not Interested')
+    return qs
+
+
+def build_calendar_crm_payload(artist=None):
+    leads = crm_queryset(
+        ClientLead.objects.filter(event_date__isnull=False)
+        .exclude(status=CONVERTED_BOOKED_STATUS)
+        .exclude(conversion_booking__isnull=False)
+    ).order_by('event_date', 'promoter_name')
+    if artist:
+        leads = leads.filter(Q(conversion_artist=artist) | Q(conversion_artist__isnull=True))
+
+    return [
+        {
+            'id': lead.id,
+            'type': 'crm',
+            'crm_type': lead.type,
+            'date': lead.event_date.strftime('%Y-%m-%d'),
+            'title': lead.promoter_name,
+            'venue': lead.venue,
+            'city': lead.city,
+            'time': '1 PM',
+            'status': lead.status,
+            'creator': crm_creator_label(lead),
+        }
+        for lead in leads
+    ]
 
 
 def booking_split(booking):
@@ -133,7 +170,7 @@ def booking_financials(booking):
         Decimal('0.00')
     )
     whn_expenses = sum(
-        (exp.amount for exp in booking.expenses.all() if exp.borne_by != 'Artist'),
+        (exp.amount for exp in booking.expenses.all() if exp.borne_by == 'WHN'),
         Decimal('0.00')
     )
     return {
@@ -446,9 +483,7 @@ def add_booking_view(request):
     if crm_lead_id:
         crm_qs = ClientLead.objects.select_related('employee', 'employee__user', 'conversion_artist', 'conversion_booking')
         if not (request.user.is_staff or request.user.is_superuser):
-            if hasattr(request.user, 'employee'):
-                crm_qs = crm_qs.filter(employee=request.user.employee)
-            else:
+            if not (hasattr(request.user, 'employee') and request.user.employee.is_active):
                 crm_qs = crm_qs.none()
         crm_lead = get_object_or_404(crm_qs, id=crm_lead_id)
 
@@ -1572,7 +1607,7 @@ def admin_whn_accounts_view(request):
         whn_ledger.append({
             'booking': booking,
             'pct_str': financials['pct_str'],
-            'artist_share': financials['artist_net'].quantize(Decimal('0.01')),
+            'artist_share': financials['artist_commission'].quantize(Decimal('0.01')),
             'artist_commission': financials['artist_commission'].quantize(Decimal('0.01')),
             'whn_share': whn_share.quantize(Decimal('0.01')),
             'whn_expenses': whn_expenses.quantize(Decimal('0.01')),
@@ -2055,7 +2090,7 @@ def employee_bookings_view(request):
 @employee_required
 def employee_crm_view(request):
     employee = request.user.employee
-    leads = crm_queryset(ClientLead.objects.filter(employee=employee)).order_by('-crm_created_at_value', '-id')
+    leads = crm_queryset(ClientLead.objects.all()).order_by('-crm_created_at_value', '-id')
     artists = Artist.objects.all().order_by('name')
     
     if request.method == 'POST':
@@ -2098,8 +2133,8 @@ def employee_crm_view(request):
         try:
             should_redirect_to_booking = False
             if lead_id:
-                lead = get_object_or_404(ClientLead, id=lead_id, employee=employee)
-                old_lead = ClientLead.objects.get(id=lead.id, employee=employee)
+                lead = get_object_or_404(ClientLead, id=lead_id)
+                old_lead = ClientLead.objects.get(id=lead.id)
                 if is_converted_submission and lead.conversion_booking_id:
                     status = CONVERTED_BOOKED_STATUS
                     conversion_event_date = lead.conversion_event_date
@@ -2177,7 +2212,7 @@ def employee_crm_view(request):
     week_start = today - timedelta(days=today.weekday())
     month_start = today.replace(day=1)
 
-    base_qs = ClientLead.objects.filter(employee=employee)
+    base_qs = ClientLead.objects.all()
     summary = base_qs.aggregate(
         today_leads=Count('id', filter=Q(created_at__date=today, type='lead')),
         today_sales=Count('id', filter=Q(created_at__date=today, type='sale')),

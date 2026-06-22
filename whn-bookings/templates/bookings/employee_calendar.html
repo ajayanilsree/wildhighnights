@@ -196,7 +196,7 @@
     const calendarInitialDateParts = /^\d{4}-\d{2}-\d{2}$/.test(calendarInitialDate) ? calendarInitialDate.split('-') : null;
     let currentYear = calendarInitialDateParts ? Number(calendarInitialDateParts[0]) : new Date().getFullYear();
     let currentMonth = calendarInitialDateParts ? Number(calendarInitialDateParts[1]) - 1 : new Date().getMonth(); // 0-indexed
-    let calendarEvents = { bookings: [], busy_dates: [] };
+    let calendarEvents = { bookings: [], busy_dates: [], crm_entries: [] };
     let selectedDate = null;
     
     // DOM selectors
@@ -237,7 +237,7 @@
     async function loadEventsAndRender() {
         const selectedArtistId = artistSelect ? artistSelect.value : '';
         if (!selectedArtistId) {
-            calendarEvents = { bookings: [], busy_dates: [] };
+            calendarEvents = { bookings: [], busy_dates: [], crm_entries: [] };
             renderArtistMonthlyCalendar();
             return;
         }
@@ -249,7 +249,7 @@
             renderArtistMonthlyCalendar();
         } catch (error) {
             console.error('Error loading calendar events:', error);
-            calendarEvents = { bookings: [], busy_dates: [] };
+            calendarEvents = { bookings: [], busy_dates: [], crm_entries: [] };
             renderArtistMonthlyCalendar();
         }
     }
@@ -313,6 +313,7 @@
         // Safely extract arrays or default to empty
         const bookingsList = (calendarEvents && calendarEvents.bookings) || [];
         const busyList = (calendarEvents && calendarEvents.busy_dates) || [];
+        const crmList = (calendarEvents && calendarEvents.crm_entries) || [];
         
         for (let day = 1; day <= totalDaysInMonth; day++) {
             const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
@@ -329,6 +330,7 @@
             // Safe find checks
             const booking = bookingsList.find(b => b.date === dateStr);
             const busy = busyList.find(b => b.date === dateStr);
+            const crmEntriesOnDate = crmList.filter(item => item.date === dateStr);
             
             // Render day number
             let cellContent = `<span class="text-sm font-black text-white/50 block mb-1 text-right">${day}</span>`;
@@ -378,6 +380,14 @@
                         </span>
                     </div>
                 `;
+            }
+            if (crmEntriesOnDate.length) {
+                const crmBadges = crmEntriesOnDate.map(item => `
+                    <span class="text-[8px] font-black text-whn-blue bg-whn-blue/10 px-2 py-1 rounded-lg block truncate max-w-full tracking-widest uppercase">
+                        ${item.title || (item.crm_type === 'sale' ? 'Sale' : 'Lead')} ${item.time || ''}
+                    </span>
+                `).join('');
+                cellContent += `<div class="mt-1 space-y-1">${crmBadges}</div>`;
             }
             
             cell.innerHTML = cellContent;

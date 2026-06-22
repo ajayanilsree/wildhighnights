@@ -248,7 +248,8 @@
         const safePayload = payload && typeof payload === 'object' ? payload : {};
         return {
             bookings: Array.isArray(safePayload.bookings) ? safePayload.bookings : [],
-            busy_dates: Array.isArray(safePayload.busy_dates) ? safePayload.busy_dates : []
+            busy_dates: Array.isArray(safePayload.busy_dates) ? safePayload.busy_dates : [],
+            crm_entries: Array.isArray(safePayload.crm_entries) ? safePayload.crm_entries : []
         };
     }
 
@@ -426,6 +427,7 @@
         
         const bookingsList = (calendarEvents && calendarEvents.bookings) || [];
         const busyList = (calendarEvents && calendarEvents.busy_dates) || [];
+        const crmList = (calendarEvents && calendarEvents.crm_entries) || [];
         
         for (let day = 1; day <= totalDaysInMonth; day++) {
             const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
@@ -443,6 +445,7 @@
             
             const booking = bookingsList.find(b => String(b?.date || '') === dateStr);
             const busy = busyList.find(b => String(b?.date || '') === dateStr);
+            const crmEntriesOnDate = crmList.filter(item => String(item?.date || '') === dateStr);
             
             let cellContent = `<span class="text-sm font-black text-white/50 block mb-1 text-right">${day}</span>`;
             
@@ -479,6 +482,14 @@
                         </span>
                     </div>
                 `;
+            }
+            if (crmEntriesOnDate.length) {
+                const crmBadges = crmEntriesOnDate.map(item => `
+                    <span class="text-[8px] font-black text-whn-blue bg-whn-blue/10 px-2 py-1 rounded-lg block truncate max-w-full tracking-widest uppercase">
+                        ${item.title || (item.crm_type === 'sale' ? 'Sale' : 'Lead')} ${item.time || ''}
+                    </span>
+                `).join('');
+                cellContent += `<div class="mt-1 space-y-1">${crmBadges}</div>`;
             }
             
             cell.innerHTML = cellContent;
