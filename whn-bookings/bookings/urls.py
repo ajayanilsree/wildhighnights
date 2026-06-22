@@ -35,6 +35,7 @@ urlpatterns = [
     path('dashboard/employees/<int:employee_id>/edit/', views.edit_employee_view, name='edit_employee'),
     path('dashboard/employees/<int:employee_id>/delete/', views.delete_employee_view, name='delete_employee'),
     path('dashboard/crm/', views.admin_crm_view, name='admin_crm'),
+    path('dashboard/crm/calendar/', views.admin_crm_calendar_view, name='admin_crm_calendar'),
     path('dashboard/crm/conversions/', views.admin_crm_conversion_view, name='admin_crm_conversion'),
     
     # Employee Portal Routes
@@ -43,6 +44,7 @@ urlpatterns = [
     path('employee/calendar/', views.employee_calendar_view, name='employee_calendar'),
     path('employee/bookings/', views.employee_bookings_view, name='employee_bookings'),
     path('employee/crm/', views.employee_crm_view, name='employee_crm'),
+    path('employee/crm/calendar/', views.employee_crm_calendar_view, name='employee_crm_calendar'),
     # Artist Portal Routes
     path('artist/dashboard/', views.artist_dashboard_view, name='artist_dashboard'),
     path('artist/calendar/', views.artist_calendar_view, name='artist_calendar'),
@@ -51,6 +53,8 @@ urlpatterns = [
     
     path('api/artists/', views.api_artists, name='api_artists'),
     path('api/bookings/', views.api_bookings, name='api_bookings'),
+    path('api/crm/calendar/', views.api_crm_calendar_events, name='api_crm_calendar_events'),
+    path('api/crm/calendar/update/', views.api_crm_calendar_update, name='api_crm_calendar_update'),
     path('api/artist/calendar/', views.api_artist_calendar_events, name='api_artist_calendar_events'),
     path('api/artist/calendar/busy/add/', views.api_add_busy_date, name='api_add_busy_date'),
     path('api/artist/calendar/busy/remove/', views.api_remove_busy_date, name='api_remove_busy_date'),

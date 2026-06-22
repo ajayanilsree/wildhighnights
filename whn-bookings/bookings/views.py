@@ -2,12 +2,14 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from decimal import Decimal
 import calendar
+import json
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.contrib.messages import get_messages
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_POST
+from django.views.decorators.csrf import csrf_protect
 from django.contrib.auth.models import User
 from datetime import datetime, timedelta
 from django.utils import timezone
@@ -103,7 +105,6 @@ def build_artist_calendar_payload(artist):
     return {
         'bookings': bookings_data,
         'busy_dates': busy_data,
-        'crm_entries': build_calendar_crm_payload(artist),
     }
 
 
@@ -112,42 +113,6 @@ def crm_queryset(base_qs):
         crm_created_at_value=Coalesce('created_at', 'created_date', output_field=DateTimeField()),
         crm_updated_at_value=Coalesce('updated_at', 'last_updated', 'created_at', 'created_date', output_field=DateTimeField()),
     )
-
-
-def crm_apply_status_filter(qs, status_filter='all'):
-    if status_filter == 'follow-up':
-        return qs.filter(status='Follow-up Needed')
-    if status_filter == 'converted':
-        return qs.filter(status__in=CONVERTED_STATUSES)
-    if status_filter == 'not-interested':
-        return qs.filter(status='Not Interested')
-    return qs
-
-
-def build_calendar_crm_payload(artist=None):
-    leads = crm_queryset(
-        ClientLead.objects.filter(event_date__isnull=False)
-        .exclude(status=CONVERTED_BOOKED_STATUS)
-        .exclude(conversion_booking__isnull=False)
-    ).order_by('event_date', 'promoter_name')
-    if artist:
-        leads = leads.filter(Q(conversion_artist=artist) | Q(conversion_artist__isnull=True))
-
-    return [
-        {
-            'id': lead.id,
-            'type': 'crm',
-            'crm_type': lead.type,
-            'date': lead.event_date.strftime('%Y-%m-%d'),
-            'title': lead.promoter_name,
-            'venue': lead.venue,
-            'city': lead.city,
-            'time': '1 PM',
-            'status': lead.status,
-            'creator': crm_creator_label(lead),
-        }
-        for lead in leads
-    ]
 
 
 def booking_split(booking):
@@ -188,6 +153,64 @@ def booking_financials(booking):
 
 def normalized_expense_bearer(value):
     return 'Artist' if value == 'Artist' else 'WHN'
+
+
+def is_admin_user(user):
+    return user.is_staff or user.is_superuser
+
+
+def crm_calendar_queryset_for_user(user):
+    qs = crm_queryset(
+        ClientLead.objects.filter(event_date__isnull=False)
+        .exclude(conversion_booking__isnull=False)
+    ).order_by('event_date', 'promoter_name')
+    if is_admin_user(user):
+        return qs
+    if hasattr(user, 'employee') and user.employee.is_active:
+        return qs.filter(created_by=user)
+    return qs.none()
+
+
+def crm_calendar_event_time(lead):
+    return '7 PM' if lead.type == 'sale' else '1 PM'
+
+
+def crm_calendar_border_color(status):
+    if status in CONVERTED_STATUSES:
+        return '#22c55e'
+    if status == 'Not Interested':
+        return '#ef4444'
+    return '#f59e0b'
+
+
+def serialize_crm_calendar_event(lead, user):
+    is_sale = lead.type == 'sale'
+    creator = crm_creator_label(lead)
+    can_edit = is_admin_user(user) or lead.created_by_id == user.id
+    return {
+        'id': str(lead.id),
+        'title': f"{'Sale' if is_sale else 'Lead'} - {lead.promoter_name}",
+        'start': lead.event_date.isoformat(),
+        'allDay': True,
+        'backgroundColor': '#16a34a' if is_sale else '#2563eb',
+        'borderColor': crm_calendar_border_color(lead.status),
+        'textColor': '#ffffff',
+        'extendedProps': {
+            'leadId': lead.id,
+            'promoterName': lead.promoter_name,
+            'contactNumber': lead.contact_number or '',
+            'venue': lead.venue or '',
+            'city': lead.city or '',
+            'type': lead.type,
+            'typeLabel': lead.get_type_display(),
+            'status': lead.status,
+            'eventDate': lead.event_date.isoformat(),
+            'notes': lead.notes or '',
+            'createdBy': creator,
+            'displayTime': crm_calendar_event_time(lead),
+            'canEdit': can_edit,
+        }
+    }
 
 
 def crm_apply_date_filter(qs, period='', from_date=None, to_date=None):
@@ -1847,6 +1870,93 @@ def follow_up_status_view(request):
         'summary': summary,
         'follow_up_rows': follow_up_rows,
         'today': today,
+    })
+
+
+@login_required(login_url='login')
+@ensure_csrf_cookie
+def admin_crm_calendar_view(request):
+    if not is_admin_user(request.user):
+        return redirect('dashboard')
+    return render(request, 'bookings/crm_calendar.html', {
+        'page_role': 'admin',
+        'back_url_name': 'admin_crm',
+        'dashboard_url_name': 'dashboard',
+        'events_url': reverse('api_crm_calendar_events'),
+        'update_url': reverse('api_crm_calendar_update'),
+        'calendar_title': 'CRM Calendar',
+        'calendar_subtitle': 'All leads and sales across WHN.',
+    })
+
+
+@employee_required
+@ensure_csrf_cookie
+def employee_crm_calendar_view(request):
+    return render(request, 'bookings/crm_calendar.html', {
+        'page_role': 'employee',
+        'back_url_name': 'employee_crm',
+        'dashboard_url_name': 'employee_dashboard',
+        'events_url': reverse('api_crm_calendar_events'),
+        'update_url': reverse('api_crm_calendar_update'),
+        'calendar_title': 'CRM Calendar',
+        'calendar_subtitle': 'Your own leads and sales by event date.',
+    })
+
+
+@login_required(login_url='login')
+def api_crm_calendar_events(request):
+    if not (is_admin_user(request.user) or (hasattr(request.user, 'employee') and request.user.employee.is_active)):
+        return JsonResponse({'error': 'Access denied.'}, status=403)
+    events = [
+        serialize_crm_calendar_event(lead, request.user)
+        for lead in crm_calendar_queryset_for_user(request.user)
+    ]
+    return JsonResponse(events, safe=False)
+
+
+@login_required(login_url='login')
+@require_POST
+@csrf_protect
+def api_crm_calendar_update(request):
+    if not (is_admin_user(request.user) or (hasattr(request.user, 'employee') and request.user.employee.is_active)):
+        return JsonResponse({'error': 'Access denied.'}, status=403)
+    try:
+        payload = json.loads(request.body.decode('utf-8') or '{}')
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid request body.'}, status=400)
+
+    lead_id = payload.get('id')
+    lead = get_object_or_404(crm_calendar_queryset_for_user(request.user), id=lead_id)
+    if not (is_admin_user(request.user) or lead.created_by_id == request.user.id):
+        return JsonResponse({'error': 'You can only edit your own CRM entries.'}, status=403)
+
+    lead_type = (payload.get('type') or lead.type).strip().lower()
+    if lead_type not in ('lead', 'sale'):
+        return JsonResponse({'error': 'Invalid CRM type.'}, status=400)
+    status = payload.get('status') or lead.status
+    valid_statuses = {choice[0] for choice in ClientLead.STATUS_CHOICES}
+    if status not in valid_statuses:
+        return JsonResponse({'error': 'Invalid status.'}, status=400)
+    event_date = parse_date_field(payload.get('event_date'))
+    if not event_date:
+        return JsonResponse({'error': 'Event date is required.'}, status=400)
+
+    lead.promoter_name = (payload.get('promoter_name') or '').strip()
+    lead.contact_number = (payload.get('contact_number') or '').strip()
+    lead.venue = (payload.get('venue') or '').strip()
+    lead.city = (payload.get('city') or '').strip()
+    lead.type = lead_type
+    lead.status = status
+    lead.event_date = event_date
+    lead.notes = payload.get('notes') or ''
+    if not all([lead.promoter_name, lead.contact_number, lead.venue, lead.city]):
+        return JsonResponse({'error': 'Promoter, contact, venue, and city are required.'}, status=400)
+    if status != 'Follow-up Needed':
+        lead.follow_up_date = None
+    lead.save()
+    return JsonResponse({
+        'success': True,
+        'event': serialize_crm_calendar_event(lead, request.user),
     })
 
 

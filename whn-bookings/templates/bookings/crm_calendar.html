@@ -1,0 +1,492 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<script src="{% static 'vendor/fullcalendar/index.global.min.js' %}"></script>
+
+<div class="min-h-screen bg-whn-dark pt-32 pb-20 px-6">
+    <div class="container mx-auto">
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-10" data-aos="fade-down">
+            <div>
+                <a href="{% url back_url_name %}" class="text-whn-purple font-bold tracking-[0.3em] uppercase text-[10px] mb-4 flex items-center gap-2 hover:translate-x-[-4px] transition-transform">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                    </svg>
+                    Back to Sales &amp; Leads
+                </a>
+                <h1 class="text-3xl sm:text-5xl md:text-6xl font-black text-white tracking-tighter">{{ calendar_title }}</h1>
+                <p class="text-whn-tertiary mt-2">{{ calendar_subtitle }}</p>
+            </div>
+        </div>
+
+        <div class="glass-card rounded-[2rem] p-4 md:p-5 border border-white/5 shadow-2xl mb-8" data-aos="fade-up">
+            <div class="flex flex-col gap-4">
+                <div class="flex flex-wrap gap-2">
+                    <button type="button" class="calendar-filter-btn px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border border-whn-purple bg-whn-purple text-white" data-group="type" data-value="all">All</button>
+                    <button type="button" class="calendar-filter-btn px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border border-white/10 bg-white/[0.03] text-whn-tertiary" data-group="type" data-value="lead">Lead</button>
+                    <button type="button" class="calendar-filter-btn px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border border-white/10 bg-white/[0.03] text-whn-tertiary" data-group="type" data-value="sale">Sale</button>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                    <button type="button" class="calendar-filter-btn px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border border-whn-purple bg-whn-purple text-white" data-group="status" data-value="all">All Status</button>
+                    <button type="button" class="calendar-filter-btn px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border border-white/10 bg-white/[0.03] text-whn-tertiary" data-group="status" data-value="Follow-up Needed">Follow-up Needed</button>
+                    <button type="button" class="calendar-filter-btn px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border border-white/10 bg-white/[0.03] text-whn-tertiary" data-group="status" data-value="Converted">Converted</button>
+                    <button type="button" class="calendar-filter-btn px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border border-white/10 bg-white/[0.03] text-whn-tertiary" data-group="status" data-value="Not Interested">Not Interested</button>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                    <button type="button" class="calendar-filter-btn px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border border-whn-purple bg-whn-purple text-white" data-group="date" data-value="all">All Dates</button>
+                    <button type="button" class="calendar-filter-btn px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border border-white/10 bg-white/[0.03] text-whn-tertiary" data-group="date" data-value="today">Today</button>
+                    <button type="button" class="calendar-filter-btn px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border border-white/10 bg-white/[0.03] text-whn-tertiary" data-group="date" data-value="week">This Week</button>
+                    <button type="button" class="calendar-filter-btn px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest border border-white/10 bg-white/[0.03] text-whn-tertiary" data-group="date" data-value="month">This Month</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-card rounded-[2rem] border border-white/5 shadow-2xl p-3 sm:p-5 md:p-8" data-aos="fade-up">
+            <div id="crmCalendar" class="crm-calendar-shell"></div>
+        </div>
+    </div>
+</div>
+
+<div id="crmCalendarModal" class="fixed inset-0 z-[160] hidden items-center justify-center p-4 bg-whn-dark/80 backdrop-blur-md opacity-0 transition-opacity duration-300">
+    <div class="absolute inset-0" data-close-modal></div>
+    <div class="glass-card relative z-10 w-full max-w-2xl rounded-[2rem] border border-white/10 p-6 md:p-8 shadow-2xl scale-95 transition-transform duration-300">
+        <div class="flex items-start justify-between gap-4 mb-6">
+            <div>
+                <p id="modalTypeStatus" class="text-[10px] uppercase tracking-[0.3em] text-whn-purple font-black">CRM Entry</p>
+                <h2 id="modalTitle" class="text-3xl font-black text-white tracking-tight mt-2">Lead Details</h2>
+            </div>
+            <button type="button" id="closeCrmModal" class="text-white/60 hover:text-white transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+
+        <div id="modalDetails" class="grid grid-cols-1 sm:grid-cols-2 gap-3"></div>
+
+        <form id="editCrmForm" class="hidden mt-6 space-y-4">
+            <input type="hidden" id="editEntryId">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="text-[10px] font-bold text-whn-tertiary uppercase tracking-[0.2em] block mb-2">Type</label>
+                    <select id="editType" class="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-4 py-3 text-white focus:outline-none focus:border-whn-purple/50">
+                        <option value="lead" class="bg-whn-dark">Lead</option>
+                        <option value="sale" class="bg-whn-dark">Sale</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-whn-tertiary uppercase tracking-[0.2em] block mb-2">Status</label>
+                    <select id="editStatus" class="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-4 py-3 text-white focus:outline-none focus:border-whn-purple/50">
+                        <option value="Follow-up Needed" class="bg-whn-dark">Follow-up Needed</option>
+                        <option value="Converted" class="bg-whn-dark">Converted</option>
+                        <option value="Converted - Pending Booking" class="bg-whn-dark">Converted - Pending Booking</option>
+                        <option value="Converted - Booking Created" class="bg-whn-dark">Converted - Booking Created</option>
+                        <option value="Not Interested" class="bg-whn-dark">Not Interested</option>
+                    </select>
+                </div>
+            </div>
+            <div>
+                <label class="text-[10px] font-bold text-whn-tertiary uppercase tracking-[0.2em] block mb-2">Promoter Name</label>
+                <input id="editPromoterName" type="text" class="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-4 py-3 text-white focus:outline-none focus:border-whn-purple/50">
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="text-[10px] font-bold text-whn-tertiary uppercase tracking-[0.2em] block mb-2">Contact Number</label>
+                    <input id="editContactNumber" type="text" class="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-4 py-3 text-white focus:outline-none focus:border-whn-purple/50">
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-whn-tertiary uppercase tracking-[0.2em] block mb-2">Event Date</label>
+                    <input id="editEventDate" type="date" class="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-4 py-3 text-white focus:outline-none focus:border-whn-purple/50 [color-scheme:dark]">
+                </div>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="text-[10px] font-bold text-whn-tertiary uppercase tracking-[0.2em] block mb-2">Venue</label>
+                    <input id="editVenue" type="text" class="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-4 py-3 text-white focus:outline-none focus:border-whn-purple/50">
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-whn-tertiary uppercase tracking-[0.2em] block mb-2">City</label>
+                    <input id="editCity" type="text" class="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-4 py-3 text-white focus:outline-none focus:border-whn-purple/50">
+                </div>
+            </div>
+            <div>
+                <label class="text-[10px] font-bold text-whn-tertiary uppercase tracking-[0.2em] block mb-2">Notes</label>
+                <textarea id="editNotes" rows="3" class="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-4 py-3 text-white focus:outline-none focus:border-whn-purple/50 resize-none"></textarea>
+            </div>
+            <p id="editError" class="hidden text-red-400 text-xs font-bold"></p>
+        </form>
+
+        <div class="flex flex-col sm:flex-row gap-3 mt-8">
+            <button type="button" id="editCrmBtn" class="hidden flex-1 py-3 rounded-xl border border-whn-purple/40 text-whn-purple text-[10px] font-black uppercase tracking-[0.2em] hover:bg-whn-purple hover:text-white transition-all">Edit</button>
+            <button type="button" id="saveCrmBtn" class="hidden flex-1 py-3 rounded-xl bg-emerald-500 text-white text-[10px] font-black uppercase tracking-[0.2em] hover:scale-[1.02] active:scale-[0.98] transition-all">Save Changes</button>
+            <button type="button" id="cancelEditBtn" class="hidden flex-1 py-3 rounded-xl border border-white/10 text-white text-[10px] font-black uppercase tracking-[0.2em] hover:bg-white/10 transition-all">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<style>
+    .crm-calendar-shell .fc {
+        --fc-page-bg-color: transparent;
+        --fc-border-color: rgba(255,255,255,0.08);
+        --fc-neutral-bg-color: rgba(255,255,255,0.03);
+        --fc-list-event-hover-bg-color: rgba(255,255,255,0.06);
+        color: #fff;
+    }
+    .crm-calendar-shell {
+        min-height: 720px;
+    }
+    .crm-calendar-shell .fc-toolbar-title {
+        color: #fff;
+        font-weight: 900;
+        letter-spacing: -0.02em;
+        font-size: clamp(1.35rem, 4vw, 2.25rem);
+    }
+    .crm-calendar-shell .fc-button {
+        background: rgba(124,58,237,0.18) !important;
+        border: 1px solid rgba(124,58,237,0.35) !important;
+        border-radius: 999px !important;
+        font-size: 10px !important;
+        font-weight: 900 !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.18em !important;
+        padding: 0.55rem 0.85rem !important;
+    }
+    .crm-calendar-shell .fc-daygrid-day,
+    .crm-calendar-shell .fc-scrollgrid,
+    .crm-calendar-shell .fc-theme-standard td,
+    .crm-calendar-shell .fc-theme-standard th {
+        border-color: rgba(255,255,255,0.07);
+    }
+    .crm-calendar-shell .fc-daygrid-day-number,
+    .crm-calendar-shell .fc-col-header-cell-cushion {
+        color: rgba(255,255,255,0.75);
+        font-size: 11px;
+        font-weight: 800;
+        text-transform: uppercase;
+    }
+    .crm-calendar-shell .fc-day-today {
+        background: rgba(124,58,237,0.12) !important;
+    }
+    .crm-calendar-shell .fc-event {
+        border-width: 2px !important;
+        border-radius: 9px !important;
+        box-shadow: 0 10px 24px rgba(0,0,0,0.18);
+        cursor: pointer;
+    }
+    .crm-event-badge {
+        display: flex;
+        flex-direction: column;
+        gap: 1px;
+        min-width: 0;
+        padding: 3px 5px;
+        line-height: 1.15;
+    }
+    .crm-event-badge strong,
+    .crm-event-badge span {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    .crm-event-badge strong {
+        font-size: 9px;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+    .crm-event-badge span {
+        font-size: 9px;
+        font-weight: 800;
+        color: rgba(255,255,255,0.82);
+    }
+    @media (max-width: 640px) {
+        .crm-calendar-shell .fc-header-toolbar {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 0.75rem;
+        }
+        .crm-calendar-shell .fc-toolbar-chunk {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+        }
+        .crm-calendar-shell .fc-daygrid-day-frame {
+            min-height: 86px;
+        }
+        .crm-calendar-shell .fc-daygrid-event {
+            margin: 1px 2px;
+        }
+        .crm-event-badge {
+            padding: 2px 4px;
+        }
+        .crm-event-badge strong,
+        .crm-event-badge span {
+            font-size: 8px;
+        }
+    }
+</style>
+
+<script>
+    const crmCalendarEventsUrl = "{{ events_url|escapejs }}";
+    const crmCalendarUpdateUrl = "{{ update_url|escapejs }}";
+    let crmCalendar = null;
+    let allCrmEvents = [];
+    let activeFilters = { type: 'all', status: 'all', date: 'all' };
+    let currentEvent = null;
+
+    const modal = document.getElementById('crmCalendarModal');
+    const modalCard = modal.querySelector('.glass-card');
+    const modalDetails = document.getElementById('modalDetails');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalTypeStatus = document.getElementById('modalTypeStatus');
+    const editForm = document.getElementById('editCrmForm');
+    const editBtn = document.getElementById('editCrmBtn');
+    const saveBtn = document.getElementById('saveCrmBtn');
+    const cancelEditBtn = document.getElementById('cancelEditBtn');
+    const editError = document.getElementById('editError');
+
+    function getCrmCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(';').shift();
+        return '';
+    }
+
+    function escapeHtml(value) {
+        const div = document.createElement('div');
+        div.textContent = value || '';
+        return div.innerHTML;
+    }
+
+    function localDateStr(date) {
+        return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    }
+
+    function startOfWeek(date) {
+        const d = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+        const offset = (d.getDay() + 6) % 7;
+        d.setDate(d.getDate() - offset);
+        return d;
+    }
+
+    function dateMatchesFilter(dateStr) {
+        if (activeFilters.date === 'all') return true;
+        const today = new Date();
+        const todayStr = localDateStr(today);
+        if (activeFilters.date === 'today') return dateStr === todayStr;
+        if (activeFilters.date === 'week') {
+            const weekStartDate = startOfWeek(today);
+            const weekEndDate = new Date(weekStartDate.getFullYear(), weekStartDate.getMonth(), weekStartDate.getDate() + 6);
+            return dateStr >= localDateStr(weekStartDate) && dateStr <= localDateStr(weekEndDate);
+        }
+        if (activeFilters.date === 'month') {
+            const monthStart = localDateStr(new Date(today.getFullYear(), today.getMonth(), 1));
+            const monthEnd = localDateStr(new Date(today.getFullYear(), today.getMonth() + 1, 0));
+            return dateStr >= monthStart && dateStr <= monthEnd;
+        }
+        return true;
+    }
+
+    function filteredEvents() {
+        return allCrmEvents.filter((event) => {
+            const props = event.extendedProps || {};
+            const typeOk = activeFilters.type === 'all' || props.type === activeFilters.type;
+            const statusOk = activeFilters.status === 'all' ||
+                (activeFilters.status === 'Converted' ? String(props.status || '').startsWith('Converted') : props.status === activeFilters.status);
+            const dateOk = dateMatchesFilter(props.eventDate || event.start || '');
+            return typeOk && statusOk && dateOk;
+        });
+    }
+
+    function refreshCalendarEvents() {
+        crmCalendar.removeAllEvents();
+        crmCalendar.addEventSource(filteredEvents());
+    }
+
+    function setFilter(group, value) {
+        activeFilters[group] = value;
+        document.querySelectorAll(`.calendar-filter-btn[data-group="${group}"]`).forEach((btn) => {
+            const active = btn.dataset.value === value;
+            btn.classList.toggle('bg-whn-purple', active);
+            btn.classList.toggle('border-whn-purple', active);
+            btn.classList.toggle('text-white', active);
+            btn.classList.toggle('bg-white/[0.03]', !active);
+            btn.classList.toggle('border-white/10', !active);
+            btn.classList.toggle('text-whn-tertiary', !active);
+        });
+        refreshCalendarEvents();
+    }
+
+    function detailItem(label, value) {
+        return `
+            <div class="rounded-2xl bg-white/[0.03] border border-white/5 p-4">
+                <span class="text-[9px] text-whn-tertiary uppercase tracking-widest block mb-1">${label}</span>
+                <span class="text-sm font-bold text-white break-words">${escapeHtml(value || 'Not provided')}</span>
+            </div>
+        `;
+    }
+
+    function showModal() {
+        modal.classList.remove('hidden', 'opacity-0');
+        modal.classList.add('flex');
+        setTimeout(() => modalCard.classList.remove('scale-95'), 10);
+    }
+
+    function hideModal() {
+        modal.classList.add('opacity-0');
+        modalCard.classList.add('scale-95');
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            cancelEdit();
+        }, 180);
+    }
+
+    function renderDetails(event) {
+        const props = event.extendedProps || {};
+        modalTitle.textContent = props.promoterName || event.title;
+        modalTypeStatus.textContent = `${props.typeLabel || 'CRM'} · ${props.status || 'No status'}`;
+        modalDetails.innerHTML = [
+            detailItem('Promoter Name', props.promoterName),
+            detailItem('Contact Number', props.contactNumber),
+            detailItem('Venue', props.venue),
+            detailItem('City', props.city),
+            detailItem('Type', props.typeLabel),
+            detailItem('Status', props.status),
+            detailItem('Event Date', props.eventDate),
+            detailItem('Created By', props.createdBy),
+            `<div class="sm:col-span-2">${detailItem('Notes', props.notes)}</div>`
+        ].join('');
+        editBtn.classList.toggle('hidden', !props.canEdit);
+        saveBtn.classList.add('hidden');
+        cancelEditBtn.classList.add('hidden');
+        editForm.classList.add('hidden');
+        editError.classList.add('hidden');
+    }
+
+    function populateEditForm(event) {
+        const props = event.extendedProps || {};
+        document.getElementById('editEntryId').value = props.leadId || event.id;
+        document.getElementById('editType').value = props.type || 'lead';
+        document.getElementById('editStatus').value = props.status || 'Follow-up Needed';
+        document.getElementById('editPromoterName').value = props.promoterName || '';
+        document.getElementById('editContactNumber').value = props.contactNumber || '';
+        document.getElementById('editEventDate').value = props.eventDate || '';
+        document.getElementById('editVenue').value = props.venue || '';
+        document.getElementById('editCity').value = props.city || '';
+        document.getElementById('editNotes').value = props.notes || '';
+    }
+
+    function startEdit() {
+        if (!currentEvent) return;
+        populateEditForm(currentEvent);
+        editForm.classList.remove('hidden');
+        editBtn.classList.add('hidden');
+        saveBtn.classList.remove('hidden');
+        cancelEditBtn.classList.remove('hidden');
+    }
+
+    function cancelEdit() {
+        editForm.classList.add('hidden');
+        saveBtn.classList.add('hidden');
+        cancelEditBtn.classList.add('hidden');
+        editError.classList.add('hidden');
+        if (currentEvent?.extendedProps?.canEdit) editBtn.classList.remove('hidden');
+    }
+
+    async function saveEdit() {
+        editError.classList.add('hidden');
+        const payload = {
+            id: document.getElementById('editEntryId').value,
+            type: document.getElementById('editType').value,
+            status: document.getElementById('editStatus').value,
+            promoter_name: document.getElementById('editPromoterName').value,
+            contact_number: document.getElementById('editContactNumber').value,
+            event_date: document.getElementById('editEventDate').value,
+            venue: document.getElementById('editVenue').value,
+            city: document.getElementById('editCity').value,
+            notes: document.getElementById('editNotes').value,
+        };
+        const response = await fetch(crmCalendarUpdateUrl, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCrmCookie('csrftoken'),
+            },
+            body: JSON.stringify(payload),
+        });
+        const data = await response.json();
+        if (!response.ok || !data.success) {
+            editError.textContent = data.error || 'Unable to save CRM entry.';
+            editError.classList.remove('hidden');
+            return;
+        }
+        const updated = data.event;
+        allCrmEvents = allCrmEvents.map((event) => String(event.id) === String(updated.id) ? updated : event);
+        refreshCalendarEvents();
+        currentEvent = crmCalendar.getEventById(updated.id);
+        if (currentEvent) {
+            renderDetails(currentEvent);
+        } else {
+            hideModal();
+        }
+    }
+
+    async function loadCrmEvents() {
+        const response = await fetch(crmCalendarEventsUrl, { credentials: 'same-origin' });
+        if (!response.ok) throw new Error('Unable to load CRM calendar events.');
+        allCrmEvents = await response.json();
+        refreshCalendarEvents();
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const calendarEl = document.getElementById('crmCalendar');
+        if (!window.FullCalendar) {
+            calendarEl.innerHTML = '<div class="p-8 text-center text-red-400 text-sm font-bold">FullCalendar could not be loaded. Please check static files.</div>';
+            return;
+        }
+        crmCalendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            height: 'auto',
+            dayMaxEvents: 4,
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,listWeek'
+            },
+            eventContent(info) {
+                const props = info.event.extendedProps || {};
+                return {
+                    html: `
+                        <div class="crm-event-badge">
+                            <strong>${escapeHtml(info.event.title)}</strong>
+                            <span>${escapeHtml(props.displayTime || '')}</span>
+                        </div>
+                    `
+                };
+            },
+            eventClick(info) {
+                currentEvent = info.event;
+                renderDetails(currentEvent);
+                showModal();
+            },
+        });
+        crmCalendar.render();
+        loadCrmEvents().catch((error) => {
+            console.error(error);
+            calendarEl.innerHTML = '<div class="p-8 text-center text-red-400 text-sm font-bold">Unable to load CRM calendar entries.</div>';
+        });
+
+        document.querySelectorAll('.calendar-filter-btn').forEach((btn) => {
+            btn.addEventListener('click', () => setFilter(btn.dataset.group, btn.dataset.value));
+        });
+        document.getElementById('closeCrmModal').addEventListener('click', hideModal);
+        modal.querySelector('[data-close-modal]').addEventListener('click', hideModal);
+        editBtn.addEventListener('click', startEdit);
+        cancelEditBtn.addEventListener('click', cancelEdit);
+        saveBtn.addEventListener('click', saveEdit);
+    });
+</script>
+{% endblock %}
+

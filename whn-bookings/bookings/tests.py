@@ -166,19 +166,50 @@ class CrmSyncAndCalendarTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn(lead, list(response.context['leads']))
 
-    def test_calendar_payload_shows_open_crm_and_hides_booked_conversion(self):
-        open_lead = ClientLead.objects.create(
+    def test_crm_calendar_api_scopes_admin_and_employee_records(self):
+        other_employee_user = User.objects.create_user(username='other_employee', password='otherpassword')
+        other_employee = Employee.objects.create(
+            user=other_employee_user,
+            name='Other Employee',
+            email='other@example.com',
+            is_active=True,
+        )
+        admin_lead = ClientLead.objects.create(
             created_by_admin=True,
             created_by=self.admin_user,
             type='lead',
-            promoter_name='Open Lead',
+            promoter_name='Admin Lead',
             city='Pune',
-            venue='Open Venue',
+            venue='Admin Venue',
             contact_number='1111111111',
             event_date=date(2026, 7, 11),
             conversion_artist=self.artist,
             status='Follow-up Needed',
             follow_up_date=date(2026, 7, 2),
+        )
+        employee_sale = ClientLead.objects.create(
+            employee=self.employee,
+            created_by=self.employee_user,
+            type='sale',
+            promoter_name='Employee Sale',
+            city='Mumbai',
+            venue='Employee Venue',
+            contact_number='3333333333',
+            event_date=date(2026, 7, 13),
+            status='Follow-up Needed',
+            follow_up_date=date(2026, 7, 3),
+        )
+        other_employee_lead = ClientLead.objects.create(
+            employee=other_employee,
+            created_by=other_employee_user,
+            type='lead',
+            promoter_name='Other Employee Lead',
+            city='Delhi',
+            venue='Other Venue',
+            contact_number='4444444444',
+            event_date=date(2026, 7, 14),
+            status='Follow-up Needed',
+            follow_up_date=date(2026, 7, 4),
         )
         booking = Booking.objects.create(
             artist=self.artist,
@@ -189,7 +220,7 @@ class CrmSyncAndCalendarTest(TestCase):
             deal_amount=Decimal('1000.00'),
             status='Confirmed',
         )
-        ClientLead.objects.create(
+        booked_lead = ClientLead.objects.create(
             created_by_admin=True,
             created_by=self.admin_user,
             type='sale',
@@ -204,9 +235,18 @@ class CrmSyncAndCalendarTest(TestCase):
         )
 
         self.client.login(username='admin', password='adminpassword')
-        response = self.client.get(reverse('api_artist_calendar_events'), {'artist_id': self.artist.id})
-        payload = response.json()
-        crm_titles = [item['title'] for item in payload['crm_entries']]
+        admin_payload = self.client.get(reverse('api_crm_calendar_events')).json()
+        admin_titles = [item['extendedProps']['promoterName'] for item in admin_payload]
+        artist_payload = self.client.get(reverse('api_artist_calendar_events'), {'artist_id': self.artist.id}).json()
+        self.client.logout()
 
-        self.assertIn(open_lead.promoter_name, crm_titles)
-        self.assertNotIn('Booked Lead', crm_titles)
+        self.client.login(username='employee', password='employeepassword')
+        employee_payload = self.client.get(reverse('api_crm_calendar_events')).json()
+        employee_titles = [item['extendedProps']['promoterName'] for item in employee_payload]
+
+        self.assertIn(admin_lead.promoter_name, admin_titles)
+        self.assertIn(employee_sale.promoter_name, admin_titles)
+        self.assertIn(other_employee_lead.promoter_name, admin_titles)
+        self.assertNotIn(booked_lead.promoter_name, admin_titles)
+        self.assertEqual(employee_titles, [employee_sale.promoter_name])
+        self.assertNotIn('crm_entries', artist_payload)
