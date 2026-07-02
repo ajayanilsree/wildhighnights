@@ -9,6 +9,11 @@ from .models import ClientLead
 def employee_follow_up_notifications(request):
     user = getattr(request, 'user', None)
     employee = getattr(user, 'employee', None) if user and user.is_authenticated else None
+    is_calendar_only_employee = bool(
+        employee
+        and getattr(employee, 'is_active', False)
+        and getattr(user, 'username', '') == 'whnsocial'
+    )
 
     if not employee or not getattr(employee, 'is_active', False):
         return {
@@ -18,6 +23,7 @@ def employee_follow_up_notifications(request):
             'notification_today': timezone.localdate(),
             'notification_tomorrow': timezone.localdate() + timedelta(days=1),
             'is_employee_portal_user': False,
+            'is_employee_calendar_only_user': False,
         }
 
     today = timezone.localdate()
@@ -49,4 +55,5 @@ def employee_follow_up_notifications(request):
         'notification_today': today,
         'notification_tomorrow': tomorrow,
         'is_employee_portal_user': True,
+        'is_employee_calendar_only_user': is_calendar_only_employee,
     }

@@ -26,6 +26,7 @@
                             Dashboard
                         </a>
 
+                        {% if not is_employee_calendar_only_user %}
                         <div class="relative">
                             <button
                                 type="button"
@@ -42,11 +43,13 @@
                                 {% endif %}
                             </button>
                         </div>
+                        {% endif %}
 
                         <a href="{% url 'logout' %}" class="text-sm font-semibold text-white/70 hover:text-white transition-colors">Logout</a>
                     </div>
 
                     <div class="md:hidden flex items-center gap-2">
+                        {% if not is_employee_calendar_only_user %}
                         <button
                             type="button"
                             class="notification-toggle relative flex items-center justify-center w-10 h-10 rounded-full bg-[#111111] text-white border border-violet-500/40 shadow-[0_20px_60px_rgba(0,0,0,0.65),0_0_30px_rgba(124,58,237,0.16)]"
@@ -60,6 +63,7 @@
                             <span id="notificationBadgeMobile" class="absolute -top-1 -right-1 inline-flex min-w-4 h-4 px-1 items-center justify-center rounded-full bg-emerald-500 text-[9px] font-black text-white leading-none">{{ notification_count }}</span>
                             {% endif %}
                         </button>
+                        {% endif %}
                         <button id="menuToggle" class="text-white p-2">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
@@ -97,7 +101,7 @@
                 </button>
             {% endif %}
 
-            {% if user.is_authenticated and is_employee_portal_user %}
+            {% if user.is_authenticated and is_employee_portal_user and not is_employee_calendar_only_user %}
             <div id="notificationPanel" class="notification-dropdown notification-panel hidden fixed z-[99999] w-[min(92vw,24rem)] md:w-[24rem] rounded-[18px] border border-violet-500/40 bg-[#111111] opacity-100 shadow-[0_20px_60px_rgba(0,0,0,0.65),0_0_30px_rgba(124,58,237,0.16)] overflow-hidden">
                 <div class="notification-dropdown-body flex items-center justify-between px-5 py-4 border-b border-white/10 bg-[#111111]">
                     <div>

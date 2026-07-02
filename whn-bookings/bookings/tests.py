@@ -287,3 +287,58 @@ class CrmSyncAndCalendarTest(TestCase):
         admin_response = self.client.post(reverse('admin_crm_delete', args=[admin_lead.id]))
         self.assertEqual(admin_response.status_code, 302)
         self.assertFalse(ClientLead.objects.filter(id=admin_lead.id).exists())
+
+
+class CalendarOnlyEmployeeAccessTest(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.calendar_only_user = User.objects.create_user(username='whnsocial', password='matteragency')
+        self.calendar_only_employee = Employee.objects.create(
+            user=self.calendar_only_user,
+            name='WHN Social',
+            email='whnsocial@example.com',
+            is_active=True,
+        )
+        self.standard_employee_user = User.objects.create_user(username='employee2', password='employee2pass')
+        self.standard_employee = Employee.objects.create(
+            user=self.standard_employee_user,
+            name='Employee Two',
+            email='employee2@example.com',
+            is_active=True,
+        )
+
+    def test_calendar_only_employee_sees_only_artist_calendar_card(self):
+        self.client.login(username='whnsocial', password='matteragency')
+        response = self.client.get(reverse('employee_dashboard'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Artist Calendar')
+        self.assertNotContains(response, 'Manage Bookings')
+        self.assertNotContains(response, 'Sales & Leads')
+
+    def test_calendar_only_employee_is_redirected_from_restricted_routes(self):
+        self.client.login(username='whnsocial', password='matteragency')
+
+        bookings_response = self.client.get(reverse('employee_bookings'))
+        crm_response = self.client.get(reverse('employee_crm'))
+        crm_calendar_response = self.client.get(reverse('employee_crm_calendar'))
+
+        self.assertRedirects(bookings_response, reverse('employee_dashboard'), fetch_redirect_response=False)
+        self.assertRedirects(crm_response, reverse('employee_dashboard'), fetch_redirect_response=False)
+        self.assertRedirects(crm_calendar_response, reverse('employee_dashboard'), fetch_redirect_response=False)
+
+    def test_calendar_only_employee_can_access_artist_calendar(self):
+        self.client.login(username='whnsocial', password='matteragency')
+        response = self.client.get(reverse('employee_calendar'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'bookings/employee_calendar.html')
+
+    def test_other_employee_still_accesses_standard_pages(self):
+        self.client.login(username='employee2', password='employee2pass')
+
+        bookings_response = self.client.get(reverse('employee_bookings'))
+        crm_response = self.client.get(reverse('employee_crm'))
+
+        self.assertEqual(bookings_response.status_code, 200)
+        self.assertEqual(crm_response.status_code, 200)

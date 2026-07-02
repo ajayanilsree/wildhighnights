@@ -24,6 +24,13 @@ CONVERTED_INPUT_STATUS = 'Converted'
 CONVERTED_PENDING_STATUS = 'Converted - Pending Booking'
 CONVERTED_BOOKED_STATUS = 'Converted - Booking Created'
 CONVERTED_STATUSES = {CONVERTED_INPUT_STATUS, CONVERTED_PENDING_STATUS, CONVERTED_BOOKED_STATUS}
+CALENDAR_ONLY_EMPLOYEE_USERNAME = 'whnsocial'
+CALENDAR_ONLY_EMPLOYEE_RESTRICTED_ROUTES = {
+    'employee_bookings',
+    'employee_crm',
+    'employee_crm_calendar',
+    'employee_notifications_seen',
+}
 
 def format_percentage(val):
     if val is None:
@@ -1165,6 +1172,21 @@ def employee_required(view_func):
     return _wrapped_view
 
 
+def employee_calendar_only_restricted(view_func):
+    def _wrapped_view(request, *args, **kwargs):
+        if (
+            getattr(request.user, 'username', '') == CALENDAR_ONLY_EMPLOYEE_USERNAME
+            and request.resolver_match
+            and request.resolver_match.url_name in CALENDAR_ONLY_EMPLOYEE_RESTRICTED_ROUTES
+        ):
+            if request.headers.get('x-requested-with') == 'XMLHttpRequest' or request.path.startswith('/api/'):
+                return JsonResponse({'error': 'Access denied.'}, status=403)
+            messages.error(request, "Access Denied: This account can only access the Artist Calendar.")
+            return redirect('employee_dashboard')
+        return view_func(request, *args, **kwargs)
+    return _wrapped_view
+
+
 @artist_required
 def artist_dashboard_view(request):
     artist = request.user.artist
@@ -1885,6 +1907,7 @@ def admin_crm_calendar_view(request):
 
 
 @employee_required
+@employee_calendar_only_restricted
 @ensure_csrf_cookie
 def employee_crm_calendar_view(request):
     return render(request, 'bookings/crm_calendar.html', {
@@ -2165,15 +2188,18 @@ def admin_crm_conversion_view(request):
 # --- Employee Portal Views ---
 
 @employee_required
+@employee_calendar_only_restricted
 def employee_dashboard_view(request):
     employee = request.user.employee
     return render(request, 'bookings/employee_dashboard.html', {
         'employee': employee,
+        'is_calendar_only_employee': request.user.username == CALENDAR_ONLY_EMPLOYEE_USERNAME,
     })
 
 
 @login_required(login_url='login')
 @employee_required
+@employee_calendar_only_restricted
 @require_POST
 def employee_notifications_seen_view(request):
     employee = request.user.employee
@@ -2185,6 +2211,7 @@ def employee_notifications_seen_view(request):
     })
 
 @employee_required
+@employee_calendar_only_restricted
 def employee_calendar_view(request):
     artists = Artist.objects.all()
     selected_artist_id = request.GET.get('artist')
@@ -2207,11 +2234,13 @@ def employee_calendar_view(request):
     })
 
 @employee_required
+@employee_calendar_only_restricted
 def employee_bookings_view(request):
     bookings = Booking.objects.all().order_by('-date')
     return render(request, 'bookings/employee_bookings.html', {'bookings': bookings})
 
 @employee_required
+@employee_calendar_only_restricted
 def employee_crm_view(request):
     employee = request.user.employee
     leads = crm_queryset(ClientLead.objects.all()).order_by('-crm_created_at_value', '-id')

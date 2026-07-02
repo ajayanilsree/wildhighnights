@@ -15,27 +15,38 @@
         </div>
 
         <!-- Dashboard Actions -->
-        <div id="dashboardActions" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 items-stretch transition-all duration-300" data-aos="fade-up" data-aos-delay="100">
+        <div id="dashboardActions" class="{% if is_calendar_only_employee %}flex justify-center{% else %}grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 items-stretch{% endif %} transition-all duration-300" data-aos="fade-up" data-aos-delay="100">
+            {% if is_calendar_only_employee %}
+            <a href="{% url 'employee_calendar' %}" class="flex h-full min-h-[200px] sm:min-h-[240px] w-full max-w-2xl flex-col items-center justify-center p-8 text-center rounded-[2.5rem] bg-white/[0.03] border border-white/5 hover:border-whn-purple/30 hover:-translate-y-2 transition-all group relative overflow-hidden">
+                <div class="absolute inset-0 bg-gradient-to-br from-whn-purple/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <div class="relative z-10 flex w-full flex-col items-center justify-center">
+                    <div class="w-16 h-16 rounded-2xl bg-whn-purple/10 flex items-center justify-center text-3xl mb-6 group-hover:scale-110 transition-transform">&#128197;</div>
+                    <h3 class="text-xl font-black text-white mb-3">Artist Calendar</h3>
+                    <p class="text-sm text-whn-tertiary max-w-xs">Check availability for artists.</p>
+                </div>
+            </a>
+            {% else %}
             <a href="{% url 'employee_bookings' %}" class="flex h-full min-h-[200px] sm:min-h-[240px] flex-col p-8 rounded-[2.5rem] bg-white/[0.03] border border-white/5 hover:border-whn-blue/30 hover:-translate-y-2 transition-all group relative overflow-hidden">
                 <div class="absolute inset-0 bg-gradient-to-br from-whn-blue/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                <div class="w-16 h-16 rounded-2xl bg-whn-blue/10 flex items-center justify-center text-3xl mb-8 group-hover:scale-110 transition-transform">🎟️</div>
+                <div class="w-16 h-16 rounded-2xl bg-whn-blue/10 flex items-center justify-center text-3xl mb-8 group-hover:scale-110 transition-transform">&#127903;&#65039;</div>
                 <h3 class="text-xl font-black text-white mb-2">Manage Bookings</h3>
                 <p class="text-sm text-whn-tertiary">View and manage event bookings.</p>
             </a>
 
             <a href="{% url 'employee_calendar' %}" class="flex h-full min-h-[200px] sm:min-h-[240px] flex-col p-8 rounded-[2.5rem] bg-white/[0.03] border border-white/5 hover:border-whn-purple/30 hover:-translate-y-2 transition-all group relative overflow-hidden">
                 <div class="absolute inset-0 bg-gradient-to-br from-whn-purple/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                <div class="w-16 h-16 rounded-2xl bg-whn-purple/10 flex items-center justify-center text-3xl mb-8 group-hover:scale-110 transition-transform">📅</div>
+                <div class="w-16 h-16 rounded-2xl bg-whn-purple/10 flex items-center justify-center text-3xl mb-8 group-hover:scale-110 transition-transform">&#128197;</div>
                 <h3 class="text-xl font-black text-white mb-2">Artist Calendar</h3>
                 <p class="text-sm text-whn-tertiary">Check availability for artists.</p>
             </a>
 
             <a href="{% url 'employee_crm' %}" class="flex h-full min-h-[200px] sm:min-h-[240px] flex-col p-8 rounded-[2.5rem] bg-white/[0.03] border border-white/5 hover:border-emerald-500/30 hover:-translate-y-2 transition-all group relative overflow-hidden md:col-span-2 xl:col-span-1">
                 <div class="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                <div class="w-16 h-16 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-3xl mb-8 group-hover:scale-110 transition-transform">📈</div>
+                <div class="w-16 h-16 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-3xl mb-8 group-hover:scale-110 transition-transform">&#128200;</div>
                 <h3 class="text-xl font-black text-white mb-2">Sales & Leads</h3>
                 <p class="text-sm text-whn-tertiary">Track your client leads and sales.</p>
             </a>
+            {% endif %}
         </div>
     </div>
 </div>
