@@ -342,3 +342,91 @@ class CalendarOnlyEmployeeAccessTest(TestCase):
 
         self.assertEqual(bookings_response.status_code, 200)
         self.assertEqual(crm_response.status_code, 200)
+
+
+class CalendarManageBookingActionTests(TestCase):
+    def setUp(self):
+        self.admin_user = User.objects.create_superuser(username='admin_cal', password='adminpass')
+        self.employee_user = User.objects.create_user(username='employee_cal', password='employeepass')
+        self.employee = Employee.objects.create(
+            user=self.employee_user,
+            name='Calendar Employee',
+            email='calendar.employee@example.com',
+            is_active=True,
+        )
+        self.artist = Artist.objects.create(
+            name='Calendar Artist',
+            genre='House',
+            instagram='calendar_artist',
+        )
+        self.booking = Booking.objects.create(
+            artist=self.artist,
+            event_type='Club',
+            venue='Original Venue',
+            location='Mumbai',
+            date=date(2026, 7, 20),
+            booking_type='Sale',
+            deal_type='Landed Deal',
+            deal_amount=Decimal('1000.00'),
+            ground_transport='No',
+            sound_check='No',
+            status='Confirmed',
+        )
+
+    def booking_post_data(self, **overrides):
+        data = {
+            'artist': str(self.artist.id),
+            'event_type': 'Club',
+            'venue': 'Updated Venue',
+            'location': 'Mumbai',
+            'date': '2026-07-20',
+            'time': '',
+            'duration': '90 minutes',
+            'booking_type': 'Sale',
+            'deal_type': 'Landed Deal',
+            'deal_amount': '1200.00',
+            'ground_transport': 'No',
+            'sound_check': 'No',
+            'status': 'Confirmed',
+            'notes': 'Updated from calendar',
+        }
+        data.update(overrides)
+        return data
+
+    def test_admin_calendar_manage_booking_uses_existing_booking_id(self):
+        self.client.login(username='admin_cal', password='adminpass')
+        response = self.client.get(reverse('admin_calendar'), {'artist': self.artist.id})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "function manageBookingUrl(dateStr, booking = null)")
+        self.assertContains(response, "/dashboard/bookings/0/edit/", html=False)
+        self.assertContains(response, "manageBookingButton(dateStr, booking)")
+
+    def test_employee_calendar_manage_booking_uses_existing_booking_id(self):
+        self.client.login(username='employee_cal', password='employeepass')
+        response = self.client.get(reverse('employee_calendar'), {'artist': self.artist.id})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "function manageBookingUrl(dateStr, booking = null)")
+        self.assertContains(response, "/dashboard/bookings/0/edit/", html=False)
+        self.assertContains(response, "manageBookingButton(dateStr, booking)")
+
+    def test_admin_calendar_edit_redirects_back_to_selected_calendar_date(self):
+        self.client.login(username='admin_cal', password='adminpass')
+        response = self.client.post(
+            f"{reverse('edit_booking', args=[self.booking.id])}?source=calendar",
+            self.booking_post_data(),
+        )
+
+        expected_url = f"{reverse('admin_calendar')}?artist={self.artist.id}&date=2026-07-20"
+        self.assertRedirects(response, expected_url, fetch_redirect_response=False)
+
+    def test_employee_calendar_edit_redirects_back_to_selected_calendar_date(self):
+        self.client.login(username='employee_cal', password='employeepass')
+        response = self.client.post(
+            f"{reverse('edit_booking', args=[self.booking.id])}?source=employee_calendar",
+            self.booking_post_data(),
+        )
+
+        expected_url = f"{reverse('employee_calendar')}?artist={self.artist.id}&date=2026-07-20"
+        self.assertRedirects(response, expected_url, fetch_redirect_response=False)

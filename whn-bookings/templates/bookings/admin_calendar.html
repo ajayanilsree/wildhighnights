@@ -214,7 +214,7 @@
     const modalDateLabel = document.getElementById('modalDateLabel');
     const modalBody = document.getElementById('modalBody');
 
-    function manageBookingUrl(dateStr) {
+    function manageBookingUrl(dateStr, booking = null) {
         const params = new URLSearchParams({
             date: dateStr,
             source: 'calendar'
@@ -222,12 +222,16 @@
         if (artistSelect && artistSelect.value) {
             params.set('artist', artistSelect.value);
         }
+        if (booking && booking.id) {
+            const editUrl = `{% url 'edit_booking' 0 %}`.replace('/0/edit/', `/${booking.id}/edit/`);
+            return `${editUrl}?${params.toString()}`;
+        }
         return `{% url 'add_booking' %}?${params.toString()}`;
     }
 
-    function manageBookingButton(dateStr) {
+    function manageBookingButton(dateStr, booking = null) {
         return `
-            <a href="${manageBookingUrl(dateStr)}" class="w-full flex items-center justify-center py-4 rounded-xl bg-gradient-to-r from-whn-purple to-whn-blue text-white text-[10px] font-bold uppercase tracking-[0.2em] hover:scale-[1.02] active:scale-[0.98] transition-all text-center">
+            <a href="${manageBookingUrl(dateStr, booking)}" class="w-full flex items-center justify-center py-4 rounded-xl bg-gradient-to-r from-whn-purple to-whn-blue text-white text-[10px] font-bold uppercase tracking-[0.2em] hover:scale-[1.02] active:scale-[0.98] transition-all text-center">
                 Manage Booking
             </a>
         `;
@@ -425,7 +429,7 @@
                     <div class="p-4 rounded-2xl bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 text-xs font-bold flex items-center gap-2">
                         <span>Read-only</span> <span>Calendar details are view-only from this modal.</span>
                     </div>
-                    ${manageBookingButton(dateStr)}
+                    ${manageBookingButton(dateStr, booking)}
                     <button type="button" onclick="showFullBookingDetails(${booking.id})" class="w-full py-4 mt-2 rounded-xl bg-gradient-to-r from-whn-purple to-whn-blue text-white text-[10px] font-bold uppercase tracking-[0.2em] hover:scale-[1.02] active:scale-[0.98] transition-all text-center">Show Details</button>
                 </div>
             `;

@@ -945,6 +945,23 @@ def manage_bookings_view(request):
     bookings = Booking.objects.select_related('artist').all().order_by('-date')
     return render(request, 'bookings/manage_bookings.html', {'bookings': bookings})
 
+
+def calendar_booking_redirect(request, booking):
+    source = request.GET.get('source') or request.POST.get('booking_source')
+    if source == 'calendar' and (request.user.is_staff or request.user.is_superuser):
+        redirect_url = reverse('admin_calendar')
+    elif source == 'employee_calendar' and hasattr(request.user, 'employee'):
+        redirect_url = reverse('employee_calendar')
+    else:
+        return None
+
+    query_params = {
+        'artist': booking.artist_id,
+        'date': booking.date,
+    }
+    return redirect(f"{redirect_url}?{urlencode(query_params)}")
+
+
 @login_required(login_url='login')
 def edit_booking_view(request, booking_id):
     booking = get_object_or_404(Booking, id=booking_id)
@@ -1038,6 +1055,9 @@ def edit_booking_view(request, booking_id):
             role='admin',
             related_record=venue,
         )
+        calendar_redirect = calendar_booking_redirect(request, booking)
+        if calendar_redirect:
+            return calendar_redirect
         if request.user.is_staff or request.user.is_superuser:
             return redirect('manage_bookings')
         return redirect('employee_bookings')
