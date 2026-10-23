@@ -89,14 +89,14 @@
 
 <!-- Deletion Modal -->
 <div id="deleteModal" class="fixed inset-0 z-[100] flex items-center justify-center px-6 hidden">
-    <div class="absolute inset-0 bg-whn-dark/90 backdrop-blur-sm" onclick="closeModal()"></div>
+    <div class="absolute inset-0 bg-whn-dark/90 backdrop-blur-sm" onclick="closeArtistDeleteModal()"></div>
     <div class="glass-card rounded-[2.5rem] p-10 md:p-12 border border-white/10 shadow-2xl relative z-10 max-w-md w-full" data-aos="zoom-in">
         <h3 class="text-3xl font-black text-white mb-4 tracking-tight">Are you sure?</h3>
         <p class="text-whn-tertiary text-sm leading-relaxed mb-8">
             Deleting <span id="artistName" class="text-white font-bold"></span> will permanently remove their profile and associated login account. This action cannot be undone.
         </p>
         <div class="flex items-center gap-4">
-            <button onclick="closeModal()" class="flex-1 py-4 rounded-2xl bg-white/5 text-white text-xs font-bold uppercase tracking-widest hover:bg-white/10 transition-all">Cancel</button>
+            <button type="button" onclick="closeArtistDeleteModal()" class="flex-1 py-4 rounded-2xl bg-white/5 text-white text-xs font-bold uppercase tracking-widest hover:bg-white/10 transition-all">Cancel</button>
             <form id="deleteForm" method="POST" class="flex-1">
                 {% csrf_token %}
                 <button type="submit" class="w-full py-4 rounded-2xl bg-red-500 text-white text-xs font-bold uppercase tracking-widest hover:bg-red-600 transition-all shadow-[0_0_30px_rgba(239,68,68,0.3)]">Delete Now</button>
@@ -141,7 +141,7 @@
         document.getElementById('deleteModal').classList.remove('hidden');
     }
     
-    function closeModal() {
+    function closeArtistDeleteModal() {
         document.getElementById('deleteModal').classList.add('hidden');
     }
 </script>
