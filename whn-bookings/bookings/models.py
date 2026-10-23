@@ -1,6 +1,7 @@
 from django.db import models
 from django.utils.text import slugify
 from django.contrib.auth.models import User
+from decimal import Decimal
 
 class Artist(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True)
@@ -9,6 +10,8 @@ class Artist(models.Model):
     genre = models.CharField(max_length=100, blank=True)
     instagram = models.CharField(max_length=255, blank=True)
     artist_image = models.ImageField(upload_to="artists/", blank=True, null=True)
+    sales_commission_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal('85.00'))
+    lead_commission_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal('90.00'))
 
     def save(self, *args, **kwargs):
         if not self.slug:

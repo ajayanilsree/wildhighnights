@@ -43,7 +43,10 @@
                                         <div class="w-full h-full bg-white/5 flex items-center justify-center text-xl">🎧</div>
                                         {% endif %}
                                     </div>
-                                    <span class="text-white font-black text-lg tracking-tight">{{ artist.name }}</span>
+                                    <div class="flex flex-col">
+                                        <span class="text-white font-black text-lg tracking-tight">{{ artist.name }}</span>
+                                        <span class="text-[10px] text-whn-tertiary">Sale {{ artist.sales_commission_percentage }}% · Lead {{ artist.lead_commission_percentage }}%</span>
+                                    </div>
                                 </div>
                             </td>
                             <td class="py-8 text-sm text-whn-tertiary">{{ artist.genre }}</td>
@@ -55,7 +58,11 @@
                                 {% endif %}
                             </td>
                             <td class="py-8">
+                                {% if artist.user %}
                                 <span class="px-4 py-1.5 rounded-lg bg-white/5 text-xs text-white/60 font-mono">@{{ artist.user.username }}</span>
+                                {% else %}
+                                <span class="text-white/30 text-xs italic">No login</span>
+                                {% endif %}
                             </td>
                             <td class="py-8 text-right">
                                 <div class="flex items-center justify-end gap-3 w-full">

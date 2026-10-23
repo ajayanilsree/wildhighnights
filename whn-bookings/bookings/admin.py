@@ -9,8 +9,9 @@ class ArtistAvailabilityAdmin(admin.ModelAdmin):
 
 @admin.register(Artist)
 class ArtistAdmin(admin.ModelAdmin):
-    list_display = ('name', 'slug', 'genre')
+    list_display = ('name', 'slug', 'genre', 'sales_commission_percentage', 'lead_commission_percentage')
     prepopulated_fields = {'slug': ('name',)}
+    fields = ('user', 'name', 'slug', 'genre', 'instagram', 'artist_image', 'sales_commission_percentage', 'lead_commission_percentage')
 
 @admin.register(Booking)
 class BookingAdmin(admin.ModelAdmin):

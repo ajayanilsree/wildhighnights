@@ -30,7 +30,18 @@
                 <!-- Genre -->
                 <div class="relative group">
                     <label class="text-[10px] font-bold text-whn-tertiary uppercase tracking-[0.2em] ml-1 mb-3 block group-focus-within:text-whn-purple transition-colors">Genre</label>
-                    <input type="text" name="genre" required value="{{ artist.genre }}" class="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-whn-purple/50 focus:ring-4 focus:ring-whn-purple/10 transition-all">
+                    <input type="text" name="genre" value="{{ artist.genre }}" class="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-whn-purple/50 focus:ring-4 focus:ring-whn-purple/10 transition-all">
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="relative group">
+                        <label class="text-[10px] font-bold text-whn-tertiary uppercase tracking-[0.2em] ml-1 mb-3 block">Sales Commission Share (%)</label>
+                        <input type="number" name="sales_commission_percentage" min="0" max="100" step="0.01" value="{{ artist.sales_commission_percentage }}" required class="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-whn-purple/50">
+                    </div>
+                    <div class="relative group">
+                        <label class="text-[10px] font-bold text-whn-tertiary uppercase tracking-[0.2em] ml-1 mb-3 block">Lead Commission Share (%)</label>
+                        <input type="number" name="lead_commission_percentage" min="0" max="100" step="0.01" value="{{ artist.lead_commission_percentage }}" required class="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-whn-purple/50">
+                    </div>
                 </div>
 
                 <!-- Artist Picture -->
@@ -55,11 +66,11 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div class="relative group">
                         <label class="text-[10px] font-bold text-whn-tertiary uppercase tracking-[0.2em] ml-1 mb-3 block group-focus-within:text-whn-purple transition-colors">Username</label>
-                        <input type="text" name="username" required value="{{ artist.user.username }}" class="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-whn-purple/50 focus:ring-4 focus:ring-whn-purple/10 transition-all">
+                        <input type="text" name="username" {% if artist.user %}value="{{ artist.user.username }}"{% else %}placeholder="Optional login username"{% endif %} class="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-whn-purple/50 focus:ring-4 focus:ring-whn-purple/10 transition-all">
                     </div>
                     <div class="relative group">
                         <label class="text-[10px] font-bold text-whn-tertiary uppercase tracking-[0.2em] ml-1 mb-3 block group-focus-within:text-whn-purple transition-colors">New Password (Optional)</label>
-                        <input type="password" name="new_password" placeholder="••••••••" class="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-whn-purple/50 focus:ring-4 focus:ring-whn-purple/10 transition-all placeholder:text-white/10">
+                        <input type="password" name="new_password" placeholder="{% if artist.user %}Optional new password{% else %}Optional login password{% endif %}" class="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-whn-purple/50 focus:ring-4 focus:ring-whn-purple/10 transition-all placeholder:text-white/10">
                     </div>
                 </div>
 

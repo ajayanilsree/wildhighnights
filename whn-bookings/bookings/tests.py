@@ -4,6 +4,7 @@ from django.contrib.auth.models import User
 from decimal import Decimal
 from datetime import date, timedelta
 from bookings.models import Artist, Booking, BookingExpense, ClientLead, Employee
+from bookings.views import booking_financials
 
 class AdminAccountsTest(TestCase):
     def setUp(self):
@@ -342,6 +343,66 @@ class CalendarOnlyEmployeeAccessTest(TestCase):
 
         self.assertEqual(bookings_response.status_code, 200)
         self.assertEqual(crm_response.status_code, 200)
+
+
+class ArtistCommissionRatesTest(TestCase):
+    def setUp(self):
+        self.admin_user = User.objects.create_superuser(username='commission_admin', password='adminpass')
+        self.esani = Artist.objects.get(name='Esani')
+        self.other_artist = Artist.objects.create(name='Existing Rate Artist')
+
+    def make_booking(self, artist, booking_type):
+        return Booking.objects.create(
+            artist=artist,
+            event_type='Club',
+            venue='Commission Test Venue',
+            location='Mumbai',
+            date=date(2026, 10, 20),
+            booking_type=booking_type,
+            deal_type='Landed Deal',
+            deal_amount=Decimal('1000.00'),
+            status='Confirmed',
+        )
+
+    def test_esani_has_individual_sales_and_lead_rates(self):
+        self.assertEqual(Artist.objects.filter(name__iexact='Esani').count(), 1)
+        self.assertEqual(self.esani.sales_commission_percentage, Decimal('20.00'))
+        self.assertEqual(self.esani.lead_commission_percentage, Decimal('15.00'))
+
+        sale = booking_financials(self.make_booking(self.esani, 'Sale'))
+        lead = booking_financials(self.make_booking(self.esani, 'Lead'))
+        self.assertEqual(sale['pct_str'], '20%')
+        self.assertEqual(sale['artist_commission'], Decimal('200.0000'))
+        self.assertEqual(lead['pct_str'], '15%')
+        self.assertEqual(lead['artist_commission'], Decimal('150.0000'))
+
+    def test_existing_artist_default_commission_rates_are_unchanged(self):
+        sale = booking_financials(self.make_booking(self.other_artist, 'Sale'))
+        lead = booking_financials(self.make_booking(self.other_artist, 'Lead'))
+        self.assertEqual(sale['pct_str'], '85%')
+        self.assertEqual(sale['artist_commission'], Decimal('850.0000'))
+        self.assertEqual(lead['pct_str'], '90%')
+        self.assertEqual(lead['artist_commission'], Decimal('900.0000'))
+
+    def test_admin_crm_displays_converted_artist_share(self):
+        ClientLead.objects.create(
+            created_by=self.admin_user,
+            created_by_admin=True,
+            type='lead',
+            promoter_name='Esani Conversion',
+            city='Mumbai',
+            venue='Commission Test Venue',
+            contact_number='1234567890',
+            status='Converted - Booking Created',
+            conversion_artist=self.esani,
+            conversion_deal_amount=Decimal('1000.00'),
+        )
+        self.client.login(username='commission_admin', password='adminpass')
+        response = self.client.get(reverse('admin_crm'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Esani share: 15.00%')
+        self.assertContains(response, '₹150.00')
 
 
 class CalendarManageBookingActionTests(TestCase):

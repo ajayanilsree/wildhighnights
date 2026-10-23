@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 import calendar
 import json
 from django.contrib.auth import authenticate, login, logout
@@ -124,13 +124,33 @@ def crm_queryset(base_qs):
 
 def booking_split(booking):
     if booking.booking_type == 'Sale':
-        return Decimal('0.85'), "85%"
+        pct = booking.artist.sales_commission_percentage
+        return pct / Decimal('100'), format_percentage(pct)
     if booking.booking_type == 'Lead':
-        return Decimal('0.90'), "90%"
+        pct = booking.artist.lead_commission_percentage
+        return pct / Decimal('100'), format_percentage(pct)
     if booking.booking_type == 'Custom':
         custom_pct = booking.custom_artist_percentage or Decimal('0.00')
         return custom_pct / Decimal('100'), format_percentage(custom_pct)
     return Decimal('0.90'), "90%"
+
+
+def attach_conversion_commission(lead):
+    if not lead.conversion_artist or lead.conversion_deal_amount is None:
+        lead.conversion_commission_percentage = None
+        lead.conversion_commission_amount = None
+        return lead
+
+    percentage = (
+        lead.conversion_artist.sales_commission_percentage
+        if lead.type == 'sale'
+        else lead.conversion_artist.lead_commission_percentage
+    )
+    lead.conversion_commission_percentage = percentage
+    lead.conversion_commission_amount = (
+        lead.conversion_deal_amount * percentage / Decimal('100')
+    ).quantize(Decimal('0.01'))
+    return lead
 
 
 def booking_financials(booking):
@@ -686,13 +706,28 @@ def add_artist_view(request):
         artist_image = request.FILES.get('artist_image')
         username = request.POST.get('username')
         password = request.POST.get('password')
+
+        try:
+            sales_commission_percentage = Decimal(request.POST.get('sales_commission_percentage', '85'))
+            lead_commission_percentage = Decimal(request.POST.get('lead_commission_percentage', '90'))
+            if not (Decimal('0') <= sales_commission_percentage <= Decimal('100')):
+                raise InvalidOperation
+            if not (Decimal('0') <= lead_commission_percentage <= Decimal('100')):
+                raise InvalidOperation
+        except (InvalidOperation, TypeError):
+            messages.error(request, 'Commission rates must be valid percentages between 0 and 100.')
+            return render(request, 'bookings/add_artist.html')
         
-        # Create User
-        if User.objects.filter(username=username).exists():
+        user = None
+        if username or password:
+            if not username or not password:
+                messages.error(request, 'Provide both username and password to create an artist login, or leave both blank.')
+                return render(request, 'bookings/add_artist.html')
+        if username and User.objects.filter(username=username).exists():
             messages.error(request, 'Username already exists.')
             return render(request, 'bookings/add_artist.html')
-            
-        user = User.objects.create_user(username=username, password=password)
+        if username:
+            user = User.objects.create_user(username=username, password=password)
         
         # Create Artist
         Artist.objects.create(
@@ -700,7 +735,9 @@ def add_artist_view(request):
             name=name, 
             genre=genre,
             instagram=instagram,
-            artist_image=artist_image
+            artist_image=artist_image,
+            sales_commission_percentage=sales_commission_percentage,
+            lead_commission_percentage=lead_commission_percentage,
         )
         log_activity(
             f"Artist created: {name}",
@@ -721,6 +758,18 @@ def edit_artist_view(request, artist_id):
         artist.name = request.POST.get('name')
         artist.genre = request.POST.get('genre', '')
         artist.instagram = request.POST.get('instagram', '')
+        try:
+            sales_commission_percentage = Decimal(request.POST.get('sales_commission_percentage', '85'))
+            lead_commission_percentage = Decimal(request.POST.get('lead_commission_percentage', '90'))
+            if not (Decimal('0') <= sales_commission_percentage <= Decimal('100')):
+                raise InvalidOperation
+            if not (Decimal('0') <= lead_commission_percentage <= Decimal('100')):
+                raise InvalidOperation
+        except (InvalidOperation, TypeError):
+            messages.error(request, 'Commission rates must be valid percentages between 0 and 100.')
+            return render(request, 'bookings/edit_artist.html', {'artist': artist})
+        artist.sales_commission_percentage = sales_commission_percentage
+        artist.lead_commission_percentage = lead_commission_percentage
         
         new_username = request.POST.get('username')
         new_password = request.POST.get('new_password')
@@ -737,6 +786,14 @@ def edit_artist_view(request, artist_id):
                 user.set_password(new_password)
             
             user.save()
+        elif new_username or new_password:
+            if not new_username or not new_password:
+                messages.error(request, 'Provide both username and password to create an artist login, or leave both blank.')
+                return render(request, 'bookings/edit_artist.html', {'artist': artist})
+            if User.objects.filter(username=new_username).exists():
+                messages.error(request, 'Username already exists.')
+                return render(request, 'bookings/edit_artist.html', {'artist': artist})
+            artist.user = User.objects.create_user(username=new_username, password=new_password)
         
         # Update Image
         if 'artist_image' in request.FILES:
@@ -2105,6 +2162,9 @@ def admin_crm_view(request):
         month_leads=Count('id', filter=Q(created_at__date__gte=month_start, type='lead')),
     )
 
+    for lead in leads:
+        attach_conversion_commission(lead)
+
     conversion_payload = [
         {
             'type': lead.type,
@@ -2399,6 +2459,9 @@ def employee_crm_view(request):
         converted_sale_amount=Sum('conversion_deal_amount', filter=Q(status=CONVERTED_BOOKED_STATUS, type='sale')),
     )
 
+    for lead in leads:
+        attach_conversion_commission(lead)
+
     leads_payload = [
         {
             'id': lead.id,
@@ -2411,6 +2474,8 @@ def employee_crm_view(request):
             'follow_up_date': lead.follow_up_date.isoformat() if lead.follow_up_date else '',
             'conversion_deal_amount': str(lead.conversion_deal_amount) if lead.conversion_deal_amount is not None else '',
             'conversion_artist': lead.conversion_artist_id or '',
+            'conversion_commission_percentage': str(lead.conversion_commission_percentage) if lead.conversion_commission_percentage is not None else '',
+            'conversion_commission_amount': str(lead.conversion_commission_amount) if lead.conversion_commission_amount is not None else '',
             'notes': lead.notes or '',
             'status': lead.status,
             'status_label': lead.status,

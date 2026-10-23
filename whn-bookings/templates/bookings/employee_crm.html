@@ -180,6 +180,9 @@
                                     {% endif %}
                                     
                                     <span class="text-[10px] font-bold uppercase tracking-widest text-white/50">{{ lead.status }}</span>
+                                    {% if lead.conversion_artist and lead.conversion_deal_amount != None %}
+                                    <span class="text-[10px] text-whn-tertiary">{{ lead.conversion_artist.name }} share: {{ lead.conversion_commission_percentage }}% (₹{{ lead.conversion_commission_amount|floatformat:2 }})</span>
+                                    {% endif %}
                                 </div>
                             </td>
                             <td class="py-6">
