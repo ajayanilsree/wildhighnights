@@ -664,14 +664,14 @@
                         </div>
                         <div class="bg-white/[0.02] p-3 rounded-xl border border-white/5">
                             <span class="text-[9px] text-whn-tertiary uppercase block">Split %</span>
-                            <span class="text-white font-bold">${booking.split_percentage}</span>
+                            <span class="text-white font-bold">${booking.split_percentage}${booking.rate_source === "current_artist_estimate" ? " (estimate; historical rate unrecorded)" : ""}</span>
                         </div>
                         <div class="bg-white/[0.02] p-3 rounded-xl border border-white/5">
                             <span class="text-[9px] text-whn-tertiary uppercase block">My Share</span>
                             <span class="text-white font-bold">₹${parseFloat(booking.artist_share).toFixed(2)}</span>
                         </div>
                         <div class="bg-white/[0.02] p-3 rounded-xl border border-white/5 col-span-2">
-                            <span class="text-[9px] text-whn-tertiary uppercase block">Net Amount</span>
+                            <span class="text-[9px] text-whn-tertiary uppercase block">Artist Net Payout</span>
                             <span class="text-green-400 font-black">₹${parseFloat(booking.net_amount).toFixed(2)}</span>
                         </div>
                         <div class="bg-white/[0.02] p-3 rounded-xl border border-white/5 col-span-2">

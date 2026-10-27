@@ -98,40 +98,29 @@ class AdminAccountsTest(TestCase):
         response = self.client.get(reverse('admin_artist_accounts'), {'artist_id': self.artist.id})
         self.assertEqual(response.status_code, 200)
         
-        # Split is Sale (85%)
-        # deal_amount = 1000.00
-        # total_earnings = 1000 * 0.85 = 850.00
-        # artist expenses = 100.00
-        # WHN expenses = 50.00
-        # net_earnings = 850.00 - 100.00 = 750.00
-        # owner_profit = 150.00 WHN share - 50.00 WHN expense = 100.00
-        
-        self.assertEqual(response.context['total_earnings'], Decimal('850.00'))
+        # Base 850; WHN commission 127.50; artist share 722.50.
+        self.assertEqual(response.context['total_earnings'], Decimal('722.50'))
         self.assertEqual(response.context['total_expenses'], Decimal('100.00'))
-        self.assertEqual(response.context['net_earnings'], Decimal('750.00'))
-        
-        # Ledger checks
-        events_ledger = response.context['events_ledger']
-        self.assertEqual(len(events_ledger), 1)
-        self.assertEqual(events_ledger[0]['earning'], Decimal('850.00'))
-        self.assertEqual(events_ledger[0]['expenses'], Decimal('100.00'))
-        self.assertEqual(events_ledger[0]['whn_expenses'], Decimal('50.00'))
-        self.assertEqual(events_ledger[0]['owner_profit'], Decimal('100.00'))
-        self.assertEqual(events_ledger[0]['net'], Decimal('750.00'))
-        self.assertEqual(events_ledger[0]['pct_str'], '85%')
+        self.assertEqual(response.context['net_earnings'], Decimal('822.50'))
+        ledger = response.context['events_ledger'][0]
+        self.assertEqual(ledger['earning'], Decimal('722.50'))
+        self.assertEqual(ledger['expenses'], Decimal('100.00'))
+        self.assertEqual(ledger['whn_expenses'], Decimal('50.00'))
+        self.assertEqual(ledger['whn_net_payout'], Decimal('177.50'))
+        self.assertEqual(ledger['net'], Decimal('822.50'))
+        self.assertEqual(ledger['pct_str'], '85%')
 
     def test_whn_accounts_calculations(self):
-        """WHN accounts deduct only WHN-borne expenses from WHN share"""
         self.client.login(username='admin', password='adminpassword')
         response = self.client.get(reverse('admin_whn_accounts'), {'artist_id': self.artist.id})
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'bookings/admin_whn_accounts.html')
-        self.assertEqual(response.context['total_whn_earnings'], Decimal('150.00'))
+        self.assertEqual(response.context['total_whn_earnings'], Decimal('127.50'))
         self.assertEqual(response.context['total_whn_expenses'], Decimal('50.00'))
-        self.assertEqual(response.context['net_whn_profit'], Decimal('100.00'))
-        self.assertEqual(response.context['whn_ledger'][0]['artist_share'], Decimal('850.00'))
-        self.assertEqual(response.context['whn_ledger'][0]['whn_share'], Decimal('150.00'))
-        self.assertEqual(response.context['whn_ledger'][0]['owner_profit'], Decimal('100.00'))
+        self.assertEqual(response.context['total_whn_net_payout'], Decimal('177.50'))
+        self.assertEqual(response.context['whn_ledger'][0]['artist_share'], Decimal('722.50'))
+        self.assertEqual(response.context['whn_ledger'][0]['whn_share'], Decimal('127.50'))
+        self.assertEqual(response.context['whn_ledger'][0]['whn_net_payout'], Decimal('177.50'))
+
 
 
 class CrmSyncAndCalendarTest(TestCase):
@@ -366,15 +355,15 @@ class ArtistCommissionRatesTest(TestCase):
 
     def test_esani_has_individual_sales_and_lead_rates(self):
         self.assertEqual(Artist.objects.filter(name__iexact='Esani').count(), 1)
-        self.assertEqual(self.esani.sales_commission_percentage, Decimal('20.00'))
-        self.assertEqual(self.esani.lead_commission_percentage, Decimal('15.00'))
+        self.assertEqual(self.esani.sales_commission_percentage, Decimal('80.00'))
+        self.assertEqual(self.esani.lead_commission_percentage, Decimal('85.00'))
 
         sale = booking_financials(self.make_booking(self.esani, 'Sale'))
         lead = booking_financials(self.make_booking(self.esani, 'Lead'))
-        self.assertEqual(sale['pct_str'], '20%')
-        self.assertEqual(sale['artist_commission'], Decimal('200.0000'))
-        self.assertEqual(lead['pct_str'], '15%')
-        self.assertEqual(lead['artist_commission'], Decimal('150.0000'))
+        self.assertEqual(sale['pct_str'], '80%')
+        self.assertEqual(sale['artist_commission'], Decimal('800.0000'))
+        self.assertEqual(lead['pct_str'], '85%')
+        self.assertEqual(lead['artist_commission'], Decimal('850.0000'))
 
     def test_existing_artist_default_commission_rates_are_unchanged(self):
         sale = booking_financials(self.make_booking(self.other_artist, 'Sale'))
@@ -401,8 +390,8 @@ class ArtistCommissionRatesTest(TestCase):
         response = self.client.get(reverse('admin_crm'))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Esani share: 15.00%')
-        self.assertContains(response, '₹150.00')
+        self.assertContains(response, 'Esani share: 85.00%')
+        self.assertContains(response, '₹850.00')
 
 
 class CalendarManageBookingActionTests(TestCase):

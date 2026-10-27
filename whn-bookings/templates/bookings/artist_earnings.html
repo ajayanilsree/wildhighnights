@@ -2,8 +2,10 @@
 {% load static %}
 
 {% block content %}
+<!-- Historical figures without a recorded booking rate are explicitly provisional. -->
 <div class="min-h-screen bg-whn-dark pt-32 pb-20 px-6">
     <div class="container mx-auto max-w-6xl">
+        {% if has_estimates %}<p class="text-sm text-amber-300 mt-6 mb-6">Bookings marked “Estimate” use current artist settings because their original rate was not recorded. Totals including estimates are provisional; reconcile against finalized settlements before payment.</p>{% endif %}
         <!-- Back navigation -->
         <div class="mb-12" data-aos="fade-down">
             <a href="{% url 'artist_dashboard' %}" class="text-whn-purple font-bold tracking-[0.3em] uppercase text-[10px] mb-4 flex items-center gap-2 hover:translate-x-[-4px] transition-transform w-fit">
@@ -190,21 +192,21 @@
             <div class="glass-card p-6 rounded-3xl border border-white/5 hover:border-whn-purple/20 transition-all duration-300" data-aos="fade-up" data-aos-delay="100">
                 <span class="text-[9px] font-bold text-whn-tertiary uppercase tracking-widest block mb-2">Total Earnings</span>
                 <div class="text-2xl font-black text-white mb-1">₹{{ total_earnings|floatformat:2 }}</div>
-                <p class="text-whn-purple text-[10px] font-bold">Gross Partner Payouts</p>
+                <p class="text-whn-purple text-[10px] font-bold">Artist share before reimbursements</p>
             </div>
 
-            <!-- Total Expenses -->
+            <!-- Artist Expense Reimbursements -->
             <div class="glass-card p-6 rounded-3xl border border-white/5 hover:border-red-500/20 transition-all duration-300" data-aos="fade-up" data-aos-delay="200">
-                <span class="text-[9px] font-bold text-whn-tertiary uppercase tracking-widest block mb-2">Total Expenses</span>
+                <span class="text-[9px] font-bold text-whn-tertiary uppercase tracking-widest block mb-2">Artist Expense Reimbursements</span>
                 <div class="text-2xl font-black text-white mb-1">₹{{ total_expenses|floatformat:2 }}</div>
-                <p class="text-red-400 text-[10px] font-bold">Cost Deductions</p>
+                <p class="text-red-400 text-[10px] font-bold">Added to artist payout</p>
             </div>
 
-            <!-- Net Profit -->
+            <!-- Artist net payout -->
             <div class="glass-card p-6 rounded-3xl border border-white/5 hover:border-green-500/20 transition-all duration-300" data-aos="fade-up" data-aos-delay="300">
-                <span class="text-[9px] font-bold text-whn-tertiary uppercase tracking-widest block mb-2">Net Earnings</span>
+                <span class="text-[9px] font-bold text-whn-tertiary uppercase tracking-widest block mb-2">Artist Net Payout</span>
                 <div class="text-2xl font-black text-green-400 mb-1">₹{{ net_earnings|floatformat:2 }}</div>
-                <p class="text-green-400 text-[10px] font-bold">Take-Home Profit</p>
+                <p class="text-green-400 text-[10px] font-bold">Share plus expense reimbursements</p>
             </div>
 
             <!-- Monthly earnings -->
@@ -236,7 +238,7 @@
                             <th class="py-4 px-6 text-[10px] font-bold text-whn-tertiary uppercase tracking-widest text-center">Split %</th>
                             <th class="py-4 px-6 text-[10px] font-bold text-whn-tertiary uppercase tracking-widest text-right">My Share</th>
                             <th class="py-4 px-6 text-[10px] font-bold text-whn-tertiary uppercase tracking-widest text-right">Expenses</th>
-                            <th class="py-4 px-6 text-[10px] font-bold text-whn-tertiary uppercase tracking-widest text-right">Net Amount</th>
+                            <th class="py-4 px-6 text-[10px] font-bold text-whn-tertiary uppercase tracking-widest text-right">Artist Net Payout</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-white/5">
@@ -244,7 +246,7 @@
                         <tr class="hover:bg-white/[0.02] transition-colors duration-200">
                             <!-- Event -->
                             <td class="py-5 px-6">
-                                <span class="text-white font-bold text-sm block">{{ ledger.booking.venue }}</span>
+                                <span class="text-white font-bold text-sm block">{{ ledger.booking.venue }}</span>{% if ledger.rate_source == "current_artist_estimate" %}<span class="block text-xs text-amber-300">Estimate: historical rate unrecorded</span>{% endif %}
                                 <span class="text-[10px] text-whn-tertiary tracking-wide uppercase">{{ ledger.booking.date|date:"d M Y" }} · {{ ledger.booking.location }}</span>
                             </td>
                             <!-- Booking Type -->
@@ -273,7 +275,7 @@
                             <td class="py-5 px-6 text-right">
                                 <span class="text-red-400 font-semibold text-sm">₹{{ ledger.expenses|floatformat:2 }}</span>
                             </td>
-                            <!-- Net Amount -->
+                            <!-- Artist Net Payout -->
                             <td class="py-5 px-6 text-right">
                                 <span class="text-green-400 font-bold text-sm">₹{{ ledger.net|floatformat:2 }}</span>
                             </td>

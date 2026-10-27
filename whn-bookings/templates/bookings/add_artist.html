@@ -19,6 +19,7 @@
         <div class="glass-card rounded-[2.5rem] p-10 md:p-12 border border-white/5 shadow-2xl" data-aos="fade-up">
             <form method="POST" enctype="multipart/form-data" class="space-y-8">
                 {% csrf_token %}
+                {% for message in messages %}<div role="alert" class="p-4 rounded-xl border border-red-400/30 text-red-300">{{ message }}</div>{% endfor %}
                 
                 <!-- Artist Name -->
                 <div class="relative group">
@@ -34,11 +35,11 @@
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div class="relative group">
-                        <label class="text-[10px] font-bold text-whn-tertiary uppercase tracking-[0.2em] ml-1 mb-3 block">Sales Commission Share (%)</label>
+                        <label class="text-[10px] font-bold text-whn-tertiary uppercase tracking-[0.2em] ml-1 mb-3 block">Sale Artist Share (%)</label>
                         <input type="number" name="sales_commission_percentage" min="0" max="100" step="0.01" value="85.00" required class="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-whn-purple/50">
                     </div>
                     <div class="relative group">
-                        <label class="text-[10px] font-bold text-whn-tertiary uppercase tracking-[0.2em] ml-1 mb-3 block">Lead Commission Share (%)</label>
+                        <label class="text-[10px] font-bold text-whn-tertiary uppercase tracking-[0.2em] ml-1 mb-3 block">Lead Artist Share (%)</label>
                         <input type="number" name="lead_commission_percentage" min="0" max="100" step="0.01" value="90.00" required class="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-whn-purple/50">
                     </div>
                 </div>

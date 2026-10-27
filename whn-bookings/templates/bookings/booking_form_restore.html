@@ -1,0 +1,25 @@
+{% if submitted_booking_data %}
+{{ submitted_booking_data|json_script:"submitted-booking-data" }}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const submitted = JSON.parse(document.getElementById('submitted-booking-data').textContent);
+    const form = document.querySelector('form[method="POST"]');
+    const expenses = document.getElementById('expenses-container');
+    expenses.replaceChildren();
+    (submitted['expense_name[]'] || []).forEach(() => document.getElementById('add-expense-btn').click());
+    Object.entries(submitted).forEach(([name, values]) => {
+        if (name === 'csrfmiddlewaretoken') return;
+        const fields = Array.from(form.elements).filter(field => field.name === name);
+        fields.forEach((field, index) => {
+            if (field.type === 'file') return;
+            if (field.type === 'radio' || field.type === 'checkbox') {
+                field.checked = values.includes(field.value);
+            } else {
+                field.value = values[index] ?? values[0] ?? '';
+            }
+            field.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+    });
+});
+</script>
+{% endif %}

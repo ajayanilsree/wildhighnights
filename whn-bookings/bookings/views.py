@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseForbidden
 from decimal import Decimal, InvalidOperation
 import calendar
 import json
@@ -13,6 +13,9 @@ from django.views.decorators.csrf import csrf_protect
 from django.contrib.auth.models import User
 from datetime import datetime, timedelta
 from django.utils import timezone
+from django.db import transaction
+from django.core.exceptions import ValidationError
+from .financials import booking_financials, configured_artist_percentage, parse_booking_financial_input, decimal_value, calculate_booking_financials
 from django.db.models import Count, Q, Sum
 from django.db.models import DateTimeField
 from django.db.models.functions import Coalesce
@@ -53,7 +56,7 @@ def build_artist_calendar_payload(artist):
         expenses_data = [
             {
                 'name': e.name,
-                'amount': float(e.amount.quantize(Decimal('0.01'))),
+                'amount': str(e.amount.quantize(Decimal('0.01'))),
                 'borne_by': e.borne_by or 'WHN',
             }
             for e in b.expenses.all()
@@ -77,16 +80,20 @@ def build_artist_calendar_payload(artist):
             'booking_type': b.booking_type,
             'custom_artist_percentage': float(b.custom_artist_percentage.quantize(Decimal('0.01'))) if b.custom_artist_percentage is not None else None,
             'deal_type': b.deal_type,
-            'deal_amount': float(deal_amount.quantize(Decimal('0.01'))),
-            'gst_amount': float(gst_amount.quantize(Decimal('0.01'))),
-            'total_amount': float(total_amount.quantize(Decimal('0.01'))),
+            'deal_amount': str(deal_amount.quantize(Decimal('0.01'))),
+            'gst_amount': str(gst_amount.quantize(Decimal('0.01'))),
+            'total_amount': str(total_amount.quantize(Decimal('0.01'))),
             'split_percentage': financials['pct_str'],
-            'artist_commission': float(financials['artist_commission'].quantize(Decimal('0.01'))),
-            'artist_share': float(financials['artist_commission'].quantize(Decimal('0.01'))),
-            'net_amount': float(financials['artist_net'].quantize(Decimal('0.01'))),
-            'owner_profit': float(financials['owner_profit'].quantize(Decimal('0.01'))),
-            'artist_expenses': float(financials['artist_expenses'].quantize(Decimal('0.01'))),
-            'whn_expenses': float(financials['whn_expenses'].quantize(Decimal('0.01'))),
+            'artist_commission': str(financials['artist_commission']),
+            'artist_share': str(financials['artist_commission']),
+            'net_amount': str(financials['artist_net_payout']),
+            'whn_net_payout': str(financials['whn_net_payout']),
+            'artist_net_payout': str(financials['artist_net_payout']),
+            'whn_share': str(financials['whn_share']),
+            'commission_base': str(financials['commission_base']),
+            'rate_source': financials['rate_source'],
+            'artist_expenses': str(financials['artist_expenses']),
+            'whn_expenses': str(financials['whn_expenses']),
             'travel_pdf': b.travel_pdf.url if b.travel_pdf else '',
             'accommodation_pdf': b.accommodation_pdf.url if b.accommodation_pdf else '',
             'accommodation_details': b.accommodation_details or '',
@@ -116,23 +123,17 @@ def build_artist_calendar_payload(artist):
 
 
 def crm_queryset(base_qs):
-    return base_qs.select_related('employee', 'employee__user', 'conversion_artist', 'conversion_booking').annotate(
+    return base_qs.select_related('employee', 'employee__user', 'conversion_artist', 'conversion_booking__artist').prefetch_related('conversion_booking__expenses').annotate(
         crm_created_at_value=Coalesce('created_at', 'created_date', output_field=DateTimeField()),
         crm_updated_at_value=Coalesce('updated_at', 'last_updated', 'created_at', 'created_date', output_field=DateTimeField()),
     )
 
 
 def booking_split(booking):
-    if booking.booking_type == 'Sale':
-        pct = booking.artist.sales_commission_percentage
-        return pct / Decimal('100'), format_percentage(pct)
-    if booking.booking_type == 'Lead':
-        pct = booking.artist.lead_commission_percentage
-        return pct / Decimal('100'), format_percentage(pct)
-    if booking.booking_type == 'Custom':
-        custom_pct = booking.custom_artist_percentage or Decimal('0.00')
-        return custom_pct / Decimal('100'), format_percentage(custom_pct)
-    return Decimal('0.90'), "90%"
+    pct = booking.applied_artist_percentage
+    if pct is None:
+        pct = configured_artist_percentage(booking)
+    return pct / Decimal('100'), format_percentage(pct)
 
 
 def attach_conversion_commission(lead):
@@ -141,42 +142,22 @@ def attach_conversion_commission(lead):
         lead.conversion_commission_amount = None
         return lead
 
+    if lead.conversion_booking_id:
+        financials = booking_financials(lead.conversion_booking)
+        lead.conversion_commission_percentage = financials['pct'] * Decimal('100')
+        lead.conversion_commission_amount = financials['artist_share']
+        return lead
+
     percentage = (
         lead.conversion_artist.sales_commission_percentage
         if lead.type == 'sale'
         else lead.conversion_artist.lead_commission_percentage
     )
     lead.conversion_commission_percentage = percentage
-    lead.conversion_commission_amount = (
-        lead.conversion_deal_amount * percentage / Decimal('100')
-    ).quantize(Decimal('0.01'))
+    lead.conversion_commission_amount = calculate_booking_financials(
+        lead.conversion_deal_amount, Decimal('0'), Decimal('0'), Decimal('100') - percentage
+    )['artist_share']
     return lead
-
-
-def booking_financials(booking):
-    pct, pct_str = booking_split(booking)
-    artist_commission = booking.deal_amount * pct
-    whn_share = booking.deal_amount - artist_commission
-    artist_expenses = sum(
-        (exp.amount for exp in booking.expenses.all() if exp.borne_by == 'Artist'),
-        Decimal('0.00')
-    )
-    whn_expenses = sum(
-        (exp.amount for exp in booking.expenses.all() if exp.borne_by == 'WHN'),
-        Decimal('0.00')
-    )
-    return {
-        'pct': pct,
-        'pct_str': pct_str,
-        'artist_commission': artist_commission,
-        'whn_share': whn_share,
-        'artist_expenses': artist_expenses,
-        'whn_expenses': whn_expenses,
-        'total_expenses': artist_expenses + whn_expenses,
-        'artist_net': artist_commission - artist_expenses,
-        'owner_profit': whn_share - whn_expenses,
-    }
-
 
 def normalized_expense_bearer(value):
     return 'Artist' if value == 'Artist' else 'WHN'
@@ -521,7 +502,13 @@ def dashboard_view(request):
     return render(request, 'bookings/dashboard.html', context)
 
 @login_required(login_url='login')
+@transaction.atomic
 def add_booking_view(request):
+    if not (is_admin_user(request.user) or (
+        hasattr(request.user, 'employee') and request.user.employee.is_active
+        and request.user.username != CALENDAR_ONLY_EMPLOYEE_USERNAME
+    )):
+        return HttpResponseForbidden('Access Denied: Booking management privileges required.')
     artists = Artist.objects.all()
     crm_lead = None
     crm_lead_id = request.POST.get('crm_lead_id') or request.GET.get('crm_lead')
@@ -542,19 +529,6 @@ def add_booking_view(request):
         duration = request.POST.get('duration')
         
         booking_type = request.POST.get('booking_type')
-        custom_pct_val = request.POST.get('custom_artist_percentage')
-        if booking_type == 'Custom' and custom_pct_val:
-            try:
-                custom_artist_percentage = Decimal(custom_pct_val)
-                if custom_artist_percentage < Decimal('0'):
-                    custom_artist_percentage = Decimal('0')
-                elif custom_artist_percentage > Decimal('100'):
-                    custom_artist_percentage = Decimal('100')
-            except:
-                custom_artist_percentage = Decimal('0')
-        else:
-            custom_artist_percentage = None
-
         deal_type = request.POST.get('deal_type')
         deal_amount = request.POST.get('deal_amount') or 0.00
         
@@ -572,6 +546,11 @@ def add_booking_view(request):
         artwork_attachment = request.FILES.get('artwork_attachment')
 
         artist = get_object_or_404(Artist, id=artist_id)
+        try:
+            deal_amount, custom_artist_percentage, expense_rows = parse_booking_financial_input(request.POST, artist)
+        except ValidationError as error:
+            messages.error(request, ' '.join(error.messages))
+            return render(request, 'bookings/add_booking.html', {'artists': artists, 'crm_lead': crm_lead, 'submitted_booking_data': dict(request.POST.lists())}, status=400)
         
         # Create Booking
         booking = Booking.objects.create(
@@ -599,17 +578,8 @@ def add_booking_view(request):
         )
 
         # Dynamic Expenses
-        expense_names = request.POST.getlist('expense_name[]')
-        expense_amounts = request.POST.getlist('expense_amount[]')
-        expense_bearers = request.POST.getlist('expense_borne_by[]')
-        for index, (name, amt) in enumerate(zip(expense_names, expense_amounts)):
-            if name.strip() and amt:
-                BookingExpense.objects.create(
-                    booking=booking,
-                    name=name.strip(),
-                    amount=amt,
-                    borne_by=normalized_expense_bearer(expense_bearers[index] if index < len(expense_bearers) else 'WHN')
-                )
+        for row in expense_rows:
+            BookingExpense.objects.create(booking=booking, **row)
 
         if crm_lead:
             crm_lead.conversion_booking = booking
@@ -699,6 +669,8 @@ def add_booking_view(request):
 
 @login_required(login_url='login')
 def add_artist_view(request):
+    if not is_admin_user(request.user):
+        return HttpResponseForbidden('Access Denied: Administrative privileges required.')
     if request.method == 'POST':
         name = request.POST.get('name')
         genre = request.POST.get('genre', '')
@@ -708,13 +680,9 @@ def add_artist_view(request):
         password = request.POST.get('password')
 
         try:
-            sales_commission_percentage = Decimal(request.POST.get('sales_commission_percentage', '85'))
-            lead_commission_percentage = Decimal(request.POST.get('lead_commission_percentage', '90'))
-            if not (Decimal('0') <= sales_commission_percentage <= Decimal('100')):
-                raise InvalidOperation
-            if not (Decimal('0') <= lead_commission_percentage <= Decimal('100')):
-                raise InvalidOperation
-        except (InvalidOperation, TypeError):
+            sales_commission_percentage = decimal_value(request.POST.get('sales_commission_percentage', '85'), 'Sale Artist Share', Decimal('100'))
+            lead_commission_percentage = decimal_value(request.POST.get('lead_commission_percentage', '90'), 'Lead Artist Share', Decimal('100'))
+        except ValidationError:
             messages.error(request, 'Commission rates must be valid percentages between 0 and 100.')
             return render(request, 'bookings/add_artist.html')
         
@@ -751,6 +719,8 @@ def add_artist_view(request):
 
 @login_required(login_url='login')
 def edit_artist_view(request, artist_id):
+    if not is_admin_user(request.user):
+        return HttpResponseForbidden('Access Denied: Administrative privileges required.')
     artist = get_object_or_404(Artist, id=artist_id)
     user = artist.user
     
@@ -759,13 +729,9 @@ def edit_artist_view(request, artist_id):
         artist.genre = request.POST.get('genre', '')
         artist.instagram = request.POST.get('instagram', '')
         try:
-            sales_commission_percentage = Decimal(request.POST.get('sales_commission_percentage', '85'))
-            lead_commission_percentage = Decimal(request.POST.get('lead_commission_percentage', '90'))
-            if not (Decimal('0') <= sales_commission_percentage <= Decimal('100')):
-                raise InvalidOperation
-            if not (Decimal('0') <= lead_commission_percentage <= Decimal('100')):
-                raise InvalidOperation
-        except (InvalidOperation, TypeError):
+            sales_commission_percentage = decimal_value(request.POST.get('sales_commission_percentage', '85'), 'Sale Artist Share', Decimal('100'))
+            lead_commission_percentage = decimal_value(request.POST.get('lead_commission_percentage', '90'), 'Lead Artist Share', Decimal('100'))
+        except ValidationError:
             messages.error(request, 'Commission rates must be valid percentages between 0 and 100.')
             return render(request, 'bookings/edit_artist.html', {'artist': artist})
         artist.sales_commission_percentage = sales_commission_percentage
@@ -1020,7 +986,13 @@ def calendar_booking_redirect(request, booking):
 
 
 @login_required(login_url='login')
+@transaction.atomic
 def edit_booking_view(request, booking_id):
+    if not (is_admin_user(request.user) or (
+        hasattr(request.user, 'employee') and request.user.employee.is_active
+        and request.user.username != CALENDAR_ONLY_EMPLOYEE_USERNAME
+    )):
+        return HttpResponseForbidden('Access Denied: Booking management privileges required.')
     booking = get_object_or_404(Booking, id=booking_id)
     artists = Artist.objects.all()
     
@@ -1034,19 +1006,6 @@ def edit_booking_view(request, booking_id):
         duration = request.POST.get('duration')
         
         booking_type = request.POST.get('booking_type')
-        custom_pct_val = request.POST.get('custom_artist_percentage')
-        if booking_type == 'Custom' and custom_pct_val:
-            try:
-                custom_artist_percentage = Decimal(custom_pct_val)
-                if custom_artist_percentage < Decimal('0'):
-                    custom_artist_percentage = Decimal('0')
-                elif custom_artist_percentage > Decimal('100'):
-                    custom_artist_percentage = Decimal('100')
-            except:
-                custom_artist_percentage = Decimal('0')
-        else:
-            custom_artist_percentage = None
-
         deal_type = request.POST.get('deal_type')
         deal_amount = request.POST.get('deal_amount') or 0.00
         
@@ -1059,6 +1018,11 @@ def edit_booking_view(request, booking_id):
         transport_details = request.POST.get('transport_details')
 
         artist = get_object_or_404(Artist, id=artist_id)
+        try:
+            deal_amount, custom_artist_percentage, expense_rows = parse_booking_financial_input(request.POST, artist)
+        except ValidationError as error:
+            messages.error(request, ' '.join(error.messages))
+            return render(request, 'bookings/edit_booking.html', {'artists': artists, 'booking': booking, 'submitted_booking_data': dict(request.POST.lists())}, status=400)
         
         booking.artist = artist
         booking.event_type = event_type
@@ -1094,17 +1058,8 @@ def edit_booking_view(request, booking_id):
 
         # Update expenses by clear and rebuild
         booking.expenses.all().delete()
-        expense_names = request.POST.getlist('expense_name[]')
-        expense_amounts = request.POST.getlist('expense_amount[]')
-        expense_bearers = request.POST.getlist('expense_borne_by[]')
-        for index, (name, amt) in enumerate(zip(expense_names, expense_amounts)):
-            if name.strip() and amt:
-                BookingExpense.objects.create(
-                    booking=booking,
-                    name=name.strip(),
-                    amount=amt,
-                    borne_by=normalized_expense_bearer(expense_bearers[index] if index < len(expense_bearers) else 'WHN')
-                )
+        for row in expense_rows:
+            BookingExpense.objects.create(booking=booking, **row)
 
         log_activity(
             f"Booking updated: {artist.name} - {venue}",
@@ -1419,7 +1374,7 @@ def api_remove_busy_date(request):
 @artist_required
 def artist_accounts_view(request):
     artist = request.user.artist
-    bookings = Booking.objects.filter(artist=artist).order_by('-date')
+    bookings = Booking.objects.filter(artist=artist).select_related('artist').prefetch_related('expenses').order_by('-date')
     
     # Precompute GST and Total for display
     booking_details = []
@@ -1439,12 +1394,14 @@ def artist_accounts_view(request):
             'earning': financials['artist_commission'].quantize(Decimal('0.01')),
             'expenses': financials['artist_expenses'].quantize(Decimal('0.01')),
             'whn_expenses': financials['whn_expenses'].quantize(Decimal('0.01')),
-            'owner_profit': financials['owner_profit'].quantize(Decimal('0.01')),
+            'whn_net_payout': financials['whn_net_payout'],
+            'rate_source': financials['rate_source'],
             'net': financials['artist_net'].quantize(Decimal('0.01'))
         })
         
     return render(request, 'bookings/artist_accounts.html', {
         'artist': artist,
+        'has_estimates': any(row['rate_source'] == 'current_artist_estimate' for row in booking_details),
         'booking_details': booking_details
     })
 
@@ -1458,7 +1415,7 @@ def artist_earnings_view(request):
     selected_year = request.GET.get('year', '')
     
     # Base bookings queryset for this artist
-    bookings = Booking.objects.filter(artist=artist).order_by('-date')
+    bookings = Booking.objects.filter(artist=artist).select_related('artist').prefetch_related('expenses').order_by('-date')
     
     # Filter bookings based on selections
     if selected_year and selected_year.isdigit():
@@ -1508,7 +1465,8 @@ def artist_earnings_view(request):
             'earning': earning.quantize(Decimal('0.01')),
             'expenses': expenses.quantize(Decimal('0.01')),
             'whn_expenses': financials['whn_expenses'].quantize(Decimal('0.01')),
-            'owner_profit': financials['owner_profit'].quantize(Decimal('0.01')),
+            'whn_net_payout': financials['whn_net_payout'],
+            'rate_source': financials['rate_source'],
             'net': net.quantize(Decimal('0.01'))
         })
         
@@ -1535,6 +1493,7 @@ def artist_earnings_view(request):
         
     return render(request, 'bookings/artist_earnings.html', {
         'artist': artist,
+        'has_estimates': any(row['rate_source'] == 'current_artist_estimate' for row in events_ledger),
         'events_ledger': events_ledger,
         'total_earnings': total_earnings.quantize(Decimal('0.01')),
         'total_expenses': total_expenses.quantize(Decimal('0.01')),
@@ -1633,7 +1592,8 @@ def admin_artist_accounts_view(request):
             'earning': earning.quantize(Decimal('0.01')),
             'expenses': expenses.quantize(Decimal('0.01')),
             'whn_expenses': financials['whn_expenses'].quantize(Decimal('0.01')),
-            'owner_profit': financials['owner_profit'].quantize(Decimal('0.01')),
+            'whn_net_payout': financials['whn_net_payout'],
+            'rate_source': financials['rate_source'],
             'net': net.quantize(Decimal('0.01'))
         })
         
@@ -1665,6 +1625,7 @@ def admin_artist_accounts_view(request):
         'artists': artists,
         'selected_artist_id': selected_artist_id,
         'selected_artist': selected_artist,
+        'has_estimates': any(row['rate_source'] == 'current_artist_estimate' for row in events_ledger),
         'events_ledger': events_ledger,
         'total_earnings': total_earnings.quantize(Decimal('0.01')),
         'total_expenses': total_expenses.quantize(Decimal('0.01')),
@@ -1708,18 +1669,24 @@ def admin_whn_accounts_view(request):
 
     total_whn_earnings = Decimal('0.00')
     total_whn_expenses = Decimal('0.00')
-    net_whn_profit = Decimal('0.00')
+    total_whn_net_payout = Decimal('0.00')
+    total_artist_expenses = Decimal('0.00')
+    total_artist_net_payout = Decimal('0.00')
+    total_deal_amount = Decimal('0.00')
     whn_ledger = []
 
     for booking in bookings:
         financials = booking_financials(booking)
         whn_share = financials['whn_share']
         whn_expenses = financials['whn_expenses']
-        owner_profit = financials['owner_profit']
+        whn_net_payout = financials['whn_net_payout']
 
         total_whn_earnings += whn_share
         total_whn_expenses += whn_expenses
-        net_whn_profit += owner_profit
+        total_whn_net_payout += whn_net_payout
+        total_artist_expenses += financials['artist_expenses']
+        total_artist_net_payout += financials['artist_net_payout']
+        total_deal_amount += financials['deal_amount']
 
         whn_ledger.append({
             'booking': booking,
@@ -1728,7 +1695,10 @@ def admin_whn_accounts_view(request):
             'artist_commission': financials['artist_commission'].quantize(Decimal('0.01')),
             'whn_share': whn_share.quantize(Decimal('0.01')),
             'whn_expenses': whn_expenses.quantize(Decimal('0.01')),
-            'owner_profit': owner_profit.quantize(Decimal('0.01')),
+            'whn_net_payout': whn_net_payout,
+            'artist_expenses': financials['artist_expenses'],
+            'artist_net_payout': financials['artist_net_payout'],
+            'rate_source': financials['rate_source'],
         })
 
     available_bookings = Booking.objects.all()
@@ -1762,10 +1732,14 @@ def admin_whn_accounts_view(request):
         'selected_year': selected_year,
         'months': months,
         'years': years,
+        'has_estimates': any(row['rate_source'] == 'current_artist_estimate' for row in whn_ledger),
         'whn_ledger': whn_ledger,
         'total_whn_earnings': total_whn_earnings.quantize(Decimal('0.01')),
         'total_whn_expenses': total_whn_expenses.quantize(Decimal('0.01')),
-        'net_whn_profit': net_whn_profit.quantize(Decimal('0.01')),
+        'total_whn_net_payout': total_whn_net_payout,
+        'total_artist_expenses': total_artist_expenses,
+        'total_artist_net_payout': total_artist_net_payout,
+        'total_deal_amount': total_deal_amount,
     })
 
 # --- Employee Management Views (Admin Only) ---

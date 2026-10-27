@@ -2,8 +2,10 @@
 {% load static %}
 
 {% block content %}
+<!-- Historical figures without a recorded booking rate are explicitly provisional. -->
 <div class="min-h-screen bg-whn-dark pt-32 pb-20 px-6">
     <div class="container mx-auto max-w-6xl">
+        {% if has_estimates %}<p class="text-sm text-amber-300 mt-6 mb-6">Bookings marked “Estimate” use current artist settings because their original rate was not recorded. Totals including estimates are provisional; reconcile against finalized settlements before payment.</p>{% endif %}
         <!-- Back navigation -->
         <div class="mb-12" data-aos="fade-down">
             <a href="{% url 'artist_dashboard' %}" class="text-whn-purple font-bold tracking-[0.3em] uppercase text-[10px] mb-4 flex items-center gap-2 hover:translate-x-[-4px] transition-transform w-fit">
@@ -26,7 +28,7 @@
                 <div class="flex flex-col md:flex-row md:items-center justify-between border-b border-white/5 pb-8 mb-8 gap-6">
                     <div>
                         <span class="text-whn-purple font-bold tracking-widest text-xs uppercase block mb-1">Contract ID: #WHN-{{ item.booking.id|stringformat:"05d" }}</span>
-                        <h2 class="text-3xl font-black text-white leading-none">{{ item.booking.venue }}</h2>
+                        <h2 class="text-3xl font-black text-white leading-none">{{ item.booking.venue }}{% if item.rate_source == "current_artist_estimate" %}<span class="block text-xs text-amber-300">Estimate: historical rate unrecorded</span>{% endif %}</h2>
                     </div>
                     <div class="flex items-center gap-4">
                         {% if item.booking.status == 'Confirmed' %}
@@ -63,7 +65,7 @@
                             </div>
                             <div>
                                 <span class="text-[10px] text-whn-tertiary uppercase tracking-wider block">Event Venue & City</span>
-                                <span class="text-white font-bold text-sm">{{ item.booking.venue }}, {{ item.booking.location }}</span>
+                                <span class="text-white font-bold text-sm">{{ item.booking.venue }}{% if item.rate_source == "current_artist_estimate" %}<span class="block text-xs text-amber-300">Estimate: historical rate unrecorded</span>{% endif %}, {{ item.booking.location }}</span>
                             </div>
                             <div>
                                 <span class="text-[10px] text-whn-tertiary uppercase tracking-wider block">Event Type</span>
@@ -118,7 +120,7 @@
                                 <span class="text-white font-bold text-sm">₹{{ item.net|floatformat:2 }}</span>
                             </div>
                             <div>
-                                <span class="text-[10px] text-whn-tertiary uppercase tracking-wider block">Net Amount</span>
+                                <span class="text-[10px] text-whn-tertiary uppercase tracking-wider block">Artist Net Payout</span>
                                 <span class="text-green-400 font-black text-sm">₹{{ item.net|floatformat:2 }}</span>
                             </div>
                         </div>

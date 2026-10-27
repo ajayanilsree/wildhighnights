@@ -2,6 +2,10 @@ from django.db import models
 from django.utils.text import slugify
 from django.contrib.auth.models import User
 from decimal import Decimal
+from django.core.validators import MinValueValidator, MaxValueValidator
+from django.core.exceptions import ValidationError
+
+PERCENT_VALIDATORS = [MinValueValidator(Decimal('0')), MaxValueValidator(Decimal('100'))]
 
 class Artist(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True)
@@ -10,8 +14,8 @@ class Artist(models.Model):
     genre = models.CharField(max_length=100, blank=True)
     instagram = models.CharField(max_length=255, blank=True)
     artist_image = models.ImageField(upload_to="artists/", blank=True, null=True)
-    sales_commission_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal('85.00'))
-    lead_commission_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal('90.00'))
+    sales_commission_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal('85.00'), validators=PERCENT_VALIDATORS)
+    lead_commission_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal('90.00'), validators=PERCENT_VALIDATORS)
 
     def save(self, *args, **kwargs):
         if not self.slug:
@@ -168,9 +172,10 @@ class Booking(models.Model):
     duration = models.CharField(max_length=100, blank=True, null=True)
     
     booking_type = models.CharField(max_length=10, choices=BOOKING_TYPE_CHOICES, default='Sale')
-    custom_artist_percentage = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True)
+    custom_artist_percentage = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True, validators=PERCENT_VALIDATORS)
+    applied_artist_percentage = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True, editable=False, validators=PERCENT_VALIDATORS)
     deal_type = models.CharField(max_length=30, choices=DEAL_TYPE_CHOICES, default='Landed Deal')
-    deal_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    deal_amount = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'), validators=[MinValueValidator(Decimal('0'))])
     
     travel_pdf = models.FileField(upload_to="booking_docs/travel/", blank=True, null=True)
     accommodation_pdf = models.FileField(upload_to="booking_docs/accommodation/", blank=True, null=True)
@@ -185,6 +190,28 @@ class Booking(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Tentative')
     notes = models.TextField(blank=True, null=True)
 
+    def save(self, *args, **kwargs):
+        from .financials import configured_artist_percentage
+        previous = type(self).objects.filter(pk=self.pk).first() if self.pk else None
+        rate_changed = previous and (
+            previous.artist_id != self.artist_id or previous.booking_type != self.booking_type or
+            (self.booking_type == 'Custom' and previous.custom_artist_percentage != self.custom_artist_percentage)
+        )
+        if previous is None or rate_changed:
+            self.applied_artist_percentage = configured_artist_percentage(self)
+            if kwargs.get('update_fields') is not None:
+                kwargs['update_fields'] = set(kwargs['update_fields']) | {'applied_artist_percentage'}
+        super().save(*args, **kwargs)
+
+    def clean(self):
+        from .financials import configured_artist_percentage, decimal_value
+        decimal_value(self.deal_amount, 'Deal Amount', Decimal('9999999999.99'))
+        configured_artist_percentage(self)
+        if self.pk:
+            total = sum((e.amount for e in self.expenses.all()), Decimal('0'))
+            if total > self.deal_amount:
+                raise ValidationError('Combined WHN and Artist Expenses cannot exceed the Deal Amount.')
+
     def __str__(self):
         return f"{self.artist.name} - {self.venue} ({self.date})"
 
@@ -195,8 +222,15 @@ class BookingExpense(models.Model):
     ]
     booking = models.ForeignKey(Booking, on_delete=models.CASCADE, related_name="expenses")
     name = models.CharField(max_length=150)
-    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    amount = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(Decimal('0'))])
     borne_by = models.CharField(max_length=10, choices=BORNE_BY_CHOICES, default='WHN')
+
+    def clean(self):
+        super().clean()
+        if self.booking_id and self.amount is not None:
+            total = sum((e.amount for e in self.booking.expenses.exclude(pk=self.pk)), Decimal('0'))
+            if total + self.amount > self.booking.deal_amount:
+                raise ValidationError('Combined WHN and Artist Expenses cannot exceed the Deal Amount.')
 
     def __str__(self):
         return f"{self.name}: {self.amount} ({self.borne_by}) for {self.booking}"
